@@ -27,6 +27,10 @@ namespace ReportConvertor
             string[] filePathsPDF = Directory.GetFiles(@inputDir, "*.pdf");
             dict.Add("pdf", filePathsPDF);
 
+            //html
+            string[] filePathsHTML = Directory.GetFiles(@inputDir, "*.html");
+            dict.Add("html", filePathsHTML);
+
             return dict;
         }
     }
