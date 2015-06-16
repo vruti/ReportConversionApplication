@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -41,20 +42,33 @@ namespace ReportConvertor
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(file);
             DataTable table = new DataTable();
-            string r = "";
+            string r;
             string x;
 
+            ArrayList wholeFile = new ArrayList();
+
+            ArrayList eachRow = new ArrayList();
             foreach (HtmlNode row in doc.DocumentNode.SelectNodes("//table//tr"))
             {
                 foreach (HtmlNode col in row.SelectNodes("//td"))
                 {
                     r = col.InnerText;
                     x = r.Replace("&nbsp;", "");
-                    Console.WriteLine(x);
-
+                    if (siteName == null)
+                    {
+                        if (isNameOfSite(x).Item1)
+                        {
+                            siteName = isNameOfSite(x).Item2;
+                        }
+                    }
+                    eachRow.Add(x);
                 }
+                wholeFile.Add(eachRow);
+                eachRow = new ArrayList();
             }
-            Console.Read();
+            report.addReportTab("main");
+            report.changeCurrentTab("main");
+            report.addRecords(wholeFile);
 
             return Tuple.Create(siteName, report);
         }

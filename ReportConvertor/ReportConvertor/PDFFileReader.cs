@@ -84,14 +84,6 @@ namespace ReportConvertor
             {
                 return Tuple.Create(true, "Howard");
             }
-            else if (name.Contains("highland 1"))
-            {
-                return Tuple.Create(true, "Highland 1");
-            }
-            else if (name.Contains("highland north"))
-            {
-                return Tuple.Create(true, "Highland North");
-            }
             else if (name.Contains("patton"))
             {
                 return Tuple.Create(true, "Patton");

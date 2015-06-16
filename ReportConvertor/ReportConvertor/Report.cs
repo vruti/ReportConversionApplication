@@ -16,6 +16,7 @@ namespace ReportConvertor
         public Report()
         {
             allRecords = new Dictionary<string, ArrayList>();
+
         }
 
         public bool addReportTab(string tabName)
@@ -43,6 +44,11 @@ namespace ReportConvertor
         public void addCheckedVals(ArrayList v)
         {
             checklistVals = v;
+        }
+
+        public List<string> getKeys()
+        {
+            return allRecords.Keys.ToList();
         }
     }
 }
