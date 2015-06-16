@@ -14,7 +14,7 @@ namespace ReportConvertor
 {
     public class PDFFileReader : FileReader
     {
-        Dictionary<string, List<Report>> readFiles(string[] files)
+        public Dictionary<string, List<Report>> readFiles(string[] files)
         {
             Dictionary<string, List<Report>> reportsBySite = new Dictionary<string, List<Report>>();
             Tuple<string, Report> tuple;
@@ -36,7 +36,7 @@ namespace ReportConvertor
             return reportsBySite;
         }
 
-        Tuple<string, Report> readFile(string file)
+        public Tuple<string, Report> readFile(string file)
         {
             Report report = new Report();
             string siteName="";
@@ -77,7 +77,7 @@ namespace ReportConvertor
             return Tuple.Create(siteName, report);
         }
 
-        private Tuple<bool, string> isNameOfSite(string n)
+        public Tuple<bool, string> isNameOfSite(string n)
         {
             string name = n.ToLower();
             if (name.Contains("howard"))

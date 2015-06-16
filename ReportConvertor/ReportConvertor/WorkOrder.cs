@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ReportConvertor
 {
-    class WorkOrder
+    public class WorkOrder
     {
         private string mPulseID;
         private string description;

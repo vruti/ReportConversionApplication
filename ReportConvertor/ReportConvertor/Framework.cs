@@ -8,7 +8,7 @@ namespace ReportConvertor
 {
     public class Framework
     {
-        private string inputDirectory = "C://Documents//test c#";
+        private string inputDirectory = "C:\\Users\\vsivakumaran\\Documents\\Test c#";
 
         public void start()
         {

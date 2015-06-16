@@ -72,7 +72,7 @@ namespace ReportConvertor
             return Tuple.Create(tuple.Item1, report);
         }
 
-        private Tuple<string, ArrayList> readWorksheet(ExcelWorksheet worksheet)
+        public Tuple<string, ArrayList> readWorksheet(ExcelWorksheet worksheet)
         {
             int totalRows = worksheet.Dimension.End.Row;
             int totalCols = worksheet.Dimension.End.Column;
@@ -89,13 +89,13 @@ namespace ReportConvertor
                     {
                         if (siteName == null)
                         {
-                            Tuple<bool, string> tuple = isNameOfSite(worksheet.Cells.Text);
+                            Tuple<bool, string> tuple = isNameOfSite(worksheet.Cells[i, j].Value.ToString());
                             if (tuple.Item1)
                             {
                                 siteName = tuple.Item2;
                             }
                         }
-                        rows.Add(worksheet.Cells.Text);
+                        rows.Add(worksheet.Cells.Value.ToString());
                     }
                     else
                     {
@@ -150,7 +150,7 @@ namespace ReportConvertor
             return checkedVals;
         }
 
-        private Tuple<bool, string> isNameOfSite(string n)
+        public Tuple<bool, string> isNameOfSite(string n)
         {
             string name = n.ToLower();
             if (name.Contains("howard"))
