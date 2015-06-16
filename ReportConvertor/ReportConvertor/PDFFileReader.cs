@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
+using System.Data;
 
 namespace ReportConvertor
 {
@@ -35,6 +37,24 @@ namespace ReportConvertor
             Report report = new Report();
             string siteName="";
 
+            //PDF READER IMPLEMENTATION
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(file);
+            DataTable table = new DataTable();
+            string r = "";
+            string x;
+
+            foreach (HtmlNode row in doc.DocumentNode.SelectNodes("//table//tr"))
+            {
+                foreach (HtmlNode col in row.SelectNodes("//td"))
+                {
+                    r = col.InnerText;
+                    x = r.Replace("&nbsp;", "");
+                    Console.WriteLine(x);
+
+                }
+            }
+            Console.Read();
 
             return Tuple.Create(siteName, report);
         }
