@@ -9,10 +9,10 @@ namespace ReportConvertor
 {
     public interface FileReader
     {
-        ArrayList getCheckedValues(string file, int n);
+        Dictionary<string, List<Report>> readFiles(string[] files);
 
-        Dictionary<int, Record> readFiles(string[] files);
+        Tuple<string, Report> readFile(string file);
 
-        Dictionary<int, Record> readFile(string file, Dictionary<int, Record> dict);
+        Tuple<bool, string> isNameOfSite(string n);
     }
 }

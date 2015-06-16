@@ -14,17 +14,16 @@ namespace ReportConvertor
         {
             DirectoryReader dR = new DirectoryReader(inputDirectory);
             Dictionary<string,string[]> files = dR.readDirectory();
-            Dictionary<int, Record> ServiceReports = parseFiles(files);
+            Dictionary<string, List<Report>> ServiceReports = parseFiles(files);
             foreach (var pair in ServiceReports) {
-                //group reports by location
                 //start convertors based on location
                 //run convertors
                 //
             }
         }
 
-        private Dictionary<int, Record> parseFiles(Dictionary<string, string[]> fDict) {
-            Dictionary<int, Record> ServiceReports = null;
+        private Dictionary<string, List<Report>> parseFiles(Dictionary<string, string[]> fDict) {
+            Dictionary<string, List<Report>> ServiceReports = null;
             foreach (string key in fDict.Keys)
             {
                 switch (key)

@@ -8,7 +8,7 @@ namespace ReportConvertor
 {
     public interface Convertor
     {
-        public Dictionary<string, WorkOrder> convertReports(Dictionary<string, Record>);
+        public Dictionary<string, WorkOrder> convertReports(Dictionary<string, Report>);
 
         public int getDownTime();
     }
