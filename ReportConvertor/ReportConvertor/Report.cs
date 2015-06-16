@@ -18,7 +18,7 @@ namespace ReportConvertor
             allRecords = new Dictionary<string, ArrayList>();
         }
 
-        public bool addWorksheet(string tabName)
+        public bool addReportTab(string tabName)
         {
             if (allRecords.ContainsKey(tabName))
             {

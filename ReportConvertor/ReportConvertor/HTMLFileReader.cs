@@ -1,18 +1,14 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using iTextSharp.text.pdf.parser;
-using System.Collections;
-
 
 namespace ReportConvertor
 {
-    public class PDFFileReader : FileReader
+    class HTMLFileReader
     {
         Dictionary<string, List<Report>> readFiles(string[] files)
         {
@@ -39,40 +35,26 @@ namespace ReportConvertor
         Tuple<string, Report> readFile(string file)
         {
             Report report = new Report();
-            string siteName="";
+            string siteName = "";
 
             //PDF READER IMPLEMENTATION
-            var doc1 = new Document();
-            PdfReader reader = new PdfReader(file);
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(file);
+            DataTable table = new DataTable();
+            string r = "";
+            string x;
 
-            ITextExtractionStrategy s = new SimpleTextExtractionStrategy();
-
-            //only one page
-            var currentText = PdfTextExtractor.GetTextFromPage(reader, 1, s);
-            currentText = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(currentText)));
-            report.addReportTab("main");
-            report.changeCurrentTab("main");
-
-            int lengthOfFile = currentText.Length;
-            ArrayList wholeFile = new ArrayList();
-
-            siteName = isNameOfSite(currentText).Item2;
-
-            ArrayList eachLine = new ArrayList();
-            for (int i = 0; i < lengthOfFile; i++)
+            foreach (HtmlNode row in doc.DocumentNode.SelectNodes("//table//tr"))
             {
-                //check if it is the end of a line
-                if (currentText[i] == '\n')
+                foreach (HtmlNode col in row.SelectNodes("//td"))
                 {
-                    wholeFile.Add(eachLine);
-                    eachLine = new ArrayList();
-                }
-                else
-                {
-                    eachLine.Add(currentText[i]);
+                    r = col.InnerText;
+                    x = r.Replace("&nbsp;", "");
+                    Console.WriteLine(x);
+
                 }
             }
-            report.addRecords(wholeFile);
+            Console.Read();
 
             return Tuple.Create(siteName, report);
         }

@@ -54,7 +54,7 @@ namespace ReportConvertor
             int n = 1;
 
             foreach (ExcelWorksheet wk in ws){
-                report.addWorksheet(wk.Name);
+                report.addReportTab(wk.Name);
                 report.changeCurrentTab(wk.Name);
                 tuple = readWorksheet(wk);
                 //add the records to the report
