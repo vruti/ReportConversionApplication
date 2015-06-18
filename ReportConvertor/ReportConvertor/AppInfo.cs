@@ -107,7 +107,7 @@ namespace ReportConvertor
 
         /* finds the vendor object based on the input
          * string given */
-        private Vendor findVendor(string n)
+        public Vendor findVendor(string n)
         {
             foreach (Vendor v in vendors)
             {

@@ -36,9 +36,12 @@ namespace ReportConvertor
             currentTab = tabName;
         }
 
-        public void addRecords(List<string> record)
+        public void addRecords(List<List<string>> records)
         {
-            allRecords[currentTab].Add(record);
+            foreach (List<string> row in records)
+            {
+                allRecords[currentTab].Add(row);
+            }
         }
 
         public List<List<string>> getRecords(string tab)

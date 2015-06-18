@@ -58,6 +58,7 @@
     <Compile Include="Convertor.cs" />
     <Compile Include="DirectoryReader.cs" />
     <Compile Include="ExcelFileReader.cs" />
+    <Compile Include="GamesaConvertor.cs" />
     <Compile Include="HTMLFileReader.cs" />
     <Compile Include="AppInfo.cs" />
     <Compile Include="PDFFileReader.cs" />

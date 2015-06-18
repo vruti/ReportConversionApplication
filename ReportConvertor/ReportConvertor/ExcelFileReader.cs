@@ -54,7 +54,7 @@ namespace ReportConvertor
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
             Report report = new Report();
-            Tuple<string, ArrayList> tuple = null;
+            Tuple<string, List<List<string>>> tuple = null;
 
             foreach (ExcelWorksheet wk in ws){
                 report.addReportTab(wk.Name);
@@ -74,17 +74,17 @@ namespace ReportConvertor
             return Tuple.Create(tuple.Item1, report);
         }
 
-        public Tuple<string, ArrayList> readWorksheet(ExcelWorksheet worksheet)
+        public Tuple<string, List<List<string>>> readWorksheet(ExcelWorksheet worksheet)
         {
             int totalRows = worksheet.Dimension.End.Row;
             int totalCols = worksheet.Dimension.End.Column;
             string siteName = null;
-            ArrayList wk = new ArrayList();
-            ArrayList rows;
+            List<List<string>> wk = new List<List<string>>();
+            List<string> rows;
 
             for (int i = 1; i <= totalRows; i++)
             {
-                rows = new ArrayList();
+                rows = new List<string>();
                 for (int j = 1; j <= totalCols; j++)
                 {
                     if (worksheet.Cells[i, j].Value != null)

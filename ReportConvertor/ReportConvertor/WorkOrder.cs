@@ -90,8 +90,20 @@ namespace ReportConvertor
             {
                 return startDate;
             }
-            set{
+            set
+            {
                 startDate = value;
+            }
+        }
+
+        public DateTime EndDate
+        {
+            get
+            {
+                return dateDone;
+            }
+            set
+            {
                 dateDone = value;
             }
         }

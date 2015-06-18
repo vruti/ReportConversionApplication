@@ -12,8 +12,16 @@ namespace ReportConvertor
         //create a dictionary with all the fields and related titles?
         private Dictionary<string, ArrayList> fieldNames;
         private string generalTab;
+        private AppInfo info;
 
-        public Dictionary<string, WorkOrder> startConversion(Report report)
+        public GamesaConvertor(AppInfo i)
+        {
+            fieldNames = new Dictionary<string, ArrayList>();
+            generalTab = null;
+            info = i;
+        }
+
+        public Dictionary<string, WorkOrder> convertReport(Report report)
         {
             Dictionary<string, WorkOrder> result = null;
             List<string> keys = report.getKeys();
@@ -25,14 +33,21 @@ namespace ReportConvertor
             }
 
             List<List<string>> generalInfo = report.getRecords(generalTab);
+            Dictionary<string, int> fieldToCells = organizeFields(generalInfo, generalTab);
+            List<WorkOrder> woInits = generalInfoReader(fieldToCells, generalInfo);
 
+            //CHANGE THIS
+            foreach (WorkOrder wo in woInits)
+            {
+                result.Add(wo.mPulseID, wo);
+            }
 
             return result;
         }
 
-        public Dictionary<string, int> organizeFields(List<List<string>> reports, string tabName)
+        public Dictionary<string, int> organizeFields(List<List<string>> reportInfo, string tabName)
         {
-            List<string> line = reports[1];
+            List<string> line = reportInfo[1];
             ArrayList fields = fieldNames[tabName];
             Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
             foreach (string field in fields)
@@ -49,7 +64,7 @@ namespace ReportConvertor
             return fieldToCell;
         }
 
-        public List<WorkOrder> generalTab(Dictionary<string, int> fieldToCell, List<List<string>> rows)
+        public List<WorkOrder> generalInfoReader(Dictionary<string, int> fieldToCell, List<List<string>> rows)
         {
             List<WorkOrder> newWOs = new List<WorkOrder>();
             foreach (List<string> row in rows)
@@ -58,8 +73,29 @@ namespace ReportConvertor
                 wo.createMPulseID();
                 //CHANGE THIS
                 wo.WorkOrderType = row[fieldToCell["Order Type"]];
-
+                wo.Description = row[fieldToCell["Description"]];
+                wo.StartDate = getDate(row[fieldToCell["Start Date"]]);
+                wo.EndDate = getDate(row[fieldToCell["End Date"]]);
+                wo.Vendor = info.findVendor("gamesa");
+                //add work order to list
+                newWOs.Add(wo);
             }
+            return newWOs;
+        }
+
+        private DateTime getDate(string s)
+        {
+            string sDate = s.Substring(1, 2);
+            string sMonth = s.Substring(4, 2);
+            string sYear = s.Substring(7, 4);
+
+            int nDate = Convert.ToInt32(sDate);
+            int nMonth = Convert.ToInt32(sMonth);
+            int nYear = Convert.ToInt32(sYear);
+
+            DateTime date = new DateTime(nDate, nMonth, nYear);
+
+            return date;
         }
     }
 }
