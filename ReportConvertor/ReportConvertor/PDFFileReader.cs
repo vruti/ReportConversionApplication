@@ -14,6 +14,12 @@ namespace ReportConvertor
 {
     public class PDFFileReader : FileReader
     {
+        private AppInfo info;
+        public PDFFileReader(AppInfo i)
+        {
+            info = i;
+        }
+
         public Dictionary<string, List<Report>> readFiles(string[] files)
         {
             Dictionary<string, List<Report>> reportsBySite = new Dictionary<string, List<Report>>();
@@ -56,8 +62,7 @@ namespace ReportConvertor
             int lengthOfFile = currentText.Length;
             ArrayList wholeFile = new ArrayList();
 
-            siteName = isNameOfSite(currentText).Item2;
-
+            siteName = getNameOfSite(currentText);
             ArrayList eachLine = new ArrayList();
             for (int i = 0; i < lengthOfFile; i++)
             {
@@ -77,30 +82,20 @@ namespace ReportConvertor
             return Tuple.Create(siteName, report);
         }
 
-        public Tuple<bool, string> isNameOfSite(string n)
+        public string getNameOfSite(string n)
         {
             string name = n.ToLower();
-            if (name.Contains("howard"))
+            List<Site> sites = info.getSites();
+
+            foreach (Site s in sites)
             {
-                return Tuple.Create(true, "Howard");
+                if (s.isSite(name))
+                {
+                    return s.Name;
+                }
             }
-            else if (name.Contains("patton"))
-            {
-                return Tuple.Create(true, "Patton");
-            }
-            else if (name.Contains("twin ridges"))
-            {
-                return Tuple.Create(true, "Twin Ridges");
-            }
-            else if (name.Contains("big sky"))
-            {
-                return Tuple.Create(true, "Big Sky"); ;
-            }
-            else if (name.Contains("mustang hills"))
-            {
-                return Tuple.Create(true, "Mustang Hills"); ;
-            }
-            return Tuple.Create(false, "");
+
+            return null;
         }
     }
 }

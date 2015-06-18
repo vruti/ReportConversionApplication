@@ -8,10 +8,10 @@ namespace ReportConvertor
 {
     public class WorkOrder
     {
-        private string mPulseID;
+        public string mPulseID;
         private string description;
         private string status;
-        private string type;
+        private string woType;
         private string outageType;
         private string priority;
         private DateTime reportDate;
@@ -26,9 +26,8 @@ namespace ReportConvertor
         private string taskID;
         private string assetID;
         private Vendor vendor;
-        private string ActualHours;
-        private string partID;
-        private string partQuantity;
+        private int actualHours;
+        private Dictionary<string, int> partsList;
         private string originalID;
 
 
@@ -37,16 +36,213 @@ namespace ReportConvertor
             originalID = id;
         }
 
-        public string createMPulseID()
+        public string Description {
+            get
+            {
+                return description;
+            }
+            set
+            {
+                description = value;
+            }
+
+        }
+
+        public string WorkOrderType
+        {
+            get
+            {
+                return woType;
+            }
+            set
+            {
+                woType = value;
+            }
+        }
+
+        public string OutageType
+        {
+            get
+            {
+                return outageType;
+            }
+            set
+            {
+                outageType = value;
+            }
+        }
+
+        public string Priority
+        {
+            get
+            {
+                return priority;
+            }
+            set
+            {
+                priority = value;
+            }
+        }
+
+        public DateTime StartDate
+        {
+            get
+            {
+                return startDate;
+            }
+            set{
+                startDate = value;
+                dateDone = value;
+            }
+        }
+
+        public DateTime OpenDate
+        {
+            get
+            {
+                return reportDate;
+            }
+            set
+            {
+                reportDate = value;
+            }
+        }
+
+        public int DownTime
+        {
+            get
+            {
+                return downTime;
+            }
+            set
+            {
+                downTime = value;
+            }
+        }
+
+        public string RegulationDoc
+        {
+            get
+            {
+                return regulatoryDocument;
+            }
+            set
+            {
+                regulatoryDocument = value;
+            }
+        }
+
+        public string Regulator
+        {
+            get
+            {
+                return regulator;
+            }
+            set 
+            {
+                regulator = value;
+            }
+        }
+
+        public Site Site
+        {
+            get
+            {
+                return site;
+            }
+            set
+            {
+                site = value;
+            }
+        }
+
+        public string Planning
+        {
+            get
+            {
+                return planning;
+            }
+            set
+            {
+                planning = value;
+            }
+        }
+
+        public string UnplannedType
+        {
+            get
+            {
+                return unplannedType;
+            }
+            set
+            {
+                unplannedType = value;
+            }
+        }
+
+        public string TaskID
+        {
+            get
+            {
+                return taskID;
+            }
+            set
+            {
+                taskID = value;
+            }
+        }
+
+        public Vendor Vendor
+        {
+            get
+            {
+                return vendor;
+            }
+            set
+            {
+                vendor = value;
+            }
+        }
+
+        public int ActualHours
+        {
+            get
+            {
+                return actualHours;
+            }
+            set
+            {
+                actualHours = value;
+            }
+        }
+
+        public void addPart(string id)
+        {
+            if (partsList.ContainsKey(id))
+            {
+                partsList[id]++;
+            }
+            else
+            {
+                partsList.Add(id, 1);
+            }
+        }
+
+        public Dictionary<string, int> getPartsList()
+        {
+            return partsList;
+        }
+
+        public void createMPulseID()
         {
             string name = "";
             
             //add site name
-            name += site.getSiteCode();
+            name += site.FiveLetterCode;
             //add -WKO
             name+="-WKO";
             //add vendor name
-            name = name+"-"+vendor.get3Form() + "-";
+            name = name+"-"+vendor.ThreeLetterCode+ "-";
             //add year
             //CHECK IF DATE DONE
             name += reportDate.Year.ToString();
@@ -62,9 +258,6 @@ namespace ReportConvertor
             name = name + "-" + srNo.ToString();
 
             mPulseID = name;
-            return mPulseID;
         }
-
-        
     }
 }

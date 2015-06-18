@@ -9,13 +9,13 @@ namespace ReportConvertor
 {
     public class Report
     {
-        private Dictionary<string, ArrayList> allRecords;
+        private Dictionary<string, List<List<string>>> allRecords;
         private ArrayList checklistVals;
         private string currentTab;
 
         public Report()
         {
-            allRecords = new Dictionary<string, ArrayList>();
+            allRecords = new Dictionary<string, List<List<string>>>();
 
         }
 
@@ -26,7 +26,7 @@ namespace ReportConvertor
                 //already contains this tab
                 return false;
             }
-            ArrayList records = new ArrayList();
+            List<List<string>> records = new List<List<string>>();
             allRecords.Add(tabName, records);
             return true;
         }
@@ -36,9 +36,14 @@ namespace ReportConvertor
             currentTab = tabName;
         }
 
-        public void addRecords(ArrayList record)
+        public void addRecords(List<string> record)
         {
             allRecords[currentTab].Add(record);
+        }
+
+        public List<List<string>> getRecords(string tab)
+        {
+            return allRecords[tab];
         }
 
         public void addCheckedVals(ArrayList v)

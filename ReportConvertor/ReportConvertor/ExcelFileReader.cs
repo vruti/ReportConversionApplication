@@ -17,6 +17,12 @@ namespace ReportConvertor
 {
     public class ExcelFileReader : FileReader
     {
+        private AppInfo info;
+        public ExcelFileReader(AppInfo aInfo)
+        {
+            info = aInfo;
+        }
+
         public Dictionary<string, List<Report>> readFiles(string[] files)
         {
             //Creating a dictionary to store all the records found in the files
@@ -42,7 +48,6 @@ namespace ReportConvertor
             return reportsBySite;
         }
 
-        //NOTE: Figure out pass by reference
         public Tuple<string, Report> readFile(string file)
         {
             FileInfo newFile = new FileInfo(file);
@@ -50,8 +55,6 @@ namespace ReportConvertor
             ExcelWorksheets ws = pck.Workbook.Worksheets;
             Report report = new Report();
             Tuple<string, ArrayList> tuple = null;
-            
-            int n = 1;
 
             foreach (ExcelWorksheet wk in ws){
                 report.addReportTab(wk.Name);
@@ -62,11 +65,10 @@ namespace ReportConvertor
 
                 //if the vendor is senvion, there are checkboxes
                 if (tuple.Item1.Equals("Twin Ridges") || tuple.Item1.Equals("Howard"))
-                {
-                    ArrayList vals = getCheckedValues(file, n);
+                { 
+                    ArrayList vals = getCheckedValues(file, wk.Index);
                     report.addCheckedVals(vals);
                 }
-                n++;
             }
 
             return Tuple.Create(tuple.Item1, report);
@@ -80,20 +82,16 @@ namespace ReportConvertor
             ArrayList wk = new ArrayList();
             ArrayList rows;
 
-            for (int i = 1; i < totalRows; i++)
+            for (int i = 1; i <= totalRows; i++)
             {
                 rows = new ArrayList();
-                for (int j = 1; j < totalCols; j++)
+                for (int j = 1; j <= totalCols; j++)
                 {
                     if (worksheet.Cells[i, j].Value != null)
                     {
                         if (siteName == null)
                         {
-                            Tuple<bool, string> tuple = isNameOfSite(worksheet.Cells[i, j].Value.ToString());
-                            if (tuple.Item1)
-                            {
-                                siteName = tuple.Item2;
-                            }
+                            siteName = getNameOfSite(worksheet.Cells[i,j].Value.ToString());
                         }
                         rows.Add(worksheet.Cells.Value.ToString());
                     }
@@ -150,38 +148,19 @@ namespace ReportConvertor
             return checkedVals;
         }
 
-        public Tuple<bool, string> isNameOfSite(string n)
+        public string getNameOfSite(string n)
         {
             string name = n.ToLower();
-            if (name.Contains("howard"))
+            List<Site> sites = info.getSites();
+
+            foreach (Site s in sites)
             {
-                return Tuple.Create(true, "Howard");
+                if(s.isSite(name)){
+                    return s.Name;
+                }
             }
-            else if (name.Contains("highland 1"))
-            {
-                return Tuple.Create(true, "Highland 1");
-            }
-            else if (name.Contains("highland north"))
-            {
-                return Tuple.Create(true, "Highland North");
-            }
-            else if (name.Contains("patton"))
-            {
-                return Tuple.Create(true, "Patton");
-            }
-            else if (name.Contains("twin ridges"))
-            {
-                return Tuple.Create(true, "Twin Ridges");
-            }
-            else if (name.Contains("big sky"))
-            {
-                return Tuple.Create(true, "Big Sky"); ;
-            }
-            else if (name.Contains("mustang hills"))
-            {
-                return Tuple.Create(true, "Mustang Hills"); ;
-            }
-            return Tuple.Create(false, "");
+
+            return null;
         }
     }
 }

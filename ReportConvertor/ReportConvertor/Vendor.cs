@@ -1,5 +1,6 @@
 ﻿using OfficeOpenXml;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,39 +15,117 @@ namespace ReportConvertor
         private string vendorName;
         private string vendor3LetterName;
         private string vendor5LetterName;
+        private ArrayList altNames;
         private Dictionary<string, int> newWorkOrders;
-        private int tabNo;
+        private Dictionary<string, int> oldWorkOrders;
+        private Dictionary<string, string> partsTable;
+        private int tabParts;
+        private int tabWO;
         string wOFile;
+        string partsFile;
 
-        public Vendor(string id, string name, string threeName, string fiveName, int n, string file)
+        public Vendor()
         {
-            vendorID = id;
-            vendorName = name;
-            vendor3LetterName = threeName;
-            vendor5LetterName = fiveName;
             newWorkOrders = new Dictionary<string, int>();
-            tabNo = n;
-            wOFile = file;
+            altNames = new ArrayList();
         }
 
-        public string getVendorName()
+        public string IDNo
         {
-            return vendorName;
+            get
+            {
+                return vendorID;
+            }
+            set
+            {
+                vendorID = value;
+            }
         }
 
-        public string get5Form()
+        public string Name
         {
-            return vendor5LetterName;
+            get
+            {
+                return vendorName;
+            }
+            set
+            {
+                vendorName = value;
+            }
         }
 
-        public string get3Form()
+        public string ThreeLetterCode
         {
-            return vendor3LetterName;
+            get
+            {
+                return vendor3LetterName;
+            }
+            set
+            {
+                vendor3LetterName = value;
+            }
         }
 
-        public int getTabNo()
+        public string FiveLetterCode
         {
-            return tabNo;
+            get
+            {
+                return vendor5LetterName;
+            }
+            set
+            {
+                vendor5LetterName = value;
+            }
+        }
+
+        public int PartsTabNo
+        {
+            get
+            {
+                return tabParts;
+            }
+            set
+            {
+                tabParts = value;
+            }
+        }
+
+        public int WOArchiveTabNo
+        {
+            get
+            {
+                return tabWO;
+            }
+            set
+            {
+                tabWO = value;
+            }
+        }
+
+        public void addAltNames(string n)
+        {
+            altNames.Add(n);
+        }
+
+        public ArrayList getAltNames()
+        {
+            return altNames;
+        }
+
+        public string PartsFile
+        {
+            set
+            {
+                partsFile = value;
+            }
+        }
+
+        public string WOArchiveFile
+        {
+            set
+            {
+                wOFile = value;
+            }
         }
 
         /*
@@ -89,10 +168,9 @@ namespace ReportConvertor
             } else {
                 /* if it isn't in the newWorkOrder dictionary, we check
                  * the archive of work order IDs*/
-                Dictionary<string, int> workOrders = getWOHistory();
-                if (workOrders.ContainsKey(id))
+                if (oldWorkOrders.ContainsKey(id))
                 {
-                    result = workOrders[id]+1;
+                    result = oldWorkOrders[id]+1;
                 }
                 else
                 {
@@ -105,13 +183,13 @@ namespace ReportConvertor
             return result;
         }
 
-        private Dictionary<string, int> getWOHistory()
+        private void generateWOHistory()
         {
-            Dictionary<string, int> WorkOrders = new Dictionary<string,int>();
+            oldWorkOrders = new Dictionary<string,int>();
             FileInfo newFile = new FileInfo(wOFile);
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
-            ExcelWorksheet wk = ws[tabNo];
+            ExcelWorksheet wk = ws[tabWO];
 
             /*working under the assumption that all work
              * orders will have consequtive serial numbers 
@@ -122,24 +200,62 @@ namespace ReportConvertor
 
             /*starting from 2 because the first row will be
              * the header */
-            for (int i = 2; i < totalRows; i++)
+            for (int i = 2; i <= totalRows; i++)
             {
                 if(wk.Cells[i,1].Value != null){
                     woName=wk.Cells[i,1].Text;
                     woID = woName.Substring(0,(woName.Length - 2));
-                    if (WorkOrders.ContainsKey(woID))
+                    if (oldWorkOrders.ContainsKey(woID))
                     {
-                        WorkOrders[woID]++;
+                        oldWorkOrders[woID]++;
                     }
                     else
                     {
-                        WorkOrders.Add(woID, 1);
+                        oldWorkOrders.Add(woID, 1);
                     }
 
                 }
             }
+        }
 
-            return WorkOrders;
+        private void generatePartsTable()
+        {
+            /* initializing the dictionary to store the 
+             * contractor part number to mpulse part number 
+             */
+            partsTable = new Dictionary<string, string>();
+            FileInfo newFile = new FileInfo(partsFile);
+            ExcelPackage pck = new ExcelPackage(newFile);
+            ExcelWorksheets ws = pck.Workbook.Worksheets;
+
+            /*chosing the tab number in the file based
+             * on the contractor name
+             */
+            ExcelWorksheet wk = ws[tabParts];
+
+            int totalRows = wk.Dimension.End.Row;
+
+            for (int i = 2; i <= totalRows; i++)
+            {
+                //1st column has contractor part name
+                //2nd column has mpulse part name
+                if (wk.Cells[i, 1].Value != null && wk.Cells[i, 2].Value != null)
+                {
+                    partsTable.Add(wk.Cells[i, 1].Text, wk.Cells[i, 2].Text);
+                }
+            }
+        }
+
+        public string getPartName(string cPart)
+        {
+            //return the mpulse part number if it exists
+            if (partsTable.ContainsKey(cPart))
+            {
+                return partsTable[cPart];
+            }
+            //return null if it doesn't
+            //convertor should create a new part to be uploaded
+            return null;
         }
     }
 }

@@ -13,6 +13,6 @@ namespace ReportConvertor
 
         Tuple<string, Report> readFile(string file);
 
-        Tuple<bool, string> isNameOfSite(string n);
+        string getNameOfSite(string n);
     }
 }
