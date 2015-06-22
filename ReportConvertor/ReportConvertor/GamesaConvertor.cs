@@ -12,13 +12,13 @@ namespace ReportConvertor
         //create a dictionary with all the fields and related titles?
         private Dictionary<string, ArrayList> fieldNames;
         private AppInfo info;
-        private List<WorkOrder> newWOs;
+        private Dictionary<string, WorkOrder> newWOs;
 
         public GamesaConvertor(AppInfo i)
         {
             fieldNames = new Dictionary<string, ArrayList>();
             info = i;
-            newWOs = new List<WorkOrder>();
+            newWOs = new Dictionary<string, WorkOrder>();
         }
 
         public Dictionary<string, WorkOrder> convertReport(Report report)
@@ -32,11 +32,11 @@ namespace ReportConvertor
             //Parsing the hours/labor tab
             hoursTabReader(keys, report);
 
-            //CHANGE THIS
+            /*CHANGE THIS
             foreach (WorkOrder wo in newWOs)
             {
                 result.Add(wo.mPulseID, wo);
-            }
+            }*/
 
             return result;
         }
@@ -106,7 +106,7 @@ namespace ReportConvertor
                         wo.OpenDate = wo.StartDate;
                     }
                     //add work order to list
-                    newWOs.Add(wo);
+                    newWOs.Add(wo.OriginalID, wo);
                 }
             }
         }
@@ -160,9 +160,42 @@ namespace ReportConvertor
                 }
             }
 
-            //Parsing the general info tab
             List<List<string>> rows = report.getRecords(tab);
             Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
+
+            foreach (List<string> row in rows)
+            {
+                if (newWOs.ContainsKey(row[fieldToCell["orderID"]]))
+                {
+                    WorkOrder wo = newWOs[row[fieldToCell["orderID"]]];
+                    if (row[fieldToCell["Personnel No."]].Equals("00000000"))
+                    {
+                        wo.ActualHours += getLaborHours(row[fieldToCell["Start Time"]], row[fieldToCell["Stop Time"]]);
+                    }
+                    if (wo.Description == null)
+                    {
+                        wo.Description = row[fieldToCell["Remarks"]];
+                    }
+                }
+            }
+        }
+
+        private double getLaborHours(string start, string stop)
+        {
+            double time = 0;
+            if(start.Contains(":"))
+            {
+                //hours
+                double startH = Convert.ToDouble(start.Substring(1, 2));
+                double stopH = Convert.ToDouble(stop.Substring(1, 2));
+                double h = stopH - startH;
+                //minutes
+                double startM = Convert.ToDouble(start.Substring(4, 2));
+                double stopM = Convert.ToDouble(stop.Substring(4, 2));
+                double m = (stopM - startM) / 60;
+                time = h + m;
+            }
+            return time;
         }
 
         private DateTime getDate(string s)

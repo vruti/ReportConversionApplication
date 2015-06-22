@@ -24,7 +24,7 @@ namespace ReportConvertor
         private string taskID;
         private string assetID;
         private Vendor vendor;
-        private int actualHours;
+        private double actualHours;
         private Dictionary<string, int> partsList;
         private string originalID;
 
@@ -215,7 +215,7 @@ namespace ReportConvertor
             }
         }
 
-        public int ActualHours
+        public double ActualHours
         {
             get
             {
@@ -224,6 +224,14 @@ namespace ReportConvertor
             set
             {
                 actualHours = value;
+            }
+        }
+
+        public string OriginalID
+        {
+            get
+            {
+                return originalID;
             }
         }
 
