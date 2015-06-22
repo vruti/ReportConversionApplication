@@ -58,9 +58,9 @@ namespace ReportConvertor
             string r;
             string x;
 
-            ArrayList wholeFile = new ArrayList();
+            List<List<string>> wholeFile = new List<List<string>>();
 
-            ArrayList eachRow = new ArrayList();
+            List<String> eachRow = new List<string>();
             foreach (HtmlNode row in doc.DocumentNode.SelectNodes("//table//tr"))
             {
                 foreach (HtmlNode col in row.SelectNodes("//td"))
@@ -75,7 +75,7 @@ namespace ReportConvertor
                     eachRow.Add(x);
                 }
                 wholeFile.Add(eachRow);
-                eachRow = new ArrayList();
+                eachRow = new List<string>();
             }
             report.addReportTab("main");
             report.changeCurrentTab("main");

@@ -155,7 +155,8 @@ namespace ReportConvertor
 
             foreach (Site s in sites)
             {
-                if(s.isSite(name)){
+                if (s.isSite(name))
+                {
                     return s.Name;
                 }
             }

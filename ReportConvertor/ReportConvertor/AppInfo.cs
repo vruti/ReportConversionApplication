@@ -26,6 +26,14 @@ namespace ReportConvertor
         private List<Site> sites;
         private Dictionary<string, string> fileLocs;
 
+        /* Initialize the object by opening the file with 
+         * all the information. The file should probably be
+         * located in the project folder, most likely debug
+         * while I'm working on it and release for normal
+         * functioning*/
+        /*NOTE: Look into embedding the file
+         * might have to create interface to change values then
+         * seems troublesome*/
         public AppInfo()
         {
             vendors = new List<Vendor>();
@@ -44,14 +52,15 @@ namespace ReportConvertor
             ExcelWorksheets ws = pck.Workbook.Worksheets;
 
             Console.WriteLine(ws.Count);
-
-            getFileLoc(ws[1]);
-            getVendors(ws[3]);
-            getSites(ws[2]);
+            
+            //read the individual tabs of the file
+            addFileLoc(ws[1]);
+            addVendors(ws[3]);
+            addSites(ws[2]);
         }
 
         // Reads all the file locations from the excel worksheet
-        private void getFileLoc(ExcelWorksheet worksheet)
+        private void addFileLoc(ExcelWorksheet worksheet)
         {
             int rows = worksheet.Dimension.End.Row;
 
@@ -63,6 +72,8 @@ namespace ReportConvertor
                 }
                 else
                 {
+                    /*If there is no file, replace it with empty string so that 
+                     * the program will run. cannot add null cell values */
                     fileLocs.Add(worksheet.Cells[i, 1].Value.ToString(), "  ");
                 }
                 Console.WriteLine(worksheet.Cells[i, 1].Value.ToString());
@@ -74,7 +85,7 @@ namespace ReportConvertor
          * a site object to contain it, then puts that
          * object into a list for easy access
          */
-        private void getSites(ExcelWorksheet wk)
+        private void addSites(ExcelWorksheet wk)
         {
             int rows = wk.Dimension.End.Row;
             int cols = wk.Dimension.End.Column;
@@ -87,7 +98,7 @@ namespace ReportConvertor
 
                 //create a site object
                 site = new Site();
-                //enter all necessart information
+                //enter all necessary information
                 site.Name = wk.Cells[i,1].Value.ToString();
                 site.ThreeLetterCode = wk.Cells[i,3].Value.ToString();
                 site.FiveLetterCode = wk.Cells[i,4].Value.ToString();
@@ -105,6 +116,25 @@ namespace ReportConvertor
             }
         }
 
+        public List<Site> getSites()
+        {
+            return sites;
+        }
+
+        /* Getter class to retrieve a specific site
+         * by name */
+        public Site getSite(string name)
+        {
+            foreach (Site site in sites)
+            {
+                if (site.Name == name)
+                {
+                    return site;
+                }
+            }
+            return null;
+        }
+
         /* finds the vendor object based on the input
          * string given */
         public Vendor findVendor(string n)
@@ -120,7 +150,10 @@ namespace ReportConvertor
             return null;
         }
 
-        private void getVendors(ExcelWorksheet wk)
+        /* Create a Vendor object for each of the vendors
+         * listed out in the file with all the information
+         * in the file for each vendor*/
+        private void addVendors(ExcelWorksheet wk)
         {
             int rows = wk.Dimension.End.Row;
 
@@ -128,8 +161,6 @@ namespace ReportConvertor
 
             for (int i = 2; i <= rows; i++)
             {
-                
-
                 v = new Vendor();
 
                 //adding all the necessary fields
@@ -151,20 +182,13 @@ namespace ReportConvertor
             }
         }
 
-        public List<Site> getSites()
+        public string getFileLoc(string n)
         {
-            return sites;
+            if (fileLocs.ContainsKey(n))
+            {
+                return fileLocs[n];
+            }
+            return null;
         }
-
-        public List<Vendor> getVendors()
-        {
-            return vendors;
-        }
-
-        public string getFileLoc(string s)
-        {
-            return fileLocs[s];
-        }
-
     }
 }

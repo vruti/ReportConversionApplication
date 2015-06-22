@@ -60,21 +60,22 @@ namespace ReportConvertor
             report.changeCurrentTab("main");
 
             int lengthOfFile = currentText.Length;
-            ArrayList wholeFile = new ArrayList();
+            List<List<string>> wholeFile = new List<List<string>>();
 
             siteName = getNameOfSite(currentText);
-            ArrayList eachLine = new ArrayList();
+            List<string> eachLine = new List<string>();
             for (int i = 0; i < lengthOfFile; i++)
             {
                 //check if it is the end of a line
                 if (currentText[i] == '\n')
                 {
                     wholeFile.Add(eachLine);
-                    eachLine = new ArrayList();
+                    eachLine = new List<string>();
                 }
                 else
                 {
-                    eachLine.Add(currentText[i]);
+                    string temp = currentText[i].ToString();
+                    eachLine.Add(temp);
                 }
             }
             report.addRecords(wholeFile);

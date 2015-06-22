@@ -74,11 +74,17 @@ namespace ReportConvertor
                 //CHANGE THIS
                 wo.WorkOrderType = row[fieldToCell["Order Type"]];
                 wo.Description = row[fieldToCell["Description"]];
-                wo.StartDate = getDate(row[fieldToCell["Start Date"]]);
-                wo.EndDate = getDate(row[fieldToCell["End Date"]]);
                 wo.Vendor = info.findVendor("gamesa");
+                wo.Site = info.getSite("patton");
                 //add work order to list
                 newWOs.Add(wo);
+
+                //if the dates are available in the general tab
+                if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
+                {
+                    wo.StartDate = getDate(row[fieldToCell["Start Date"]]);
+                    wo.EndDate = getDate(row[fieldToCell["End Date"]]);
+                }
             }
             return newWOs;
         }
@@ -96,6 +102,11 @@ namespace ReportConvertor
             DateTime date = new DateTime(nDate, nMonth, nYear);
 
             return date;
+        }
+
+        public int getDownTime()
+        {
+            return 0;
         }
     }
 }
