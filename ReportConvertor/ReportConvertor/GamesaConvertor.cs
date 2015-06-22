@@ -180,6 +180,46 @@ namespace ReportConvertor
             }
         }
 
+        private void stopTimeTabReader(List<string> keys, Report report)
+        {
+            string tab = null;
+            foreach (string key in keys)
+            {
+                if (key.ToLower().Contains("stop") || key.ToLower().Contains("time"))
+                {
+                    tab = key;
+                }
+            }
+
+            List<List<string>> rows = report.getRecords(tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
+            Dictionary<string,List<Tuple<DateTime, DateTime>>> stopTimes = new Dictionary<string,List<Tuple<DateTime, DateTime>>>();
+
+            foreach (List<string> row in rows)
+            {
+                if (newWOs.ContainsKey(row[fieldToCell["orderID"]]))
+                {
+                    if (row[fieldToCell["Stop Time"]] != null)
+                    {
+                        
+                    }
+                }
+            }
+        }
+
+        private DateTime getDateTimeInfo(string time, string date)
+        {
+            int month = Convert.ToInt32(date.Substring(1, 2));
+            int day = Convert.ToInt32(date.Substring(4, 2));
+            int year = Convert.ToInt32(date.Substring(7, 4));
+            int hours = Convert.ToInt32(time.Substring(1, 2));
+            int min = Convert.ToInt32(time.Substring(4, 2));
+            int sec = Convert.ToInt32(time.Substring(7, 2));
+            DateTime dateTime = new DateTime(year, month, day, hours, min, sec);
+
+            return dateTime;
+        }
+
         private double getLaborHours(string start, string stop)
         {
             double time = 0;
