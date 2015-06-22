@@ -18,8 +18,6 @@ namespace ReportConvertor
         private DateTime startDate;
         private DateTime dateDone;
         private int downTime;
-        private string regulatoryDocument;
-        private string regulator;
         private Site site;
         private string planning;
         private string unplannedType;
@@ -34,6 +32,7 @@ namespace ReportConvertor
         public WorkOrder(string id)
         {
             originalID = id;
+            partsList = new Dictionary<string, int>();
         }
 
         public string Description {
@@ -46,6 +45,18 @@ namespace ReportConvertor
                 description = value;
             }
 
+        }
+
+        public string Status
+        {
+            get
+            {
+                return status;
+            }
+            set
+            {
+                status = value;
+            }
         }
 
         public string WorkOrderType
@@ -132,30 +143,6 @@ namespace ReportConvertor
             }
         }
 
-        public string RegulationDoc
-        {
-            get
-            {
-                return regulatoryDocument;
-            }
-            set
-            {
-                regulatoryDocument = value;
-            }
-        }
-
-        public string Regulator
-        {
-            get
-            {
-                return regulator;
-            }
-            set 
-            {
-                regulator = value;
-            }
-        }
-
         public Site Site
         {
             get
@@ -201,6 +188,18 @@ namespace ReportConvertor
             set
             {
                 taskID = value;
+            }
+        }
+
+        public string AssetID
+        {
+            get
+            {
+                return assetID;
+            }
+            set
+            {
+                assetID = value;
             }
         }
 

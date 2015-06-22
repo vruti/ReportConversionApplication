@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,12 +20,11 @@ namespace ReportConvertor
      */
     public class AppInfo
     {
-        private string dir;
-        private string prtFile;
-        private string wOArchive;
         private List<Vendor> vendors;
         private List<Site> sites;
         private Dictionary<string, string> fileLocs;
+        private Dictionary<string, List<List<string>>> vendorData;
+        private Dictionary<string, List<string>> assets;
 
         /* Initialize the object by opening the file with 
          * all the information. The file should probably be
@@ -39,6 +39,8 @@ namespace ReportConvertor
             vendors = new List<Vendor>();
             sites = new List<Site>();
             fileLocs = new Dictionary<string, string>();
+            vendorData = new Dictionary<string, List<List<string>>>();
+            assets = new Dictionary<string, List<string>>();
 
             /* The AppinfoSheet file should always be located
              * in the specified location. File can be modified 
@@ -57,6 +59,8 @@ namespace ReportConvertor
             addFileLoc(ws[1]);
             addVendors(ws[3]);
             addSites(ws[2]);
+
+            //getting vendor information
         }
 
         // Reads all the file locations from the excel worksheet
@@ -182,11 +186,104 @@ namespace ReportConvertor
             }
         }
 
+        private void addVendorInfo(ExcelWorksheets ws)
+        {
+            foreach (Vendor v in vendors)
+            {
+                for (int i = 1; i <= ws.Count; i++)
+                {
+                    if (ws[i].Name.Equals(v.Name))
+                    {
+                        List<List<string>> wksht = new List<List<string>>();
+                        ExcelWorksheet wk = ws[i];
+
+                        int rows = wk.Dimension.End.Row;
+                        int cols = wk.Dimension.End.Column;
+
+                        List<string> row;
+                        for (int j = 1; j <= rows; j++)
+                        {
+                            row = new List<string>();
+                            for(int k = 1; k <= cols; k++)
+                            {                       
+                                if (wk.Cells[j, k].Value != null)
+                                {
+                                    row.Add(wk.Cells[i, j].Value.ToString());
+                                }
+                                else
+                                {
+                                    row.Add(" ");
+                                }
+                            }
+                            wksht.Add(row);
+                        }
+                        vendorData.Add(v.Name, wksht);
+                    }
+                }
+            }
+        }
+
+        public List<List<string>> getVendorData(string n)
+        {
+            if (vendorData.ContainsKey(n))
+            {
+                return vendorData[n];
+            }
+            return null;
+        }
+
         public string getFileLoc(string n)
         {
             if (fileLocs.ContainsKey(n))
             {
                 return fileLocs[n];
+            }
+            return null;
+        }
+
+        private void addAssets()
+        {
+            if (fileLocs.ContainsKey("Assets"))
+            {
+                string dir = fileLocs["Assets"];
+
+                FileInfo newFile = new FileInfo(dir);
+                ExcelPackage pck = new ExcelPackage(newFile);
+                ExcelWorksheet wk = pck.Workbook.Worksheets[1];
+                List<string> names;
+
+                int rows = wk.Dimension.End.Row;
+                int cols = wk.Dimension.End.Column;
+
+                for (int i = 1; i <= rows; i++)
+                {
+                    names = new List<string>();
+                    for (int j = 2; j <= cols; j++)
+                    {
+                        if (wk.Cells[i, j].Value != null)
+                        {
+                            names.Add(wk.Cells[i, j].Value.ToString());
+                        }
+                    }
+                    assets.Add(wk.Cells[i, 1].Value.ToString(), names);
+                }
+
+            }
+        }
+
+        public string getAssetID(string n)
+        {
+            List<string> keys = assets.Keys.ToList();
+            foreach(string key in keys)
+            {
+                List<string> assetNames = assets[key];
+                foreach (string asset in assetNames)
+                {
+                    if (n.ToLower().Contains(asset.ToLower()))
+                    {
+                        return key;
+                    }
+                }
             }
             return null;
         }
