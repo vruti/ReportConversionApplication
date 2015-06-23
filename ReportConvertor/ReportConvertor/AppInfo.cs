@@ -168,7 +168,7 @@ namespace ReportConvertor
                 v = new Vendor();
 
                 //adding all the necessary fields
-                v.IDNo = wk.Cells[i, 1].Value.ToString();
+                v.ID = wk.Cells[i, 1].Value.ToString();
                 v.Name = wk.Cells[i, 2].Value.ToString();
                 v.ThreeLetterCode = wk.Cells[i, 4].Value.ToString();
                 v.FiveLetterCode = wk.Cells[i, 5].Value.ToString();

@@ -13,12 +13,16 @@ namespace ReportConvertor
         private Dictionary<string, ArrayList> fieldNames;
         private AppInfo info;
         private Dictionary<string, WorkOrder> newWOs;
+        private Dictionary<string, Part> newParts;
+        private Dictionary<string, WorkOrder> flaggedWO;
 
         public GamesaConvertor(AppInfo i)
         {
             fieldNames = new Dictionary<string, ArrayList>();
             info = i;
             newWOs = new Dictionary<string, WorkOrder>();
+            newParts = new Dictionary<string, Part>();
+            flaggedWO = new Dictionary<string, WorkOrder>();
         }
 
         public Dictionary<string, WorkOrder> convertReport(Report report)
@@ -199,12 +203,131 @@ namespace ReportConvertor
             {
                 if (newWOs.ContainsKey(row[fieldToCell["orderID"]]))
                 {
+                    if (!stopTimes.ContainsKey(row[fieldToCell["orderID"]]))
+                    {
+                        List<Tuple<DateTime, DateTime>> list = new List<Tuple<DateTime, DateTime>>();
+                        stopTimes.Add(row[fieldToCell["orderID"]], list);
+                    }
                     if (row[fieldToCell["Stop Time"]] != null)
                     {
-                        
+                        DateTime start = getDateTimeInfo(row[fieldToCell["Start Time"]], row[fieldToCell["Start Date"]]);
+                        DateTime stop = getDateTimeInfo(row[fieldToCell["Stop Time"]], row[fieldToCell["Stop Date"]]);
+                        stopTimes[row[fieldToCell["orderID"]]].Add(Tuple.Create<DateTime, DateTime>(start, stop));
+                    } else
+                    {
+                        newWOs.Remove(row[fieldToCell["orderID"]]);
                     }
                 }
             }
+
+            List<string> stopKeys = stopTimes.Keys.ToList();
+            foreach (string key in stopKeys)
+            {
+                double time = calculateStopTime(stopTimes[key]);
+                newWOs[key].DownTime = time;
+            }
+        }
+
+        private void partsTabReader(List<string> keys, Report report)
+        {
+            string tab = null;
+            foreach (string key in keys)
+            {
+                if (key.ToLower().Contains("consumption"))
+                {
+                    tab = key;
+                }
+            }
+
+            List<List<string>> rows = report.getRecords(tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
+
+            foreach (List<string> row in rows)
+            {
+                string key = row[fieldToCell["orderID"]];
+                if (newWOs.ContainsKey(key))
+                {
+                    if (row[fieldToCell["MvT"]].Equals("967"))
+                    {
+                        string part = row[fieldToCell["Material"]];
+                        string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
+                        int qty = Convert.ToInt32(row[fieldToCell["Quantity"]]);
+                        if (partID != null)
+                        {
+                            newWOs[key].addPart(partID, qty);
+                        }
+                        else
+                        {
+                            if (newParts.ContainsKey(part))
+                            {
+                                newParts[part].Qty += qty;
+                            }
+                            //create new part record
+                            Part newPart = new Part(part);
+                            if (newParts.Count > 1)
+                            {
+                                List<string> k = newParts.Keys.ToList();
+                                int len = k.Count;
+                                newPart.generateID(newParts[k[len]].ID);
+                            }
+                            else
+                            {
+                                newPart.generateID(newWOs[key].Vendor.newestPartID());
+                            }
+                            newPart.Qty = qty;
+                            newPart.Description = row[fieldToCell["Description"]];
+                            newParts.Add(part, newPart);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        private double calculateStopTime(List<Tuple<DateTime, DateTime>> times)
+        {
+            double downTime=0.0;
+            Tuple<DateTime, DateTime> tuple;
+            TimeSpan duration;
+            int len = times.Count;
+            if (len > 1)
+            {
+                for (int i = 1; i < len; i++)
+                {
+                    DateTime start1 = times[i].Item1;
+                    DateTime stop1 = times[i].Item2;
+                    DateTime start2 = times[i + 1].Item1;
+                    DateTime stop2 = times[i + 1].Item2;
+
+                    /* Using formula based on mergeSort to find any overlapping
+                     * downTimes, merge them and replace it in the list of
+                     * stop times*/
+                    if (start1 < start2 && stop1 > start2 && stop2 > stop1)
+                    {
+                        tuple = Tuple.Create<DateTime, DateTime>(start1, stop2);
+                        times[i] = tuple;
+                        times.RemoveAt(i + 1);
+                        i = 1;
+                    }
+                    else if (start1 > start2 && stop2 > start1 && stop1 > stop2)
+                    {
+                        tuple = Tuple.Create<DateTime, DateTime>(start2, stop1);
+                        times[i] = tuple;
+                        times.RemoveAt(i + 1);
+                        i = 1;
+                    }
+                }
+            }
+            len = times.Count;
+            foreach (Tuple<DateTime, DateTime> time in times)
+            {
+                DateTime start = times[1].Item1;
+                DateTime stop = times[1].Item2;
+                duration = stop - start;
+                downTime = downTime + (duration.TotalHours + (duration.TotalMinutes / 60));
+            }
+
+            return downTime;
         }
 
         private DateTime getDateTimeInfo(string time, string date)

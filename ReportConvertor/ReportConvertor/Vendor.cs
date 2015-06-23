@@ -11,34 +11,34 @@ namespace ReportConvertor
 {
     public class Vendor
     {
-        private string vendorID;
-        private string vendorName;
-        private string vendor3LetterName;
-        private string vendor5LetterName;
+        private string id;
+        private string name;
+        private string v3Code;
+        private string v5Code;
         private ArrayList altNames;
-        private Dictionary<string, int> newWorkOrders;
-        private Dictionary<string, int> oldWorkOrders;
+        private Dictionary<string, int> newWO;
+        private Dictionary<string, int> oldWO;
         private Dictionary<string, string> partsTable;
-        private int tabParts;
-        private int tabWO;
-        string wOFile;
+        private int partsTab;
+        private int woTab;
+        string woFile;
         string partsFile;
 
         public Vendor()
         {
-            newWorkOrders = new Dictionary<string, int>();
+            newWO = new Dictionary<string, int>();
             altNames = new ArrayList();
         }
 
-        public string IDNo
+        public string ID
         {
             get
             {
-                return vendorID;
+                return id;
             }
             set
             {
-                vendorID = value;
+                id = value;
             }
         }
 
@@ -46,11 +46,11 @@ namespace ReportConvertor
         {
             get
             {
-                return vendorName;
+                return name;
             }
             set
             {
-                vendorName = value;
+                name = value;
             }
         }
 
@@ -58,11 +58,11 @@ namespace ReportConvertor
         {
             get
             {
-                return vendor3LetterName;
+                return v3Code;
             }
             set
             {
-                vendor3LetterName = value;
+                v3Code = value;
             }
         }
 
@@ -70,11 +70,11 @@ namespace ReportConvertor
         {
             get
             {
-                return vendor5LetterName;
+                return v5Code;
             }
             set
             {
-                vendor5LetterName = value;
+                v5Code = value;
             }
         }
 
@@ -82,11 +82,11 @@ namespace ReportConvertor
         {
             get
             {
-                return tabParts;
+                return partsTab;
             }
             set
             {
-                tabParts = value;
+                partsTab = value;
             }
         }
 
@@ -94,11 +94,11 @@ namespace ReportConvertor
         {
             get
             {
-                return tabWO;
+                return woTab;
             }
             set
             {
-                tabWO = value;
+                woTab = value;
             }
         }
 
@@ -124,7 +124,7 @@ namespace ReportConvertor
         {
             set
             {
-                wOFile = value;
+                woFile = value;
             }
         }
 
@@ -137,16 +137,16 @@ namespace ReportConvertor
          */
         public void addWO(string id, int n)
         {
-            if (newWorkOrders.ContainsKey(id))
+            if (newWO.ContainsKey(id))
             {
-                newWorkOrders[id]++;
+                newWO[id]++;
             }
             else
             {
                 /* If the workorder isn't present,
                  * add it to the dictionary with its serial
                  * number to start */
-                newWorkOrders.Add(id, n);
+                newWO.Add(id, n);
             }
         }
 
@@ -163,14 +163,14 @@ namespace ReportConvertor
              * vendor was recently created, the most recent 
              * serial number will be in the newWorkOrders
              * dictionary, so we check that first*/
-            if(newWorkOrders.ContainsKey(id)){
-                result=newWorkOrders[id]+1;
+            if(newWO.ContainsKey(id)){
+                result=newWO[id]+1;
             } else {
                 /* if it isn't in the newWorkOrder dictionary, we check
                  * the archive of work order IDs*/
-                if (oldWorkOrders.ContainsKey(id))
+                if (oldWO.ContainsKey(id))
                 {
-                    result = oldWorkOrders[id]+1;
+                    result = oldWO[id]+1;
                 }
                 else
                 {
@@ -185,11 +185,11 @@ namespace ReportConvertor
 
         private void generateWOHistory()
         {
-            oldWorkOrders = new Dictionary<string,int>();
-            FileInfo newFile = new FileInfo(wOFile);
+            oldWO = new Dictionary<string,int>();
+            FileInfo newFile = new FileInfo(woFile);
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
-            ExcelWorksheet wk = ws[tabWO];
+            ExcelWorksheet wk = ws[woTab];
 
             /*working under the assumption that all work
              * orders will have consequtive serial numbers 
@@ -205,13 +205,13 @@ namespace ReportConvertor
                 if(wk.Cells[i,1].Value != null){
                     woName=wk.Cells[i,1].Text;
                     woID = woName.Substring(0,(woName.Length - 2));
-                    if (oldWorkOrders.ContainsKey(woID))
+                    if (oldWO.ContainsKey(woID))
                     {
-                        oldWorkOrders[woID]++;
+                        oldWO[woID]++;
                     }
                     else
                     {
-                        oldWorkOrders.Add(woID, 1);
+                        oldWO.Add(woID, 1);
                     }
 
                 }
@@ -231,7 +231,7 @@ namespace ReportConvertor
             /*chosing the tab number in the file based
              * on the contractor name
              */
-            ExcelWorksheet wk = ws[tabParts];
+            ExcelWorksheet wk = ws[partsTab];
 
             int totalRows = wk.Dimension.End.Row;
 
@@ -246,7 +246,7 @@ namespace ReportConvertor
             }
         }
 
-        public string getPartName(string cPart)
+        public string getPartID(string cPart)
         {
             //return the mpulse part number if it exists
             if (partsTable.ContainsKey(cPart))
@@ -256,6 +256,13 @@ namespace ReportConvertor
             //return null if it doesn't
             //convertor should create a new part to be uploaded
             return null;
+        }
+
+        public string newestPartID()
+        {
+            List<string> keys = partsTable.Keys.ToList();
+            int len = keys.Count;
+            return partsTable[keys[len]];
         }
     }
 }
