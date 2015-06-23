@@ -31,9 +31,6 @@ namespace ReportConvertor
          * located in the project folder, most likely debug
          * while I'm working on it and release for normal
          * functioning*/
-        /*NOTE: Look into embedding the file
-         * might have to create interface to change values then
-         * seems troublesome*/
         public AppInfo()
         {
             vendors = new List<Vendor>();
