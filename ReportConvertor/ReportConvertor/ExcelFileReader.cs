@@ -55,6 +55,7 @@ namespace ReportConvertor
             ExcelWorksheets ws = pck.Workbook.Worksheets;
             Report report = new Report();
             Tuple<string, List<List<string>>> tuple = null;
+            string siteName = null;
 
             foreach (ExcelWorksheet wk in ws){
                 report.addReportTab(wk.Name);
@@ -63,15 +64,20 @@ namespace ReportConvertor
                 //add the records to the report
                 report.addRecords(tuple.Item2);
 
+                if (siteName == null)
+                {
+                    siteName = tuple.Item1;
+                }
+
                 //if the vendor is senvion, there are checkboxes
-                if (tuple.Item1.Equals("Twin Ridges") || tuple.Item1.Equals("Howard"))
+                if (siteName.Equals("Twin Ridges") || siteName.Equals("Howard"))
                 { 
                     ArrayList vals = getCheckedValues(file, wk.Index);
                     report.addCheckedVals(vals);
                 }
             }
 
-            return Tuple.Create(tuple.Item1, report);
+            return Tuple.Create(siteName, report);
         }
 
         public Tuple<string, List<List<string>>> readWorksheet(ExcelWorksheet worksheet)
@@ -150,12 +156,11 @@ namespace ReportConvertor
 
         public string getNameOfSite(string n)
         {
-            string name = n.ToLower();
             List<Site> sites = info.getSites();
 
             foreach (Site s in sites)
             {
-                if (s.isSite(name))
+                if (s.isSite(n))
                 {
                     return s.Name;
                 }

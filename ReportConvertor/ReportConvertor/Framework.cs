@@ -10,11 +10,15 @@ namespace ReportConvertor
     {
         private AppInfo info;
         private string inputDirectory;
+        public Dictionary<string, WorkOrder> newWO;
+        public List<WorkOrder> flaggedWO;
 
         public Framework()
         {
             info = new AppInfo();
             inputDirectory = info.getFileLoc("Directory");
+            newWO = new Dictionary<string, WorkOrder>();
+            flaggedWO = new List<WorkOrder>();
         }
 
         public void start()
@@ -24,18 +28,65 @@ namespace ReportConvertor
             Dictionary<string,string[]> files = dR.readDirectory();
 
             //Reading data from all the files found
-            Dictionary<string, List<Report>> ServiceReports = parseFiles(files);
+            Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = parseFiles(files);
             /*data is organized by location so go through each
              * list and send the data to the right parsers */
-            foreach (var pair in ServiceReports) {
+            Convertor c = null;
+            List<string> keys = ServiceReports["xlsx"].Keys.ToList();
+            foreach (string key in keys) {
                 //start convertors based on location
+                switch (key)
+                {
+                    case "Highland 1":
+                        break;
+                    case "Highland North":
+                        break;
+                    case "Patton":
+                        c = new GamesaConvertor(info);
+                        break;
+                }
+                foreach (Report report in ServiceReports["xlsx"][key])
+                {
+                    Dictionary<string, WorkOrder> woList = c.convertReport(report);
+                    addWorkOrders(woList);
+                }
                 //run convertors
                 //
             }
+            ExcelFileWriter writer = new ExcelFileWriter(info);
+            writer.writeFiles(getListofWO(), null, null);
+
         }
 
-        private Dictionary<string, List<Report>> parseFiles(Dictionary<string, string[]> fDict) {
-            Dictionary<string, List<Report>> ServiceReports = null;
+        private List<WorkOrder> getListofWO()
+        {
+            List<WorkOrder> workOrders = new List<WorkOrder>();
+            List<String> keys = newWO.Keys.ToList();
+            foreach (string key in keys)
+            {
+                workOrders.Add(newWO[key]);
+            }
+            return workOrders;
+        }
+
+        private void addWorkOrders(Dictionary<string, WorkOrder> wo)
+        {
+            List<string> keys = wo.Keys.ToList();
+            foreach (string key in keys)
+            {
+                if (newWO.ContainsKey(key))
+                {
+                    flaggedWO.Add(newWO[key]);
+                    flaggedWO.Add(wo[key]);
+                    wo.Remove(key);
+                    newWO.Remove(key);
+                }
+            }
+        }
+
+        private Dictionary<string, Dictionary<string, List<Report>>> parseFiles(Dictionary<string, string[]> fDict)
+        {
+            Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = new Dictionary<string,Dictionary<string,List<Report>>>();
             FileReader fR = null;
             foreach (string key in fDict.Keys)
             {
@@ -45,19 +96,23 @@ namespace ReportConvertor
                 {
                     case "xlsx":
                         fR = new ExcelFileReader(info);
+                        string[] files = fDict[key];
+                        ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "pdf":
                         fR = new PDFFileReader(info);
+                        ServiceReports.Add(key, fR.readFiles(fDict[key]));
                         break;
                     case "html":
                         fR = new HTMLFileReader(info);
+                        ServiceReports.Add(key, fR.readFiles(fDict[key]));
                         break;
                     default:
                         //Write code
                         ServiceReports = null;
                         break;
                 }
-                ServiceReports = fR.readFiles(fDict[key]);
+                
             }
             return ServiceReports;
         }
