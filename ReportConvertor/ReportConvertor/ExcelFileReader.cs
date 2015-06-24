@@ -99,7 +99,7 @@ namespace ReportConvertor
                         {
                             siteName = getNameOfSite(worksheet.Cells[i,j].Value.ToString());
                         }
-                        rows.Add(worksheet.Cells[i,j].Value.ToString());
+                        rows.Add(String.Format("{0}", worksheet.Cells[i,j].Text));
                     }
                     else
                     {

@@ -25,6 +25,7 @@ namespace ReportConvertor
         private Dictionary<string, string> fileLocs;
         private Dictionary<string, List<List<string>>> vendorData;
         private Dictionary<string, List<string>> assets;
+        private Dictionary<string, List<string>> fieldNames;
 
         /* Initialize the object by opening the file with 
          * all the information. The file should probably be
@@ -38,6 +39,7 @@ namespace ReportConvertor
             fileLocs = new Dictionary<string, string>();
             vendorData = new Dictionary<string, List<List<string>>>();
             assets = new Dictionary<string, List<string>>();
+            fieldNames = new Dictionary<string, List<string>>();
 
             /* The AppinfoSheet file should always be located
              * in the specified location. File can be modified 
@@ -56,6 +58,7 @@ namespace ReportConvertor
             addFileLoc(ws[1]);
             addVendors(ws[3]);
             addSites(ws[2]);
+            addVendorData(ws);
 
             //getting vendor information
         }
@@ -183,7 +186,7 @@ namespace ReportConvertor
             }
         }
 
-        private void addVendorInfo(ExcelWorksheets ws)
+        private void addVendorData(ExcelWorksheets ws)
         {
             foreach (Vendor v in vendors)
             {
@@ -205,7 +208,7 @@ namespace ReportConvertor
                             {                       
                                 if (wk.Cells[j, k].Value != null)
                                 {
-                                    row.Add(wk.Cells[i, j].Value.ToString());
+                                    row.Add(wk.Cells[j, k].Value.ToString());
                                 }
                                 else
                                 {

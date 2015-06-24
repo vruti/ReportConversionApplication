@@ -35,33 +35,99 @@ namespace ReportConvertor
 
             //Parsing the hours/labor tab
             hoursTabReader(keys, report);
+            stopTimeTabReader(keys, report);
+            partsTabReader(keys, report);
 
-            /*CHANGE THIS
-            foreach (WorkOrder wo in newWOs)
+            //CHANGE THIS
+            List<string> woKeys = newWOs.Keys.ToList();
+            foreach (string k in woKeys)
             {
+                WorkOrder wo = newWOs[k];
+                wo.createMPulseID();
                 result.Add(wo.mPulseID, wo);
-            }*/
+            }
 
             return result;
         }
 
         public Dictionary<string, int> organizeFields(List<List<string>> reportInfo, string tabName)
         {
-            List<string> line = reportInfo[1];
-            ArrayList fields = fieldNames[tabName];
+            List<string> line = reportInfo[0];
             Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
+
+            Dictionary<string, List<string>> fieldNames = getFieldNames(tabName);
+
+            List<string> fields = fieldNames.Keys.ToList();
+            
             foreach (string field in fields)
             {
-                for (int i = 1; i <= line.Count; i++)
+                if (tabName.Equals("Stop Times") && field.Equals("Start Time"))
                 {
-                    string cell = line[i].ToLower();
-                    if ((field.ToLower().Contains(cell)) || cell.Contains(field.ToLower()))
+                    fieldToCell.Add(field, fieldToCell["Start Date"]+1);
+                }
+                else if (tabName.Equals("Stop Times") && field.Equals("Stop Time"))
+                {
+                    fieldToCell.Add(field, fieldToCell["Stop Date"] + 1);
+                }
+                else
+                {
+                    for (int i = 0; i < line.Count; i++)
                     {
-                        fieldToCell.Add(field, i);
+                        string cell = line[i].ToLower();
+                        if (!fieldToCell.ContainsKey(field))
+                        {
+                            foreach (string val in fieldNames[field])
+                            {
+                                string vall = val.ToLower();
+                                if (cell.Contains(vall))// || val.ToLower().Contains(cell))
+                                {
+                                    fieldToCell.Add(field, i);
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
             return fieldToCell;
+        }
+
+        private Dictionary<string, List<string>> getFieldNames(string tab)
+        {
+            List<List<string>> data = info.getVendorData("Gamesa");
+            Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
+            int rows = 0;
+            int start = 0;
+            int i;
+            List<string> row;
+
+            for (i = 0; i < data.Count; i++)
+            {
+                row = data[i];
+                if (row[0].Contains("Tab"))
+                {
+                    if (tab.Contains(row[1]) && !row[1].Equals(" "))
+                    {
+                        start = i+1;
+                        rows = Convert.ToInt32(row[2]);
+                        break;
+                    }
+                }
+            }
+
+            for (i = start; i < start + rows; i++)
+            {
+                row = new List<string>();
+                foreach (string val in data[i])
+                {
+                    if (!val.Equals(" "))
+                    {
+                        row.Add(val);
+                    }
+                }
+                result.Add(row[0], row);
+            }
+            return result;
         }
 
         public void generalInfoReader(List<string> keys, Report report)
@@ -78,27 +144,28 @@ namespace ReportConvertor
             //Parsing the general info tab
             List<List<string>> rows = report.getRecords(tab);
             Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
-
-            foreach (List<string> row in rows)
+            Dictionary<string, List<string>> table = getTableData();
+            for(int i =1; i<rows.Count;i++)
             {
+                List<string> row = rows[i];
                 /* If the WO Type is ZPM7, it will not be imported*/
                 if (!row[fieldToCell["Order Type"]].Contains("ZPM7"))
                 {
-                    WorkOrder wo = new WorkOrder(row[fieldToCell["orderID"]]);
-                    wo.createMPulseID();
+                    WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
+                    
                     //CHANGE THIS
                     string oType = row[fieldToCell["Order Type"]];
-                    List<string> taskInfo = getTableData()[oType];
-                    wo.WorkOrderType = taskInfo[1];
-                    wo.TaskID = taskInfo[2];
-                    wo.OutageType = taskInfo[3];
-                    wo.Planning = taskInfo[4];
-                    wo.UnplannedType = taskInfo[5];
-                    wo.Priority = taskInfo[6];
+                    List<string> taskInfo = table[oType];
+                    wo.WorkOrderType = taskInfo[0];
+                    wo.TaskID = taskInfo[1];
+                    wo.OutageType = taskInfo[2];
+                    wo.Planning = taskInfo[3];
+                    wo.UnplannedType = taskInfo[4];
+                    wo.Priority = taskInfo[5];
                     wo.Description = row[fieldToCell["Description"]];
                     wo.Status = "Closed";
-                    wo.Vendor = info.findVendor("gamesa");
-                    wo.Site = info.getSite("patton");
+                    wo.Vendor = info.findVendor("Gamesa");
+                    wo.Site = info.getSite("Patton");
                     //get asset ID
                     wo.AssetID = getAssetNo(row[fieldToCell["Turbine No."]]);
 
@@ -125,12 +192,16 @@ namespace ReportConvertor
             int rows = wk.Count;
             int tableR = 0;
 
-            for(int i =1; i<=rows; i++)
+            for(int i = 0; i<rows; i++)
             {
                 row = new List<string>();
                 int cols = wk[i].Count;
-                for (int j = 2; j <= cols; j++)
+                for (int j = 1; j < cols; j++)
                 {
+                    if (wk[i][0].Equals(" "))
+                    {
+                        return table;
+                    }
                     if (isTable)
                     {
                         if (i > tableR + 1)
@@ -147,7 +218,13 @@ namespace ReportConvertor
                         }
                     }
                 }
-                table.Add(wk[i][1], row);
+                if (isTable)
+                {
+                    if (i > tableR + 1)
+                    {
+                        table.Add(wk[i][0], row);
+                    }
+                }
             }
 
             return table;
@@ -169,9 +246,9 @@ namespace ReportConvertor
 
             foreach (List<string> row in rows)
             {
-                if (newWOs.ContainsKey(row[fieldToCell["orderID"]]))
+                if (newWOs.ContainsKey(row[fieldToCell["Order ID"]]))
                 {
-                    WorkOrder wo = newWOs[row[fieldToCell["orderID"]]];
+                    WorkOrder wo = newWOs[row[fieldToCell["Order ID"]]];
                     if (row[fieldToCell["Personnel No."]].Equals("00000000"))
                     {
                         wo.ActualHours += getLaborHours(row[fieldToCell["Start Time"]], row[fieldToCell["Stop Time"]]);
@@ -201,18 +278,18 @@ namespace ReportConvertor
 
             foreach (List<string> row in rows)
             {
-                if (newWOs.ContainsKey(row[fieldToCell["orderID"]]))
+                if (newWOs.ContainsKey(row[fieldToCell["Order ID"]]))
                 {
-                    if (!stopTimes.ContainsKey(row[fieldToCell["orderID"]]))
+                    if (!stopTimes.ContainsKey(row[fieldToCell["Order ID"]]))
                     {
                         List<Tuple<DateTime, DateTime>> list = new List<Tuple<DateTime, DateTime>>();
-                        stopTimes.Add(row[fieldToCell["orderID"]], list);
+                        stopTimes.Add(row[fieldToCell["Order ID"]], list);
                     }
                     if (row[fieldToCell["Stop Time"]] != null)
                     {
                         DateTime start = getDateTimeInfo(row[fieldToCell["Start Time"]], row[fieldToCell["Start Date"]]);
                         DateTime stop = getDateTimeInfo(row[fieldToCell["Stop Time"]], row[fieldToCell["Stop Date"]]);
-                        stopTimes[row[fieldToCell["orderID"]]].Add(Tuple.Create<DateTime, DateTime>(start, stop));
+                        stopTimes[row[fieldToCell["Order ID"]]].Add(Tuple.Create<DateTime, DateTime>(start, stop));
                     } else
                     {
                         newWOs.Remove(row[fieldToCell["orderID"]]);
@@ -244,12 +321,13 @@ namespace ReportConvertor
 
             foreach (List<string> row in rows)
             {
-                string key = row[fieldToCell["orderID"]];
+                string key = row[fieldToCell["Order ID"]];
                 if (newWOs.ContainsKey(key))
                 {
                     if (row[fieldToCell["MvT"]].Equals("967"))
                     {
                         string part = row[fieldToCell["Material"]];
+                        WorkOrder wo = newWOs[key];
                         string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
                         int qty = Convert.ToInt32(row[fieldToCell["Quantity"]]);
                         if (partID != null)
@@ -292,7 +370,7 @@ namespace ReportConvertor
             int len = times.Count;
             if (len > 1)
             {
-                for (int i = 1; i < len; i++)
+                for (int i = 0; i < len-1; i++)
                 {
                     DateTime start1 = times[i].Item1;
                     DateTime stop1 = times[i].Item2;
@@ -321,8 +399,8 @@ namespace ReportConvertor
             len = times.Count;
             foreach (Tuple<DateTime, DateTime> time in times)
             {
-                DateTime start = times[1].Item1;
-                DateTime stop = times[1].Item2;
+                DateTime start = time.Item1;
+                DateTime stop = time.Item2;
                 duration = stop - start;
                 downTime = downTime + (duration.TotalHours + (duration.TotalMinutes / 60));
             }
@@ -332,12 +410,12 @@ namespace ReportConvertor
 
         private DateTime getDateTimeInfo(string time, string date)
         {
-            int month = Convert.ToInt32(date.Substring(1, 2));
-            int day = Convert.ToInt32(date.Substring(4, 2));
-            int year = Convert.ToInt32(date.Substring(7, 4));
-            int hours = Convert.ToInt32(time.Substring(1, 2));
-            int min = Convert.ToInt32(time.Substring(4, 2));
-            int sec = Convert.ToInt32(time.Substring(7, 2));
+            int month = Convert.ToInt32(date.Substring(0, 2));
+            int day = Convert.ToInt32(date.Substring(3, 2));
+            int year = Convert.ToInt32(date.Substring(6, 4));
+            int hours = Convert.ToInt32(time.Substring(0, 2));
+            int min = Convert.ToInt32(time.Substring(3, 2));
+            int sec = Convert.ToInt32(time.Substring(6, 2));
             DateTime dateTime = new DateTime(year, month, day, hours, min, sec);
 
             return dateTime;
@@ -363,15 +441,14 @@ namespace ReportConvertor
 
         private DateTime getDate(string s)
         {
-            string sDate = s.Substring(1, 2);
-            string sMonth = s.Substring(4, 2);
-            string sYear = s.Substring(7, 4);
+            string sMonth = s.Substring(0, 2);
+            string sDate = s.Substring(3, 2);
+            string sYear = s.Substring(6, 4);
 
             int nDate = Convert.ToInt32(sDate);
             int nMonth = Convert.ToInt32(sMonth);
             int nYear = Convert.ToInt32(sYear);
-
-            DateTime date = new DateTime(nDate, nMonth, nYear);
+            DateTime date = new DateTime(nYear, nMonth, nDate);
 
             return date;
         }
