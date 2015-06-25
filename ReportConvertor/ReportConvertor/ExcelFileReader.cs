@@ -13,7 +13,7 @@ using System.Data.OleDb;
 using Microsoft.Office.Interop.Excel;
 
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class ExcelFileReader : FileReader
     {
@@ -95,11 +95,12 @@ namespace ReportConvertor
                 {
                     if (worksheet.Cells[i, j].Value != null)
                     {
+                        string val = String.Format("{0}", worksheet.Cells[i, j].Text);
                         if (siteName == null)
                         {
-                            siteName = getNameOfSite(worksheet.Cells[i,j].Value.ToString());
+                            siteName = getNameOfSite(val);
                         }
-                        rows.Add(String.Format("{0}", worksheet.Cells[i,j].Text));
+                        rows.Add(val);
                     }
                     else
                     {

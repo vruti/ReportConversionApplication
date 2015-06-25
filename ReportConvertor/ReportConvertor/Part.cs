@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class Part
     {
@@ -20,10 +20,10 @@ namespace ReportConvertor
 
         public void generateID(string newestID)
         {
-            string num = newestID.Substring(11, 4);
+            string num = newestID.Substring(10, 4);
             int n = Convert.ToInt32(num);
             n++;
-            id = "GAMSA-PRT-" + n.ToString();
+            id = "GAMSA-PRT-" + n.ToString("D4");
         }
 
         public string ID

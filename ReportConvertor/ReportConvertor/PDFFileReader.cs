@@ -10,7 +10,7 @@ using iTextSharp.text.pdf.parser;
 using System.Collections;
 
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class PDFFileReader : FileReader
     {

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public partial class Settings : Form
     {
@@ -24,6 +24,11 @@ namespace ReportConvertor
         private void Settings_FormClosing(object sender, FormClosingEventArgs e)
         {
             m.activateForm();
+        }
+
+        private void Settings_Load(object sender, EventArgs e)
+        {
+
         }
 
     }

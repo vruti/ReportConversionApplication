@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class WorkOrder
     {
@@ -278,17 +278,17 @@ namespace ReportConvertor
             name = name+"-"+vendor.ThreeLetterCode+ "-";
             //add year
             //CHECK IF DATE DONE
-            name += startDate.Year.ToString();
+            name += startDate.Year.ToString("D4");
             //add month
-            name += startDate.Month.ToString();
+            name += startDate.Month.ToString("D2");
             //add day
-            name += startDate.Day.ToString();
+            name += startDate.Day.ToString("D2");
             //get serial number
             int srNo = vendor.getWOIDNumber(name);
             //add WOID to vendor's WO list
             vendor.addWO(name, srNo);
             //add serial number
-            name = name + "-" + srNo.ToString();
+            name = name + "-" + srNo.ToString("D2");
 
             mPulseID = name;
         }
@@ -299,6 +299,36 @@ namespace ReportConvertor
             List<string> keys = partsList.Keys.ToList();
 
             ArrayList record;
+
+            if (keys.Count == 0)
+            {
+                record = new ArrayList();
+                record.Add(mPulseID);
+                record.Add(description);
+                record.Add(status);
+                record.Add(woType);
+                record.Add(outageType);
+                record.Add(priority);
+                record.Add(openDate.ToShortDateString());
+                record.Add(startDate.ToShortDateString());
+                record.Add(dateDone.ToShortDateString());
+                record.Add(downTime);
+                record.Add(site.Name);
+                record.Add(planning);
+                record.Add(unplannedType);
+                record.Add(taskID);
+                record.Add(assetID);
+                record.Add(vendor.ID);
+                record.Add(actualHours);
+                record.Add(" ");
+                record.Add(" ");
+                record.Add(comments);
+                record.Add(originalID);
+
+                records.Add(record);
+                return records;
+            }
+
             foreach(string key in keys)
             {
                 record = new ArrayList();
@@ -308,9 +338,9 @@ namespace ReportConvertor
                 record.Add(woType);
                 record.Add(outageType);
                 record.Add(priority);
-                record.Add(openDate);
-                record.Add(startDate);
-                record.Add(dateDone);
+                record.Add(openDate.ToShortDateString());
+                record.Add(startDate.ToShortDateString());
+                record.Add(dateDone.ToShortDateString());
                 record.Add(downTime);
                 record.Add(site.Name);
                 record.Add(planning);

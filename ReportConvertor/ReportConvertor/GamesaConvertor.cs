@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
-    public class GamesaConvertor : Convertor
+    public class GamesaConverter : Converter
     {
         //create a dictionary with all the fields and related titles?
         private Dictionary<string, ArrayList> fieldNames;
@@ -16,7 +16,7 @@ namespace ReportConvertor
         private Dictionary<string, Part> newParts;
         private Dictionary<string, WorkOrder> flaggedWO;
 
-        public GamesaConvertor(AppInfo i)
+        public GamesaConverter(AppInfo i)
         {
             fieldNames = new Dictionary<string, ArrayList>();
             info = i;
@@ -27,7 +27,7 @@ namespace ReportConvertor
 
         public Dictionary<string, WorkOrder> convertReport(Report report)
         {
-            Dictionary<string, WorkOrder> result = null;
+            Dictionary<string, WorkOrder> result = new Dictionary<string,WorkOrder>();
             List<string> keys = report.getKeys();
 
             //Parsing the general info tab
@@ -58,6 +58,7 @@ namespace ReportConvertor
             Dictionary<string, List<string>> fieldNames = getFieldNames(tabName);
 
             List<string> fields = fieldNames.Keys.ToList();
+            List<int> used = new List<int>();
             
             foreach (string field in fields)
             {
@@ -79,9 +80,10 @@ namespace ReportConvertor
                             foreach (string val in fieldNames[field])
                             {
                                 string vall = val.ToLower();
-                                if (cell.Contains(vall))// || val.ToLower().Contains(cell))
+                                if (cell.Contains(vall) && !used.Contains(i))// || val.ToLower().Contains(cell))
                                 {
                                     fieldToCell.Add(field, i);
+                                    used.Add(i);
                                     break;
                                 }
                             }
@@ -249,7 +251,7 @@ namespace ReportConvertor
                 if (newWOs.ContainsKey(row[fieldToCell["Order ID"]]))
                 {
                     WorkOrder wo = newWOs[row[fieldToCell["Order ID"]]];
-                    if (row[fieldToCell["Personnel No."]].Equals("00000000"))
+                    if (!row[fieldToCell["Personnel No."]].Equals("00000000"))
                     {
                         wo.ActualHours += getLaborHours(row[fieldToCell["Start Time"]], row[fieldToCell["Stop Time"]]);
                     }
@@ -287,7 +289,7 @@ namespace ReportConvertor
                     }
                     if (row[fieldToCell["Stop Time"]] != null)
                     {
-                        DateTime start = getDateTimeInfo(row[fieldToCell["Start Time"]], row[fieldToCell["Start Date"]]);
+                        DateTime start = getDateTimeInfo(row[fieldToCell["Start Date"]+1], row[fieldToCell["Start Date"]]);
                         DateTime stop = getDateTimeInfo(row[fieldToCell["Stop Time"]], row[fieldToCell["Stop Date"]]);
                         stopTimes[row[fieldToCell["Order ID"]]].Add(Tuple.Create<DateTime, DateTime>(start, stop));
                     } else
@@ -329,7 +331,7 @@ namespace ReportConvertor
                         string part = row[fieldToCell["Material"]];
                         WorkOrder wo = newWOs[key];
                         string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
-                        int qty = Convert.ToInt32(row[fieldToCell["Quantity"]]);
+                        int qty = (int) Convert.ToDouble(row[fieldToCell["Quantity"]]);
                         if (partID != null)
                         {
                             newWOs[key].addPart(partID, qty);
@@ -340,21 +342,24 @@ namespace ReportConvertor
                             {
                                 newParts[part].Qty += qty;
                             }
-                            //create new part record
-                            Part newPart = new Part(part);
-                            if (newParts.Count > 1)
-                            {
-                                List<string> k = newParts.Keys.ToList();
-                                int len = k.Count;
-                                newPart.generateID(newParts[k[len]].ID);
-                            }
                             else
                             {
-                                newPart.generateID(newWOs[key].Vendor.newestPartID());
+                                //create new part record
+                                Part newPart = new Part(part);
+                                if (newParts.Count > 1)
+                                {
+                                    List<string> k = newParts.Keys.ToList();
+                                    int len = k.Count;
+                                    newPart.generateID(newParts[k[len - 1]].ID);
+                                }
+                                else
+                                {
+                                    newPart.generateID(newWOs[key].Vendor.newestPartID());
+                                }
+                                newPart.Qty = qty;
+                                newPart.Description = row[fieldToCell["Description"]];
+                                newParts.Add(part, newPart);
                             }
-                            newPart.Qty = qty;
-                            newPart.Description = row[fieldToCell["Description"]];
-                            newParts.Add(part, newPart);
                         }
                     }
                 }
@@ -427,12 +432,12 @@ namespace ReportConvertor
             if(start.Contains(":"))
             {
                 //hours
-                double startH = Convert.ToDouble(start.Substring(1, 2));
-                double stopH = Convert.ToDouble(stop.Substring(1, 2));
+                double startH = Convert.ToDouble(start.Substring(0, 2));
+                double stopH = Convert.ToDouble(stop.Substring(0, 2));
                 double h = stopH - startH;
                 //minutes
-                double startM = Convert.ToDouble(start.Substring(4, 2));
-                double stopM = Convert.ToDouble(stop.Substring(4, 2));
+                double startM = Convert.ToDouble(start.Substring(3, 2));
+                double stopM = Convert.ToDouble(stop.Substring(3, 2));
                 double m = (stopM - startM) / 60;
                 time = h + m;
             }

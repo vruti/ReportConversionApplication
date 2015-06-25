@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public partial class Main : Form
     {
@@ -27,7 +27,7 @@ namespace ReportConvertor
             if (active)
             {
                 active = false;
-                f.start();
+                f.start(this);
             }
         }
 
@@ -48,9 +48,19 @@ namespace ReportConvertor
             active = true;
         }
 
+        public void showDoneMessage()
+        {
+            MessageBox.Show("Conversion Complete!");
+        }
+
         private void label1_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

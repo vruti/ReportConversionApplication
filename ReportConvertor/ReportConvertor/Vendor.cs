@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class Vendor
     {
@@ -183,7 +183,7 @@ namespace ReportConvertor
             return result;
         }
 
-        private void generateWOHistory()
+        public void generateWOHistory()
         {
             oldWO = new Dictionary<string,int>();
             FileInfo newFile = new FileInfo(woFile);
@@ -218,7 +218,7 @@ namespace ReportConvertor
             }
         }
 
-        private void generatePartsTable()
+        public void generatePartsTable()
         {
             /* initializing the dictionary to store the 
              * contractor part number to mpulse part number 
@@ -262,7 +262,7 @@ namespace ReportConvertor
         {
             List<string> keys = partsTable.Keys.ToList();
             int len = keys.Count;
-            return partsTable[keys[len]];
+            return partsTable[keys[len-1]];
         }
     }
 }

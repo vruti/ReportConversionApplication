@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
-    public interface Convertor
+    public interface Converter
     {
         Dictionary<string, WorkOrder> convertReport(Report report);
 

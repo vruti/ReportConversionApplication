@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     /* Contains all the necessary information for the 
      * application to run, like file locations, vendor
@@ -59,8 +59,6 @@ namespace ReportConvertor
             addVendors(ws[3]);
             addSites(ws[2]);
             addVendorData(ws);
-
-            //getting vendor information
         }
 
         // Reads all the file locations from the excel worksheet
@@ -70,19 +68,23 @@ namespace ReportConvertor
 
             for (int i = 2; i <= rows; i++)
             {
+                //The file path fields should never be empty
                 if (worksheet.Cells[i, 2].Value != null)
                 {
                     fileLocs.Add(worksheet.Cells[i, 1].Value.ToString(), worksheet.Cells[i, 2].Value.ToString());
                 }
-                else
-                {
-                    /*If there is no file, replace it with empty string so that 
-                     * the program will run. cannot add null cell values */
-                    fileLocs.Add(worksheet.Cells[i, 1].Value.ToString(), "  ");
-                }
-                Console.WriteLine(worksheet.Cells[i, 1].Value.ToString());
             }
 
+        }
+
+        // Get the location of file/directory specified
+        public string getFileLoc(string n)
+        {
+            if (fileLocs.ContainsKey(n))
+            {
+                return fileLocs[n];
+            }
+            return null;
         }
 
         /*Reads all the site information and creates
@@ -98,21 +100,21 @@ namespace ReportConvertor
 
             for (int i = 2; i <= rows; i++)
             {
-                vendor = wk.Cells[i, 2].Value.ToString();
+                vendor = String.Format("{0}", wk.Cells[i, 2].Text);
 
                 //create a site object
                 site = new Site();
                 //enter all necessary information
-                site.Name = wk.Cells[i,1].Value.ToString();
-                site.ThreeLetterCode = wk.Cells[i,3].Value.ToString();
-                site.FiveLetterCode = wk.Cells[i,4].Value.ToString();
+                site.Name = String.Format("{0}", wk.Cells[i,1].Text);
+                site.ThreeLetterCode = String.Format("{0}", wk.Cells[i, 3].Text);
+                site.FiveLetterCode = String.Format("{0}", wk.Cells[i, 4].Text);
                 site.Contractor = (findVendor(vendor));
-
+                //Adding any alternate names for site
                 for (int j = 5; j <= cols; j++)
                 {
                     if (wk.Cells[i, j].Value != null)
                     {
-                        site.addAltName(wk.Cells[i, j].Value.ToString());
+                        site.addAltName(String.Format("{0}", wk.Cells[i, j].Text));
                     }
                 }
                 //adding the new site to the list
@@ -120,6 +122,7 @@ namespace ReportConvertor
             }
         }
 
+        //Get list of all the sites
         public List<Site> getSites()
         {
             return sites;
@@ -139,6 +142,39 @@ namespace ReportConvertor
             return null;
         }
 
+        /* Create a Vendor object for each of the vendors
+         * listed out in the file with all the information
+         * in the file for each vendor*/
+        private void addVendors(ExcelWorksheet wk)
+        {
+            int rows = wk.Dimension.End.Row;
+
+            Vendor v;
+
+            for (int i = 2; i <= rows; i++)
+            {
+                v = new Vendor();
+
+                //adding all the necessary fields
+                v.ID = String.Format("{0}", wk.Cells[i, 1].Text);
+                v.Name = String.Format("{0}", wk.Cells[i, 2].Text);
+                v.ThreeLetterCode = String.Format("{0}", wk.Cells[i, 4].Text);
+                v.FiveLetterCode = String.Format("{0}", wk.Cells[i, 5].Text);
+                v.PartsTabNo = Convert.ToInt32(wk.Cells[i, 6].Value.ToString());
+                v.WOArchiveTabNo = Convert.ToInt32(wk.Cells[i, 7].Value.ToString());
+                v.PartsFile=(fileLocs["Parts"]);
+                v.WOArchiveFile=(fileLocs["WOHistory"]);
+                v.generatePartsTable();
+                v.generateWOHistory();
+                //if there is an alternate name that we have to look for
+                if (wk.Cells[i, 2].Value != null)
+                {
+                    v.addAltNames(String.Format("{0}", wk.Cells[i, 2].Text));
+                }
+                vendors.Add(v);
+            }
+        }
+
         /* finds the vendor object based on the input
          * string given */
         public Vendor findVendor(string n)
@@ -154,38 +190,8 @@ namespace ReportConvertor
             return null;
         }
 
-        /* Create a Vendor object for each of the vendors
-         * listed out in the file with all the information
-         * in the file for each vendor*/
-        private void addVendors(ExcelWorksheet wk)
-        {
-            int rows = wk.Dimension.End.Row;
-
-            Vendor v;
-
-            for (int i = 2; i <= rows; i++)
-            {
-                v = new Vendor();
-
-                //adding all the necessary fields
-                v.ID = wk.Cells[i, 1].Value.ToString();
-                v.Name = wk.Cells[i, 2].Value.ToString();
-                v.ThreeLetterCode = wk.Cells[i, 4].Value.ToString();
-                v.FiveLetterCode = wk.Cells[i, 5].Value.ToString();
-                v.PartsTabNo = Convert.ToInt32(wk.Cells[i, 6].Value.ToString());
-                v.WOArchiveTabNo = Convert.ToInt32(wk.Cells[i, 7].Value.ToString());
-                v.PartsFile=(fileLocs["Parts"]);
-                v.WOArchiveFile=(fileLocs["WOHistory"]);
-
-                //if there is an alternate name that we have to look for
-                if (wk.Cells[i, 2].Value != null)
-                {
-                    v.addAltNames(wk.Cells[i, 2].Value.ToString());
-                }
-                vendors.Add(v);
-            }
-        }
-
+        /* reading the specific information about
+         * a vendor by the tab */
         private void addVendorData(ExcelWorksheets ws)
         {
             foreach (Vendor v in vendors)
@@ -208,7 +214,7 @@ namespace ReportConvertor
                             {                       
                                 if (wk.Cells[j, k].Value != null)
                                 {
-                                    row.Add(wk.Cells[j, k].Value.ToString());
+                                    row.Add(String.Format("{0}", wk.Cells[i, j].Text));
                                 }
                                 else
                                 {
@@ -223,20 +229,12 @@ namespace ReportConvertor
             }
         }
 
+        /* get vedor tab data by vendor*/
         public List<List<string>> getVendorData(string n)
         {
             if (vendorData.ContainsKey(n))
             {
                 return vendorData[n];
-            }
-            return null;
-        }
-
-        public string getFileLoc(string n)
-        {
-            if (fileLocs.ContainsKey(n))
-            {
-                return fileLocs[n];
             }
             return null;
         }

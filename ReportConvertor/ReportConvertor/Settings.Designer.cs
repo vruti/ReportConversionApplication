@@ -1,4 +1,4 @@
-﻿namespace ReportConvertor
+﻿namespace ReportConverter
 {
     partial class Settings
     {
@@ -38,6 +38,7 @@
             this.Name = "Settings";
             this.Text = "Settings";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Settings_FormClosing);
+            this.Load += new System.EventHandler(this.Settings_Load);
             this.ResumeLayout(false);
 
         }

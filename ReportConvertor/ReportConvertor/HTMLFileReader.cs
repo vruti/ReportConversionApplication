@@ -12,7 +12,7 @@ using System.Web.Script.Services;
 using System.Text.RegularExpressions;
 using System.IO;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class HTMLFileReader : FileReader
     {

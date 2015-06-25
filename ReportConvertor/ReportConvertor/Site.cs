@@ -5,13 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class Site
     {
-        private string siteName;
-        private string siteCode3;
-        private string siteCode5;
+        private string name;
+        private string code3;
+        private string code5;
         private ArrayList altNames;
         private Vendor vendor;
 
@@ -36,11 +36,11 @@ namespace ReportConvertor
         {
             get
             {
-                return siteName;
+                return name;
             }
             set
             {
-                siteName = value;
+                name = value;
             }
         }
 
@@ -48,11 +48,11 @@ namespace ReportConvertor
         {
             get
             {
-                return siteCode3;
+                return code3;
             }
             set
             {
-                siteCode3 = value;
+                code3 = value;
             }
         }
 
@@ -60,11 +60,11 @@ namespace ReportConvertor
         {
             get
             {
-                return siteCode5;
+                return code5;
             }
             set
             {
-                siteCode5 = value;
+                code5 = value;
             }
         }
 
@@ -80,7 +80,7 @@ namespace ReportConvertor
 
         public bool isSite(string n)
         {
-            if (n.Contains(siteName))
+            if (n.Contains(name))
             {
                 return true;
             }

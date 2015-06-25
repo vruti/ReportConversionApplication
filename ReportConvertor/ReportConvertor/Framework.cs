@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ReportConvertor
+namespace ReportConverter
 {
     public class Framework
     {
@@ -21,7 +21,7 @@ namespace ReportConvertor
             flaggedWO = new List<WorkOrder>();
         }
 
-        public void start()
+        public void start(Main m)
         {
             //Getting names of all the files in the input directory
             DirectoryReader dR = new DirectoryReader(inputDirectory);
@@ -31,7 +31,7 @@ namespace ReportConvertor
             Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = parseFiles(files);
             /*data is organized by location so go through each
              * list and send the data to the right parsers */
-            Convertor c = null;
+            Converter c = null;
             List<string> keys = ServiceReports["xlsx"].Keys.ToList();
             foreach (string key in keys) {
                 //start convertors based on location
@@ -42,7 +42,15 @@ namespace ReportConvertor
                     case "Highland North":
                         break;
                     case "Patton":
-                        c = new GamesaConvertor(info);
+                        c = new GamesaConverter(info);
+                        break;
+                    case "Twin Ridges":
+                        break;
+                    case "Big Sky":
+                        break;
+                    case "Howard":
+                        break;
+                    case "Mustang Hills":
                         break;
                 }
                 foreach (Report report in ServiceReports["xlsx"][key])
@@ -50,12 +58,11 @@ namespace ReportConvertor
                     Dictionary<string, WorkOrder> woList = c.convertReport(report);
                     addWorkOrders(woList);
                 }
-                //run convertors
-                //
             }
             ExcelFileWriter writer = new ExcelFileWriter(info);
             writer.writeFiles(getListofWO(), null, null);
-
+            m.showDoneMessage();
+            m.activateForm();
         }
 
         private List<WorkOrder> getListofWO()
@@ -80,6 +87,10 @@ namespace ReportConvertor
                     flaggedWO.Add(wo[key]);
                     wo.Remove(key);
                     newWO.Remove(key);
+                }
+                else
+                {
+                    newWO.Add(key, wo[key]);
                 }
             }
         }
