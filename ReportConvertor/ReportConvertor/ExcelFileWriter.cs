@@ -26,8 +26,11 @@ namespace ReportConverter
             ExcelWorksheets ws = pck.Workbook.Worksheets;
        
             writeWO(wo, ws);
+            if (p != null)
+            {
+                writeParts(p, ws);
+            }
             pck.Save();
-
         }
 
         private List<ArrayList> getRecords(List<WorkOrder> woList)
@@ -43,7 +46,6 @@ namespace ReportConverter
                     records.Add(r);
                 }
             }
-
             return records;
         }
 
@@ -64,18 +66,18 @@ namespace ReportConverter
 
         }
 
-        private void writeParts(List<WorkOrder> woList, ExcelWorksheets ws)
+        private void writeParts(List<Part> parts, ExcelWorksheets ws)
         {
-            ExcelWorksheet wk = ws["Work Orders"];
-            List<ArrayList> records = getRecords(woList);
-            int totalRows = records.Count;
-            int totalCols = records[0].Count;
+            ExcelWorksheet wk = ws["Parts"];
+            int totalRows = parts.Count;
 
             for (int i = 0; i < totalRows; i++)
             {
+                ArrayList record = parts[i].getRecord();
+                int totalCols = record.Count;
                 for (int j = 0; j < totalCols; j++)
                 {
-                    wk.Cells[(i + 2), (j + 1)].Value = records[i][j];
+                    wk.Cells[(i + 2), (j + 1)].Value = record[j];
                 }
             }
         }

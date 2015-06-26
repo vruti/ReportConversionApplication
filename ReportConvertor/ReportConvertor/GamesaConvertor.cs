@@ -25,7 +25,7 @@ namespace ReportConverter
             flaggedWO = new Dictionary<string, WorkOrder>();
         }
 
-        public Dictionary<string, WorkOrder> convertReport(Report report)
+        public void convertReport(Report report)
         {
             Dictionary<string, WorkOrder> result = new Dictionary<string,WorkOrder>();
             List<string> keys = report.getKeys();
@@ -43,11 +43,33 @@ namespace ReportConverter
             foreach (string k in woKeys)
             {
                 WorkOrder wo = newWOs[k];
-                wo.createMPulseID();
-                result.Add(wo.mPulseID, wo);
+                //wo.createMPulseID();
+                //result.Add(wo.mPulseID, wo);
             }
+        }
 
-            return result;
+        public Dictionary<string, WorkOrder> getWorkOrders()
+        {
+            /*
+            List<string> keys = newWOs.Keys.ToList();
+            List<WorkOrder> wo = new List<WorkOrder>();
+            foreach (string key in keys)
+            {
+                wo.Add(newWOs[key]);
+            }
+            return wo;*/
+            return newWOs;
+        }
+
+        public List<Part> getNewParts()
+        {
+            List<string> keys = newParts.Keys.ToList();
+            List<Part> parts = new List<Part>();
+            foreach (string key in keys)
+            {
+                parts.Add(newParts[key]);
+            }
+            return parts;
         }
 
         public Dictionary<string, int> organizeFields(List<List<string>> reportInfo, string tabName)
@@ -108,10 +130,10 @@ namespace ReportConverter
                 row = data[i];
                 if (row[0].Contains("Tab"))
                 {
-                    if (tab.Contains(row[1]) && !row[1].Equals(" "))
+                    if (isTab(tab, row))
                     {
                         start = i+1;
-                        rows = Convert.ToInt32(row[2]);
+                        rows = Convert.ToInt32(row[1]);
                         break;
                     }
                 }
@@ -130,6 +152,18 @@ namespace ReportConverter
                 result.Add(row[0], row);
             }
             return result;
+        }
+
+        private bool isTab(string tab, List<string> row)
+        {
+            for (int i = 2; i < row.Count; i++)
+            {
+                if (tab.Contains(row[i]) && !row[i].Equals(" "))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void generalInfoReader(List<string> keys, Report report)

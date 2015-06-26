@@ -214,7 +214,7 @@ namespace ReportConverter
                             {                       
                                 if (wk.Cells[j, k].Value != null)
                                 {
-                                    row.Add(String.Format("{0}", wk.Cells[i, j].Text));
+                                    row.Add(String.Format("{0}", wk.Cells[j, k].Text));
                                 }
                                 else
                                 {

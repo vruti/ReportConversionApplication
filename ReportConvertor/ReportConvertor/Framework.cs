@@ -12,6 +12,7 @@ namespace ReportConverter
         private string inputDirectory;
         public Dictionary<string, WorkOrder> newWO;
         public List<WorkOrder> flaggedWO;
+        public List<Part> newParts;
 
         public Framework()
         {
@@ -55,14 +56,26 @@ namespace ReportConverter
                 }
                 foreach (Report report in ServiceReports["xlsx"][key])
                 {
-                    Dictionary<string, WorkOrder> woList = c.convertReport(report);
-                    addWorkOrders(woList);
+                    c.convertReport(report);
+                    addNewParts(c.getNewParts());
                 }
+                addWorkOrders(c.getWorkOrders());
             }
             ExcelFileWriter writer = new ExcelFileWriter(info);
-            writer.writeFiles(getListofWO(), null, null);
+            writer.writeFiles(getListofWO(), newParts, null);
             m.showDoneMessage();
             m.activateForm();
+        }
+
+        private void addNewParts(List<Part> parts)
+        {
+            foreach (Part p in parts)
+            {
+                if (!newParts.Contains(p))
+                {
+                    newParts.Add(p);
+                }
+            }
         }
 
         private List<WorkOrder> getListofWO()
@@ -71,6 +84,7 @@ namespace ReportConverter
             List<String> keys = newWO.Keys.ToList();
             foreach (string key in keys)
             {
+                newWO[key].createMPulseID();
                 workOrders.Add(newWO[key]);
             }
             return workOrders;

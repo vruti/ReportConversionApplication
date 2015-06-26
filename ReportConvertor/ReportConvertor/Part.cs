@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -64,6 +65,18 @@ namespace ReportConverter
             {
                 qty = value;
             }
+        }
+
+        public ArrayList getRecord()
+        {
+            ArrayList parts = new ArrayList();
+
+            parts.Add(id);
+            parts.Add(description);
+            parts.Add(qty);
+            parts.Add(supplierID);
+
+            return parts;
         }
     }
 }
