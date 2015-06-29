@@ -108,7 +108,7 @@ namespace ReportConverter
                 site.Name = String.Format("{0}", wk.Cells[i,1].Text);
                 site.ThreeLetterCode = String.Format("{0}", wk.Cells[i, 3].Text);
                 site.FiveLetterCode = String.Format("{0}", wk.Cells[i, 4].Text);
-                site.Contractor = (findVendor(vendor));
+                site.Contractor = (getVendor(vendor));
                 //Adding any alternate names for site
                 for (int j = 5; j <= cols; j++)
                 {
@@ -177,7 +177,7 @@ namespace ReportConverter
 
         /* finds the vendor object based on the input
          * string given */
-        public Vendor findVendor(string n)
+        public Vendor getVendor(string n)
         {
             foreach (Vendor v in vendors)
             {

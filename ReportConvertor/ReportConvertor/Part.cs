@@ -13,10 +13,12 @@ namespace ReportConverter
         private string supplierID;
         private string description;
         private int qty;
+        private Vendor vendor;
 
-        public Part(string partID)
+        public Part(string partID, Vendor v)
         {
             supplierID=partID;
+            vendor = v;
         }
 
         public void generateID(string newestID)
@@ -24,7 +26,15 @@ namespace ReportConverter
             string num = newestID.Substring(10, 4);
             int n = Convert.ToInt32(num);
             n++;
-            id = "GAMSA-PRT-" + n.ToString("D4");
+            id = vendor.FiveLetterCode+"-PRT-" + n.ToString("D4");
+        }
+
+        public Vendor Vendor
+        {
+            get
+            {
+                return vendor;
+            }
         }
 
         public string ID
@@ -74,6 +84,7 @@ namespace ReportConverter
             parts.Add(id);
             parts.Add(description);
             parts.Add(qty);
+            parts.Add(Vendor.Name);
             parts.Add(supplierID);
 
             return parts;

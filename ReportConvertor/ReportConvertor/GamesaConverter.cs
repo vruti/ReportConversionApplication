@@ -200,7 +200,7 @@ namespace ReportConverter
                     wo.Priority = taskInfo[5];
                     wo.Description = row[fieldToCell["Description"]];
                     wo.Status = "Closed";
-                    wo.Vendor = info.findVendor("Gamesa");
+                    wo.Vendor = info.getVendor("Gamesa");
                     wo.Site = info.getSite("Patton");
                     //get asset ID
                     wo.AssetID = getAssetNo(row[fieldToCell["Turbine No."]]);
@@ -360,12 +360,14 @@ namespace ReportConverter
                 string key = row[fieldToCell["Order ID"]];
                 if (newWOs.ContainsKey(key))
                 {
-                    if (row[fieldToCell["MvT"]].Equals("967"))
+                    //if (row[fieldToCell["MvT"]].Equals("965"))
                     {
                         string part = row[fieldToCell["Material"]];
                         WorkOrder wo = newWOs[key];
                         string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
                         int qty = (int) Convert.ToDouble(row[fieldToCell["Quantity"]]);
+                        qty = qty * (-1);
+
                         if (partID != null)
                         {
                             newWOs[key].addPart(partID, qty);
@@ -374,12 +376,13 @@ namespace ReportConverter
                         {
                             if (newParts.ContainsKey(part))
                             {
-                                newParts[part].Qty += qty;
+                                partID = newParts[part].ID;
+                                newWOs[key].addPart(partID, qty);
                             }
                             else
                             {
                                 //create new part record
-                                Part newPart = new Part(part);
+                                Part newPart = new Part(part, wo.Vendor);
                                 if (newParts.Count > 1)
                                 {
                                     List<string> k = newParts.Keys.ToList();
@@ -393,6 +396,7 @@ namespace ReportConverter
                                 newPart.Qty = qty;
                                 newPart.Description = row[fieldToCell["Description"]];
                                 newParts.Add(part, newPart);
+                                newWOs[key].addPart(newPart.ID, qty);
                             }
                         }
                     }

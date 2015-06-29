@@ -35,6 +35,11 @@ namespace ReportConverter
         {
             originalID = id;
             partsList = new Dictionary<string, int>();
+            actualHours = 0;
+            downTime = 0;
+            openDate = new DateTime();
+            startDate = new DateTime();
+            dateDone = new DateTime();
         }
 
         public string Description {
@@ -331,30 +336,33 @@ namespace ReportConverter
 
             foreach(string key in keys)
             {
-                record = new ArrayList();
-                record.Add(mPulseID);
-                record.Add(description);
-                record.Add(status);
-                record.Add(woType);
-                record.Add(outageType);
-                record.Add(priority);
-                record.Add(openDate.ToShortDateString());
-                record.Add(startDate.ToShortDateString());
-                record.Add(dateDone.ToShortDateString());
-                record.Add(downTime);
-                record.Add(site.Name);
-                record.Add(planning);
-                record.Add(unplannedType);
-                record.Add(taskID);
-                record.Add(assetID);
-                record.Add(vendor.ID);
-                record.Add(actualHours);
-                record.Add(key);
-                record.Add(partsList[key]);
-                record.Add(comments);
-                record.Add(originalID);
+                if (partsList[key] > 0)
+                {
+                    record = new ArrayList();
+                    record.Add(mPulseID);
+                    record.Add(description);
+                    record.Add(status);
+                    record.Add(woType);
+                    record.Add(outageType);
+                    record.Add(priority);
+                    record.Add(openDate.ToShortDateString());
+                    record.Add(startDate.ToShortDateString());
+                    record.Add(dateDone.ToShortDateString());
+                    record.Add(downTime);
+                    record.Add(site.Name);
+                    record.Add(planning);
+                    record.Add(unplannedType);
+                    record.Add(taskID);
+                    record.Add(assetID);
+                    record.Add(vendor.ID);
+                    record.Add(actualHours);
+                    record.Add(key);
+                    record.Add(partsList[key]);
+                    record.Add(comments);
+                    record.Add(originalID);
 
-                records.Add(record);
+                    records.Add(record);
+                }
             }
             return records;
         }

@@ -54,13 +54,12 @@ namespace ReportConverter
             HtmlDocument doc = new HtmlDocument();
             string data = File.ReadAllText(file);
             doc.LoadHtml(data);
-            DataTable table = new DataTable();
-            string r;
             string x;
 
             List<List<string>> wholeFile = new List<List<string>>();
-
-            List<String> eachRow = new List<string>();
+            
+            List<String> eachRow;
+            /*
             foreach (HtmlNode row in doc.DocumentNode.SelectNodes("//table//tr"))
             {
                 foreach (HtmlNode col in row.SelectNodes("//td"))
@@ -72,15 +71,35 @@ namespace ReportConverter
                         siteName = getNameOfSite(x);
                       
                     }
-                    eachRow.Add(x);
+                    eachRow.Add(x.Trim());
                 }
                 wholeFile.Add(eachRow);
                 eachRow = new List<string>();
             }
+            
+            */
+
+            List<List<string>> table = doc.DocumentNode.SelectNodes("//table").Descendants("tr").Skip(1).Where(tr => tr.Elements("td").Count() > 1).Select(tr => tr.Elements("td").Select(td => td.InnerText.Trim()).ToList()).ToList();
+            foreach (List<string> row in table)
+            {
+                eachRow = new List<string>();
+                foreach (string val in row)
+                {
+                    x = val.Replace("&nbsp;", "");
+                    x = x.Replace("\n", "");
+                    x = x.Trim();
+                    if (siteName == null)
+                    {
+                        siteName = getNameOfSite(x);
+                      
+                    }
+                    eachRow.Add(x);
+                }
+                wholeFile.Add(eachRow);
+            }
             report.addReportTab("main");
             report.changeCurrentTab("main");
             report.addRecords(wholeFile);
-            Console.WriteLine(siteName);
 
             return Tuple.Create(siteName, report);
         }

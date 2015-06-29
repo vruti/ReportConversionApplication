@@ -20,6 +20,7 @@ namespace ReportConverter
             inputDirectory = info.getFileLoc("Directory");
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new List<WorkOrder>();
+            newParts = new List<Part>();
         }
 
         public void start(Main m)
@@ -33,34 +34,41 @@ namespace ReportConverter
             /*data is organized by location so go through each
              * list and send the data to the right parsers */
             Converter c = null;
-            List<string> keys = ServiceReports["xlsx"].Keys.ToList();
-            foreach (string key in keys) {
-                //start convertors based on location
-                switch (key)
+            List<string> sKeys = ServiceReports.Keys.ToList();
+            foreach (string sKey in sKeys)
+            {
+                List<string> keys = ServiceReports[sKey].Keys.ToList();
+                foreach (string key in keys)
                 {
-                    case "Highland 1":
-                        break;
-                    case "Highland North":
-                        break;
-                    case "Patton":
-                        c = new GamesaConverter(info);
-                        break;
-                    case "Twin Ridges":
-                        break;
-                    case "Big Sky":
-                        break;
-                    case "Howard":
-                        break;
-                    case "Mustang Hills":
-                        break;
+                    switch (key)
+                    {
+                        case "Highland 1":
+                            c = new NordexConverter("Highland 1", info);
+                            break;
+                        case "Highland North":
+                            c = new NordexConverter("Highland North", info);
+                            break;
+                        case "Patton":
+                            c = new GamesaConverter(info);
+                            break;
+                        case "Twin Ridges":
+                            break;
+                        case "Big Sky":
+                            break;
+                        case "Howard":
+                            break;
+                        case "Mustang Hills":
+                            break;
+                    }
+                    foreach (Report report in ServiceReports[sKey][key])
+                    {
+                        c.convertReport(report);
+                        addNewParts(c.getNewParts());
+                    }
+                    addWorkOrders(c.getWorkOrders());
                 }
-                foreach (Report report in ServiceReports["xlsx"][key])
-                {
-                    c.convertReport(report);
-                    addNewParts(c.getNewParts());
-                }
-                addWorkOrders(c.getWorkOrders());
             }
+            
             ExcelFileWriter writer = new ExcelFileWriter(info);
             writer.writeFiles(getListofWO(), newParts, null);
             m.showDoneMessage();
@@ -69,11 +77,21 @@ namespace ReportConverter
 
         private void addNewParts(List<Part> parts)
         {
-            foreach (Part p in parts)
+            if (newParts.Count == 0)
             {
-                if (!newParts.Contains(p))
+                foreach (Part part in parts)
                 {
-                    newParts.Add(p);
+                    newParts.Add(part);
+                }
+            }
+            else
+            {
+                foreach (Part part in parts)
+                {
+                    if (!newParts.Contains(part))
+                    {
+                        newParts.Add(part);
+                    }
                 }
             }
         }
