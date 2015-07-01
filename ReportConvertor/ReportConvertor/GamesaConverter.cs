@@ -38,26 +38,15 @@ namespace ReportConverter
             stopTimeTabReader(keys, report);
             partsTabReader(keys, report);
 
-            //CHANGE THIS
             List<string> woKeys = newWOs.Keys.ToList();
             foreach (string k in woKeys)
             {
                 WorkOrder wo = newWOs[k];
-                //wo.createMPulseID();
-                //result.Add(wo.mPulseID, wo);
             }
         }
 
         public Dictionary<string, WorkOrder> getWorkOrders()
         {
-            /*
-            List<string> keys = newWOs.Keys.ToList();
-            List<WorkOrder> wo = new List<WorkOrder>();
-            foreach (string key in keys)
-            {
-                wo.Add(newWOs[key]);
-            }
-            return wo;*/
             return newWOs;
         }
 
@@ -102,7 +91,7 @@ namespace ReportConverter
                             foreach (string val in fieldNames[field])
                             {
                                 string vall = val.ToLower();
-                                if (cell.Contains(vall) && !used.Contains(i))// || val.ToLower().Contains(cell))
+                                if (cell.Contains(vall) && !used.Contains(i))
                                 {
                                     fieldToCell.Add(field, i);
                                     used.Add(i);
@@ -185,8 +174,8 @@ namespace ReportConverter
             {
                 List<string> row = rows[i];
                 /* If the WO Type is ZPM7, it will not be imported*/
-                if (!row[fieldToCell["Order Type"]].Contains("ZPM7"))
-                {
+                //if (!row[fieldToCell["Order Type"]].Contains("ZPM7"))
+                //{
                     WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
                     
                     //CHANGE THIS
@@ -214,7 +203,7 @@ namespace ReportConverter
                     }
                     //add work order to list
                     newWOs.Add(wo.OriginalID, wo);
-                }
+                //}
             }
         }
 
@@ -329,6 +318,10 @@ namespace ReportConverter
                     } else
                     {
                         newWOs.Remove(row[fieldToCell["orderID"]]);
+                    }
+                    if ((newWOs[row[fieldToCell["Order ID"]]].Comments == null) && fieldToCell["Remarks"] != null)
+                    {
+                        newWOs[row[fieldToCell["Order ID"]]].Comments = row[fieldToCell["Remarks"]];
                     }
                 }
             }
@@ -526,7 +519,6 @@ namespace ReportConverter
                     }
                 }
             }
-
             return null;
         }
     }

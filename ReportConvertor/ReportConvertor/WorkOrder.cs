@@ -305,7 +305,12 @@ namespace ReportConverter
 
             ArrayList record;
 
-            if (keys.Count == 0)
+            if (comments == null)
+            {
+                comments = description;
+            }
+
+            if (keys.Count == 0 || (keys.Count == 1 && partsList[keys[0]] < 1))
             {
                 record = new ArrayList();
                 record.Add(mPulseID);
