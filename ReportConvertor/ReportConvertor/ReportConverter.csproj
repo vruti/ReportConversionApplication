@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="Converter.cs" />
     <Compile Include="DirectoryReader.cs" />
+    <Compile Include="EVPConverter.cs" />
     <Compile Include="ExcelFileReader.cs" />
     <Compile Include="ExcelFileWriter.cs" />
     <Compile Include="GamesaConverter.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="NordexConverter.cs" />
     <Compile Include="Part.cs" />
     <Compile Include="PDFFileReader.cs" />
+    <Compile Include="SenvionConverter.cs" />
     <Compile Include="Site.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
@@ -88,6 +90,7 @@
       <DependentUpon>Settings.cs</DependentUpon>
     </Compile>
     <Compile Include="Vendor.cs" />
+    <Compile Include="VestasConverter.cs" />
     <Compile Include="WorkOrder.cs" />
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
