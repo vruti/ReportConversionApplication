@@ -13,11 +13,13 @@ namespace ReportConverter
         public Dictionary<string, WorkOrder> newWO;
         public List<WorkOrder> flaggedWO;
         public List<Part> newParts;
+        private string archiveDirectory;
 
         public Framework()
         {
             info = new AppInfo();
             inputDirectory = info.getFileLoc("Directory");
+            archiveDirectory = info.getFileLoc("Archive");
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new List<WorkOrder>();
             newParts = new List<Part>();
@@ -26,11 +28,11 @@ namespace ReportConverter
         public void start(Main m)
         {
             //Getting names of all the files in the input directory
-            DirectoryReader dR = new DirectoryReader(inputDirectory);
+            DirectoryReader dR = new DirectoryReader(inputDirectory, archiveDirectory);
             Dictionary<string,string[]> files = dR.readDirectory();
 
             //Reading data from all the files found
-            Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = parseFiles(files);
+            Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = parseFiles(files, dR);
             /*data is organized by location so go through each
              * list and send the data to the right parsers */
             Converter c = null;
@@ -122,40 +124,40 @@ namespace ReportConverter
                 }
                 else
                 {
-                    newWO.Add(key, wo[key]);
+                    newWO.Add(wo[key].mPulseID, wo[key]);
                 }
             }
         }
 
-        private Dictionary<string, Dictionary<string, List<Report>>> parseFiles(Dictionary<string, string[]> fDict)
+        private Dictionary<string, Dictionary<string, List<Report>>> parseFiles(Dictionary<string, string[]> fDict, DirectoryReader dR)
         {
             Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = new Dictionary<string,Dictionary<string,List<Report>>>();
             FileReader fR = null;
             foreach (string key in fDict.Keys)
             {
+                string[] files = fDict[key];
                 /* Read data from the files based
                  * on the type of file */
                 switch (key)
                 {
                     case "xlsx":
                         fR = new ExcelFileReader(info);
-                        string[] files = fDict[key];
                         ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "pdf":
                         fR = new PDFFileReader(info);
-                        ServiceReports.Add(key, fR.readFiles(fDict[key]));
+                        ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "html":
                         fR = new HTMLFileReader(info);
-                        ServiceReports.Add(key, fR.readFiles(fDict[key]));
+                        ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     default:
                         //Write code
                         ServiceReports = null;
                         break;
                 }
-                
+                dR.moveFiles(files);
             }
             return ServiceReports;
         }

@@ -319,7 +319,7 @@ namespace ReportConverter
                     {
                         newWOs.Remove(row[fieldToCell["orderID"]]);
                     }
-                    if ((newWOs[row[fieldToCell["Order ID"]]].Comments == null) && fieldToCell["Remarks"] != null)
+                    if ((newWOs[row[fieldToCell["Order ID"]]].Comments == null) && fieldToCell.ContainsKey("Remarks"))
                     {
                         newWOs[row[fieldToCell["Order ID"]]].Comments = row[fieldToCell["Remarks"]];
                     }

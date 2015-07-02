@@ -10,9 +10,11 @@ namespace ReportConverter
     class DirectoryReader
     {
         private string inputDir;
+        private string archiveDir;
 
-        public DirectoryReader(string dir){
-            inputDir= dir;
+        public DirectoryReader(string dir, string aDir){
+            inputDir = dir;
+            archiveDir = aDir;
         }
 
         /* with a given directory, the function reads
@@ -42,9 +44,20 @@ namespace ReportConverter
             if (filePathsHTML != null)
             {
                 dict.Add("html", filePathsHTML);
-            }
+            }            
 
             return dict;
+        }
+
+        public void moveFiles(string[] files)
+        {
+            foreach (string filePath in files)
+            {
+                string file = Path.GetFileName(filePath);
+                string archiveFile = Path.Combine(archiveDir, file);
+                File.Move(filePath, archiveFile);
+                Console.WriteLine(file);
+            }
         }
     }
 }
