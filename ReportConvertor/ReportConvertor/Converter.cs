@@ -12,6 +12,6 @@ namespace ReportConverter
 
         List<Part> getNewParts();
 
-        Dictionary<string, WorkOrder> getWorkOrders();
+        List<WorkOrder> getWorkOrders();
     }
 }

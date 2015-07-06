@@ -27,6 +27,19 @@ namespace ReportConverter
         {
             newWO = new WorkOrder("temp ID");
             List<List<string>> rec = report.getRecords("main");
+            organizeFields(rec);
+
+            newWO.Site = info.getSite(site);
+            newWO.Vendor = newWO.Site.Contractor;
+            newWO.Description = rec[fieldToCell["Description"]][0];
+            newWO.WorkOrderType = rec[fieldToCell["Type"]][0];
+            DateTime date = toDate(rec);
+            newWO.OpenDate = date;
+            newWO.EndDate = date;
+            newWO.StartDate = date;
+            newWO.DownTime = Convert.ToInt32(rec[fieldToCell["Down Time"]][0]);
+            newWO.ActualHours = Convert.ToInt32(rec[fieldToCell["Actual Hours"]][0]);
+            newWO.Comments = rec[fieldToCell["Comments"]][0];
         }
 
         public void organizeFields(List<List<string>> records)
@@ -50,6 +63,18 @@ namespace ReportConverter
             }
         }
 
+        private DateTime toDate(List<List<string>> rec)
+        {
+            string date = rec[fieldToCell["Date"]][0];
+
+            int day = Convert.ToInt32(date.Substring(0, 2));
+            int month = Convert.ToInt32(date.Substring(3, 2));
+            int year = Convert.ToInt32(date.Substring(6, 4));
+            DateTime dateTime = new DateTime(year, month, day);
+
+            return dateTime;
+        }
+
         public List<Part> getNewParts()
         {
             List<string> keys = newParts.Keys.ToList();
@@ -61,8 +86,10 @@ namespace ReportConverter
             return parts;
         }
 
-        public Dictionary<string, WorkOrder> getWorkOrders()
+        public List<WorkOrder> getWorkOrders()
         {
+            List<WorkOrder> newWOs = new List<WorkOrder>();
+            newWOs.Add(newWO);
             return newWOs;
         }
     }

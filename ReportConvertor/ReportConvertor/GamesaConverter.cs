@@ -20,14 +20,13 @@ namespace ReportConverter
         {
             fieldNames = new Dictionary<string, ArrayList>();
             info = i;
-            newWOs = new Dictionary<string, WorkOrder>();
             newParts = new Dictionary<string, Part>();
             flaggedWO = new Dictionary<string, WorkOrder>();
         }
 
         public void convertReport(Report report)
         {
-            Dictionary<string, WorkOrder> result = new Dictionary<string,WorkOrder>();
+            newWOs = new Dictionary<string, WorkOrder>();
             List<string> keys = report.getKeys();
 
             //Parsing the general info tab
@@ -45,9 +44,16 @@ namespace ReportConverter
             }
         }
 
-        public Dictionary<string, WorkOrder> getWorkOrders()
+        public List<WorkOrder> getWorkOrders()
         {
-            return newWOs;
+            List<string> keys = newWOs.Keys.ToList();
+            List<WorkOrder> newWOList = new List<WorkOrder>();
+            foreach (string key in keys)
+            {
+                newWOs[key].createMPulseID();
+                newWOList.Add(newWOs[key]);
+            }
+            return newWOList;
         }
 
         public List<Part> getNewParts()

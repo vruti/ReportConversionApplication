@@ -11,7 +11,7 @@ namespace ReportConverter
         private AppInfo info;
         private string inputDirectory;
         public Dictionary<string, WorkOrder> newWO;
-        public List<WorkOrder> flaggedWO;
+        public Dictionary<string, List<WorkOrder>> flaggedWO;
         public List<Part> newParts;
         private string archiveDirectory;
 
@@ -21,7 +21,7 @@ namespace ReportConverter
             inputDirectory = info.getFileLoc("Directory");
             archiveDirectory = info.getFileLoc("Archive");
             newWO = new Dictionary<string, WorkOrder>();
-            flaggedWO = new List<WorkOrder>();
+            flaggedWO = new Dictionary<string,List<WorkOrder>>();
             newParts = new List<Part>();
         }
 
@@ -66,8 +66,9 @@ namespace ReportConverter
                     {
                         c.convertReport(report);
                         addNewParts(c.getNewParts());
+                        addWorkOrders(c.getWorkOrders());
                     }
-                    addWorkOrders(c.getWorkOrders());
+                   // addWorkOrders(c.getWorkOrders());
                 }
             }
             
@@ -110,9 +111,9 @@ namespace ReportConverter
             return workOrders;
         }
 
-        private void addWorkOrders(Dictionary<string, WorkOrder> wo)
+        private void addWorkOrders(List<WorkOrder> workOrders)
         {
-            List<string> keys = wo.Keys.ToList();
+            /*List<string> keys = wo.Keys.ToList();
             foreach (string key in keys)
             {
                 if (newWO.ContainsKey(key))
@@ -125,6 +126,23 @@ namespace ReportConverter
                 else
                 {
                     newWO.Add(wo[key].mPulseID, wo[key]);
+                }
+            }*/
+
+            foreach (WorkOrder wo in workOrders)
+            {
+                string id = wo.mPulseID;
+                if (newWO.ContainsKey(id))
+                {
+                    List<WorkOrder> wos = new List<WorkOrder>();
+                    wos.Add(wo);
+                    wos.Add(newWO[id]);
+                    flaggedWO.Add(id, wos);
+                    newWO.Remove(id);
+                }
+                else
+                {
+                    newWO.Add(id, wo);
                 }
             }
         }
