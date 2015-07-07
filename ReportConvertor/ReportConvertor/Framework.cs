@@ -30,51 +30,57 @@ namespace ReportConverter
             //Getting names of all the files in the input directory
             DirectoryReader dR = new DirectoryReader(inputDirectory, archiveDirectory);
             Dictionary<string,string[]> files = dR.readDirectory();
-
-            //Reading data from all the files found
-            Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = parseFiles(files, dR);
-            /*data is organized by location so go through each
-             * list and send the data to the right parsers */
-            Converter c = null;
-            List<string> sKeys = ServiceReports.Keys.ToList();
-            foreach (string sKey in sKeys)
+            if (files.ToArray().Count() > 0)
             {
-                List<string> keys = ServiceReports[sKey].Keys.ToList();
-                foreach (string key in keys)
+                //Reading data from all the files found
+                Dictionary<string, Dictionary<string, List<Report>>> ServiceReports = parseFiles(files, dR);
+                /*data is organized by location so go through each
+                 * list and send the data to the right parsers */
+                Converter c = null;
+                List<string> sKeys = ServiceReports.Keys.ToList();
+                foreach (string sKey in sKeys)
                 {
-                    switch (key)
+                    List<string> keys = ServiceReports[sKey].Keys.ToList();
+                    foreach (string key in keys)
                     {
-                        case "Highland 1":
-                            c = new NordexConverter("Highland 1", info);
-                            break;
-                        case "Highland North":
-                            c = new NordexConverter("Highland North", info);
-                            break;
-                        case "Patton":
-                            c = new GamesaConverter(info);
-                            break;
-                        case "Twin Ridges":
-                            break;
-                        case "Big Sky":
-                            break;
-                        case "Howard":
-                            break;
-                        case "Mustang Hills":
-                            break;
+                        switch (key)
+                        {
+                            case "Highland 1":
+                                c = new NordexConverter("Highland 1", info);
+                                break;
+                            case "Highland North":
+                                c = new NordexConverter("Highland North", info);
+                                break;
+                            case "Patton":
+                                c = new GamesaConverter(info);
+                                break;
+                            case "Twin Ridges":
+                                //c = new SenvionConverter(info, "Twin Ridges");
+                                break;
+                            case "Big Sky":
+                                //c = new VestasConverter(info);
+                                break;
+                            case "Howard":
+                                //c = new SenvionConverter(info, "Howard");
+                                break;
+                            case "Mustang Hills":
+                                //c = new SuzlonConverter(info);
+                                break;
+                        }
+                        foreach (Report report in ServiceReports[sKey][key])
+                        {
+                            c.convertReport(report);
+                            addNewParts(c.getNewParts());
+                            addWorkOrders(c.getWorkOrders());
+                        }
+                        // addWorkOrders(c.getWorkOrders());
                     }
-                    foreach (Report report in ServiceReports[sKey][key])
-                    {
-                        c.convertReport(report);
-                        addNewParts(c.getNewParts());
-                        addWorkOrders(c.getWorkOrders());
-                    }
-                   // addWorkOrders(c.getWorkOrders());
                 }
+
+                ExcelFileWriter writer = new ExcelFileWriter(info);
+                writer.writeFiles(getListofWO(), newParts, null);
+                m.showDoneMessage();
             }
-            
-            ExcelFileWriter writer = new ExcelFileWriter(info);
-            writer.writeFiles(getListofWO(), newParts, null);
-            m.showDoneMessage();
             m.activateForm();
         }
 

@@ -27,21 +27,21 @@ namespace ReportConverter
 
             //excel files. All the report files are .xlsx
             string[] filePathsXlsx = Directory.GetFiles(@inputDir, "*.xlsx");
-            if (filePathsXlsx != null)
+            if (filePathsXlsx.Length > 0)
             {
                 dict.Add("xlsx", filePathsXlsx);
             }
 
             //pdf files
             string[] filePathsPDF = Directory.GetFiles(@inputDir, "*.pdf");
-            if (filePathsPDF != null)
+            if (filePathsPDF.Length > 0)
             {
                 dict.Add("pdf", filePathsPDF);
             }
 
             //html files
             string[] filePathsHTML = Directory.GetFiles(@inputDir, "*.htm");
-            if (filePathsHTML != null)
+            if (filePathsHTML.Length > 0)
             {
                 dict.Add("html", filePathsHTML);
             }            

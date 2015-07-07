@@ -42,7 +42,42 @@ namespace ReportConverter
             newWO.Comments = rec[fieldToCell["Comments"]][0];
         }
 
-        public void organizeFields(List<List<string>> records)
+        private void addParts(List<List<string>> rec)
+        {
+            int i = fieldToCell["Parts"] + 2;
+            while (!rec[i][0].Equals(""))
+            {
+                string id = rec[i][0];
+                string partID = newWO.Vendor.getPartID(id);
+                if (partID != null)
+                {
+                    int qty = Convert.ToInt32(rec[i][2]);
+                    newWO.addPart(partID, qty);
+                }
+                else
+                {
+                    flaggedWO = newWO;
+                    newWO = null;
+                }
+                i++;
+            }
+        }
+
+        private void addNewParts(List<List<string>> rec)
+        {
+            int i = fieldToCell["Parts"] + 2;
+            while (!rec[i][4].Equals(""))
+            {
+                string id = rec[i][4];
+                Part p = new Part(id, newWO.Vendor);
+                p.Description = rec[i][5];
+                p.Qty = Convert.ToInt32(rec[i][6]);
+                p.generateID(newWO.Vendor.newestPartID());
+                newWO.addPart(p.ID, p.Qty);
+            }
+        }
+
+        private void organizeFields(List<List<string>> records)
         {
             bool isTable = false;
             for (int i = 0; i < records.Count; i++)
@@ -56,6 +91,7 @@ namespace ReportConverter
                 {
                     if (row[0].Contains("Parts"))
                     {
+                        fieldToCell.Add("Parts", i);
                         isTable = false;
                     }
                     fieldToCell.Add(row[0], i);
