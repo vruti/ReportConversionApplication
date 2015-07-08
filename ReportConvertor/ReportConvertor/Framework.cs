@@ -55,7 +55,14 @@ namespace ReportConverter
                                 c = new GamesaConverter(info);
                                 break;
                             case "Twin Ridges":
-                                //c = new SenvionConverter(info, "Twin Ridges");
+                                if (key.Equals("xlsm"))
+                                {
+                                    c = new EVPConverter("Twin Ridges", info);
+                                }
+                                else
+                                {
+                                    c = new SenvionConverter("Twin Ridges", info);
+                                }
                                 break;
                             case "Big Sky":
                                 //c = new VestasConverter(info);
@@ -119,22 +126,6 @@ namespace ReportConverter
 
         private void addWorkOrders(List<WorkOrder> workOrders)
         {
-            /*List<string> keys = wo.Keys.ToList();
-            foreach (string key in keys)
-            {
-                if (newWO.ContainsKey(key))
-                {
-                    flaggedWO.Add(newWO[key]);
-                    flaggedWO.Add(wo[key]);
-                    wo.Remove(key);
-                    newWO.Remove(key);
-                }
-                else
-                {
-                    newWO.Add(wo[key].mPulseID, wo[key]);
-                }
-            }*/
-
             foreach (WorkOrder wo in workOrders)
             {
                 string id = wo.mPulseID;
@@ -168,6 +159,10 @@ namespace ReportConverter
                         fR = new ExcelFileReader(info);
                         ServiceReports.Add(key, fR.readFiles(files));
                         break;
+                    case "xlsm":
+                        fR = new ExcelFileReader(info);
+                        ServiceReports.Add(key, fR.readFiles(files));
+                        break;
                     case "pdf":
                         fR = new PDFFileReader(info);
                         ServiceReports.Add(key, fR.readFiles(files));
@@ -177,7 +172,6 @@ namespace ReportConverter
                         ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     default:
-                        //Write code
                         ServiceReports = null;
                         break;
                 }

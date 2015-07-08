@@ -32,6 +32,13 @@ namespace ReportConverter
                 dict.Add("xlsx", filePathsXlsx);
             }
 
+            //adding the evp format reports
+            string[] filePathsXlsm = Directory.GetFiles(@inputDir, "*.xlsm");
+            if (filePathsXlsm.Length > 0)
+            {
+                dict.Add("xlsm", filePathsXlsm);
+            }
+
             //pdf files
             string[] filePathsPDF = Directory.GetFiles(@inputDir, "*.pdf");
             if (filePathsPDF.Length > 0)

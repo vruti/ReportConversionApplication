@@ -14,7 +14,7 @@ namespace ReportConverter
         private string site;
         AppInfo info;
 
-        public VestasConverter(AppInfo i, string s)
+        public VestasConverter(string s, AppInfo i)
         {
             info = i;
             site = s;

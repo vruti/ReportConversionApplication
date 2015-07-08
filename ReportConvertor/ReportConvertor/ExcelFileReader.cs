@@ -72,7 +72,7 @@ namespace ReportConverter
                 //if the vendor is senvion, there are checkboxes
                 if (siteName.Equals("Twin Ridges") || siteName.Equals("Howard"))
                 { 
-                    ArrayList vals = getCheckedValues(file, wk.Index);
+                    List<string> vals = getCheckedValues(file, wk.Index);
                     report.addCheckedVals(vals);
                 }
             }
@@ -126,9 +126,9 @@ namespace ReportConverter
          * opened again with functions from the Microsoft.Interop.Excel library and
          * the worksheet in question is scanned for any checkbox values
          **/
-        public ArrayList getCheckedValues(string file, int n)
+        public List<string> getCheckedValues(string file, int n)
         {
-            ArrayList checkedVals = new ArrayList();
+            List<string> checkedVals = new List<string>();
             Application app = new Application();
             Workbooks wbs = app.Workbooks;
             Workbook wb = wbs.Open(file);

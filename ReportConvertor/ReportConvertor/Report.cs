@@ -10,7 +10,7 @@ namespace ReportConverter
     public class Report
     {
         private Dictionary<string, List<List<string>>> allRecords;
-        private ArrayList checklistVals;
+        private List<string> checklistVals;
         private string currentTab;
 
         public Report()
@@ -49,7 +49,7 @@ namespace ReportConverter
             return allRecords[tab];
         }
 
-        public void addCheckedVals(ArrayList v)
+        public void addCheckedVals(List<string> v)
         {
             checklistVals = v;
         }
@@ -57,6 +57,11 @@ namespace ReportConverter
         public List<string> getKeys()
         {
             return allRecords.Keys.ToList();
+        }
+
+        public string getWOType()
+        {
+            return checklistVals[2];
         }
     }
 }

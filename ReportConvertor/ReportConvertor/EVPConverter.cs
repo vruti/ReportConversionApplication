@@ -15,7 +15,7 @@ namespace ReportConverter
         private string site;
         AppInfo info;
 
-        public EVPConverter(AppInfo i, string s)
+        public EVPConverter(string s, AppInfo i)
         {
             info = i;
             site = s;
