@@ -64,18 +64,25 @@ namespace ReportConverter
 
             siteName = getNameOfSite(currentText);
             List<string> eachLine = new List<string>();
+            string word = "";
             for (int i = 0; i < lengthOfFile; i++)
             {
                 //check if it is the end of a line
                 if (currentText[i] == '\n')
                 {
+                    eachLine.Add(word);
+                    word = "";
                     wholeFile.Add(eachLine);
                     eachLine = new List<string>();
                 }
+                else if (currentText[i] == ' ')
+                {
+                    eachLine.Add(word);
+                    word = "";
+                }
                 else
                 {
-                    string temp = currentText[i].ToString();
-                    eachLine.Add(temp);
+                    word += currentText[i];
                 }
             }
             report.addRecords(wholeFile);

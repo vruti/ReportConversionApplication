@@ -9,7 +9,7 @@ namespace ReportConverter
     public class VestasConverter : Converter
     {
         private Dictionary<string, Part> newParts;
-        private List<WorkOrder> newWOs;
+        private WorkOrder newWO;
         private Dictionary<string, WorkOrder> flaggedWO;
         private string site;
         AppInfo info;

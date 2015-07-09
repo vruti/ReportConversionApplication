@@ -7,6 +7,48 @@ using System.Threading.Tasks;
 
 namespace ReportConverter
 {
+    public class DateRange
+    {
+        private DateTime start;
+        private DateTime end;
+
+        public DateRange(DateTime s, DateTime e)
+        {
+            start = s;
+            end = e;
+        }
+
+        public DateTime Start
+        {
+            get
+            {
+                return start;
+            }
+            set
+            {
+                start = value;
+            }
+        }
+
+        public DateTime End
+        {
+            get
+            {
+                return end;
+            }
+            set
+            {
+                end = value;
+            }
+        }
+
+        public double getHours()
+        {
+            TimeSpan difference = end - start;
+            return difference.TotalHours;
+        }
+    }
+
     public class GamesaConverter : Converter
     {
         //create a dictionary with all the fields and related titles?
@@ -67,72 +109,124 @@ namespace ReportConverter
             return parts;
         }
 
-        public Dictionary<string, int> organizeFields(List<List<string>> reportInfo, string tabName)
+        public Dictionary<string, int> organizeFields(List<string> line, string tabName)
         {
-            List<string> line = reportInfo[0];
+            //List<string> line = reportInfo[0];
             Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
 
             Dictionary<string, List<string>> fieldNames = getFieldNames(tabName);
 
             List<string> fields = fieldNames.Keys.ToList();
             List<int> used = new List<int>();
-            
-            foreach (string field in fields)
+
+            for (int i = 0; i < line.Count; i++)
             {
-                if (tabName.Equals("Stop Times") && field.Equals("Start Time"))
+                string key = isField(line[i], fieldNames);
+                if (key != null && !fieldToCell.ContainsKey(key) && !used.Contains(i))
                 {
-                    fieldToCell.Add(field, fieldToCell["Start Date"]+1);
+                    fieldToCell.Add(key, i);
                 }
-                else if (tabName.Equals("Stop Times") && field.Equals("Stop Time"))
+            }     
+
+                /*
+                foreach (string field in fields)
                 {
-                    fieldToCell.Add(field, fieldToCell["Stop Date"] + 1);
-                }
-                else
-                {
-                    for (int i = 0; i < line.Count; i++)
+                    if (tabName.Equals("Stop Times") && field.Equals("Start Time"))
                     {
-                        string cell = line[i].ToLower();
-                        if (!fieldToCell.ContainsKey(field))
+                        fieldToCell.Add(field, fieldToCell["Start Date"]+1);
+                    }
+                    else if (tabName.Equals("Stop Times") && field.Equals("Stop Time"))
+                    {
+                        fieldToCell.Add(field, fieldToCell["Stop Date"] + 1);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < line.Count; i++)
                         {
-                            foreach (string val in fieldNames[field])
+                            string cell = line[i].ToLower();
+                            if (!fieldToCell.ContainsKey(field))
                             {
-                                string vall = val.ToLower();
-                                if (cell.Contains(vall) && !used.Contains(i))
+                                foreach (string val in fieldNames[field])
                                 {
-                                    fieldToCell.Add(field, i);
-                                    used.Add(i);
-                                    break;
+                                    string vall = val.ToLower();
+                                    if (cell.Contains(vall) && !used.Contains(i))
+                                    {
+                                        fieldToCell.Add(field, i);
+                                        used.Add(i);
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
+                }*/
+                return fieldToCell;
+        }
+
+        private string isField(string s, Dictionary<string, List<string>> fieldNames)
+        {
+            List<string> fieldKeys = fieldNames.Keys.ToList();
+            string name = s.ToLower();
+            foreach (string key in fieldKeys)
+            {
+                foreach (string field in fieldNames[key])
+                {
+                    if (name.Contains(field.ToLower()))
+                    {
+                        return key;
+                    }
                 }
-            }
-            return fieldToCell;
+            }           
+            return null;
         }
 
         private Dictionary<string, List<string>> getFieldNames(string tab)
         {
             List<List<string>> data = info.getVendorData("Gamesa");
             Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
-            int rows = 0;
-            int start = 0;
-            int i;
+            //int rows = 0;
+            int i, j;
             List<string> row;
+            bool isFieldTable = false;
 
             for (i = 0; i < data.Count; i++)
             {
                 row = data[i];
-                if (row[0].Contains("Tab"))
+                if (row[0].Contains("Tab") && isTab(tab, row))
                 {
-                    if (isTab(tab, row))
+                    isFieldTable = true;
+                }
+                if (row[0].Equals(" "))
+                {
+                    isFieldTable = false;
+                    break;
+                }
+                if (isFieldTable)
+                {
+                    j = 0;
+                    List<string> fields = new List<string>();
+                    while (!row[j].Equals(" "))
                     {
-                        start = i+1;
-                        rows = Convert.ToInt32(row[1]);
-                        break;
+                        fields.Add(row[j].ToLower());
+                        j++;
                     }
+                    result.Add(row[0], fields);
                 }
             }
+            /*
+                for (i = 0; i < data.Count; i++)
+                {
+                    row = data[i];
+                    if (row[0].Contains("Tab"))
+                    {
+                        if (isTab(tab, row))
+                        {
+                            start = i + 1;
+                            rows = Convert.ToInt32(row[1]);
+                            break;
+                        }
+                    }
+                }
 
             for (i = start; i < start + rows; i++)
             {
@@ -145,7 +239,7 @@ namespace ReportConverter
                     }
                 }
                 result.Add(row[0], row);
-            }
+            }*/
             return result;
         }
 
@@ -174,7 +268,7 @@ namespace ReportConverter
 
             //Parsing the general info tab
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
             Dictionary<string, List<string>> table = getTableData();
             for(int i =1; i<rows.Count;i++)
             {
@@ -203,8 +297,8 @@ namespace ReportConverter
                     //if the dates are available in the general tab
                     if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
                     {
-                        wo.StartDate = getDate(row[fieldToCell["Start Date"]]);
-                        wo.EndDate = getDate(row[fieldToCell["End Date"]]);
+                        wo.StartDate = getDateTime(row[fieldToCell["Start Date"]], " ");
+                        wo.EndDate = getDateTime(row[fieldToCell["End Date"]], " ");
                         wo.OpenDate = wo.StartDate;
                     }
                     //add work order to list
@@ -273,23 +367,46 @@ namespace ReportConverter
             }
 
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
 
             foreach (List<string> row in rows)
             {
                 if (newWOs.ContainsKey(row[fieldToCell["Order ID"]]))
                 {
                     WorkOrder wo = newWOs[row[fieldToCell["Order ID"]]];
+                    //If personnel no. is 00000000 then don't take the hours
                     if (!row[fieldToCell["Personnel No."]].Equals("00000000"))
                     {
-                        wo.ActualHours += getLaborHours(row[fieldToCell["Start Time"]], row[fieldToCell["Stop Time"]]);
+                        DateTime start = getDateTime("", row[fieldToCell["Start Time"]]);
+                        DateTime end = getDateTime("", row[fieldToCell["Stop Time"]]);
+                        TimeSpan hours = end - start;
+                        wo.ActualHours = hours.TotalHours;
+                        //wo.ActualHours += getLaborHours(row[fieldToCell["Start Time"]], row[fieldToCell["Stop Time"]]);
                     }
+                    /*if description isn't in the main tab, take it from
+                     * the remarks field here*/
                     if (wo.Description == null)
                     {
                         wo.Description = row[fieldToCell["Remarks"]];
                     }
                 }
             }
+        }
+
+        private Dictionary<string, int> startStopFields(List<string> row, string tab)
+        {
+            Dictionary<string, int> fieldToCell = organizeFields(row, tab);
+            int s = fieldToCell["Start Date"];
+            int e = fieldToCell["Stop Date"];
+            if (s > e)
+            {
+                fieldToCell["Start Date"] = e;
+                fieldToCell["Stop Date"] = s;
+            }
+            fieldToCell.Add("Start Time", fieldToCell["Start Date"]+1);
+            fieldToCell.Add("Stop Time", fieldToCell["Stop Date"]+1);
+
+            return fieldToCell;
         }
 
         private void stopTimeTabReader(List<string> keys, Report report)
@@ -303,31 +420,36 @@ namespace ReportConverter
                 }
             }
 
-            List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
-            Dictionary<string,List<Tuple<DateTime, DateTime>>> stopTimes = new Dictionary<string,List<Tuple<DateTime, DateTime>>>();
+            List<List<string>> records = report.getRecords(tab);
+            Dictionary<string, int> fieldToCell = startStopFields(records[0], tab);
+            Dictionary<string,List<DateRange>> stopTimes = new Dictionary<string,List<DateRange>>();
+            //Remove the first line containing header values
+            records.RemoveRange(0, 1);
 
-            foreach (List<string> row in rows)
+            foreach (List<string> row in records)
             {
-                if (newWOs.ContainsKey(row[fieldToCell["Order ID"]]))
+                string id = row[fieldToCell["Order ID"]];
+                //By this time, the order should already exist in the dictionary of work orders
+                if (newWOs.ContainsKey(id))
                 {
-                    if (!stopTimes.ContainsKey(row[fieldToCell["Order ID"]]))
+                    if (!stopTimes.ContainsKey(id))
                     {
-                        List<Tuple<DateTime, DateTime>> list = new List<Tuple<DateTime, DateTime>>();
-                        stopTimes.Add(row[fieldToCell["Order ID"]], list);
+                        List<DateRange> list = new List<DateRange>();
+                        stopTimes.Add(id, list);
                     }
                     if (row[fieldToCell["Stop Time"]] != null)
                     {
-                        DateTime start = getDateTimeInfo(row[fieldToCell["Start Date"]+1], row[fieldToCell["Start Date"]]);
-                        DateTime stop = getDateTimeInfo(row[fieldToCell["Stop Time"]], row[fieldToCell["Stop Date"]]);
-                        stopTimes[row[fieldToCell["Order ID"]]].Add(Tuple.Create<DateTime, DateTime>(start, stop));
+                        DateTime start = getDateTime(row[fieldToCell["Start Date"]], row[fieldToCell["Start Time"]]);
+                        DateTime stop = getDateTime(row[fieldToCell["Stop Date"]], row[fieldToCell["Start Time"]]);
+                        DateRange range = new DateRange(start, stop);
+                        stopTimes[id].Add(range);
                     } else
                     {
-                        newWOs.Remove(row[fieldToCell["orderID"]]);
+                        newWOs.Remove(id);
                     }
-                    if ((newWOs[row[fieldToCell["Order ID"]]].Comments == null) && fieldToCell.ContainsKey("Remarks"))
+                    if ((newWOs[id].Comments == null) && fieldToCell.ContainsKey("Remarks"))
                     {
-                        newWOs[row[fieldToCell["Order ID"]]].Comments = row[fieldToCell["Remarks"]];
+                        newWOs[id].Comments = row[fieldToCell["Remarks"]];
                     }
                 }
             }
@@ -352,7 +474,7 @@ namespace ReportConverter
             }
 
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows, tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
 
             foreach (List<string> row in rows)
             {
@@ -360,43 +482,42 @@ namespace ReportConverter
                 if (newWOs.ContainsKey(key))
                 {
                     //if (row[fieldToCell["MvT"]].Equals("965"))
-                    {
-                        string part = row[fieldToCell["Material"]];
-                        WorkOrder wo = newWOs[key];
-                        string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
-                        int qty = (int) Convert.ToDouble(row[fieldToCell["Quantity"]]);
-                        qty = qty * (-1);
 
-                        if (partID != null)
+                    string part = row[fieldToCell["Material"]];
+                    WorkOrder wo = newWOs[key];
+                    string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
+                    int qty = (int)Convert.ToDouble(row[fieldToCell["Quantity"]]);
+                    qty = qty * (-1);
+
+                    if (partID != null)
+                    {
+                        newWOs[key].addPart(partID, qty);
+                    }
+                    else
+                    {
+                        if (newParts.ContainsKey(part))
                         {
+                            partID = newParts[part].ID;
                             newWOs[key].addPart(partID, qty);
                         }
                         else
                         {
-                            if (newParts.ContainsKey(part))
+                            //create new part record
+                            Part newPart = new Part(part, wo.Vendor);
+                            if (newParts.Count > 1)
                             {
-                                partID = newParts[part].ID;
-                                newWOs[key].addPart(partID, qty);
+                                List<string> k = newParts.Keys.ToList();
+                                int len = k.Count;
+                                newPart.generateID(newParts[k[len - 1]].ID);
                             }
                             else
                             {
-                                //create new part record
-                                Part newPart = new Part(part, wo.Vendor);
-                                if (newParts.Count > 1)
-                                {
-                                    List<string> k = newParts.Keys.ToList();
-                                    int len = k.Count;
-                                    newPart.generateID(newParts[k[len - 1]].ID);
-                                }
-                                else
-                                {
-                                    newPart.generateID(newWOs[key].Vendor.newestPartID());
-                                }
-                                newPart.Qty = qty;
-                                newPart.Description = row[fieldToCell["Description"]];
-                                newParts.Add(part, newPart);
-                                newWOs[key].addPart(newPart.ID, qty);
+                                newPart.generateID(newWOs[key].Vendor.newestPartID());
                             }
+                            newPart.Qty = qty;
+                            newPart.Description = row[fieldToCell["Description"]];
+                            newParts.Add(part, newPart);
+                            newWOs[key].addPart(newPart.ID, qty);
                         }
                     }
                 }
@@ -404,83 +525,59 @@ namespace ReportConverter
         }
 
 
-        private double calculateStopTime(List<Tuple<DateTime, DateTime>> times)
+        private double calculateStopTime(List<DateRange> times)
         {
             double downTime=0.0;
-            Tuple<DateTime, DateTime> tuple;
-            TimeSpan duration;
-            int len = times.Count;
-            if (len > 1)
+            for (int i = 0; i < times.Count - 1; i++)
             {
-                for (int i = 0; i < len-1; i++)
-                {
-                    DateTime start1 = times[i].Item1;
-                    DateTime stop1 = times[i].Item2;
-                    DateTime start2 = times[i + 1].Item1;
-                    DateTime stop2 = times[i + 1].Item2;
+                DateTime start1 = times[i].Start;
+                DateTime stop1 = times[i].End;
+                DateTime start2 = times[i + 1].Start;
+                DateTime stop2 = times[i + 1].End;
 
-                    /* Using formula based on mergeSort to find any overlapping
-                     * downTimes, merge them and replace it in the list of
-                     * stop times*/
-                    if (start1 < start2 && stop1 > start2 && stop2 > stop1)
-                    {
-                        tuple = Tuple.Create<DateTime, DateTime>(start1, stop2);
-                        times[i] = tuple;
-                        times.RemoveAt(i + 1);
-                        i = 1;
-                    }
-                    else if (start1 > start2 && stop2 > start1 && stop1 > stop2)
-                    {
-                        tuple = Tuple.Create<DateTime, DateTime>(start2, stop1);
-                        times[i] = tuple;
-                        times.RemoveAt(i + 1);
-                        i = 1;
-                    }
+                /* Using formula based on mergeSort to find any overlapping
+                 * downTimes, merge them and replace it in the list of
+                 * stop times*/
+                if (start1 < start2 && stop1 > start2 && stop2 > stop1)
+                {
+                    times[i].End = stop2;
+                    times.RemoveAt(i + 1);
+                    i = 0;
+                }
+                else if (start1 > start2 && stop2 > start1 && stop1 > stop2)
+                {
+                    times[i].Start = start2;
+                    times.RemoveAt(i + 1);
+                    i = 0;
                 }
             }
-            len = times.Count;
-            foreach (Tuple<DateTime, DateTime> time in times)
+            
+            foreach (DateRange time in times)
             {
-                DateTime start = time.Item1;
-                DateTime stop = time.Item2;
-                duration = stop - start;
-                downTime = downTime + (duration.TotalHours + (duration.TotalMinutes / 60));
+                downTime = downTime + time.getHours();
             }
 
             return downTime;
         }
 
-        private DateTime getDateTimeInfo(string time, string date)
+        private DateTime getDateTime(string date, string time)
         {
-            int month = Convert.ToInt32(date.Substring(0, 2));
-            int day = Convert.ToInt32(date.Substring(3, 2));
-            int year = Convert.ToInt32(date.Substring(6, 4));
-            int hours = Convert.ToInt32(time.Substring(0, 2));
-            int min = Convert.ToInt32(time.Substring(3, 2));
-            int sec = Convert.ToInt32(time.Substring(6, 2));
-            DateTime dateTime = new DateTime(year, month, day, hours, min, sec);
+            string combined = date.Trim() + "," + time.Trim();
+            DateTime dateTime = Convert.ToDateTime(combined);
 
             return dateTime;
         }
 
+        /*
         private double getLaborHours(string start, string stop)
         {
-            double time = 0;
-            if(start.Contains(":"))
-            {
-                //hours
-                double startH = Convert.ToDouble(start.Substring(0, 2));
-                double stopH = Convert.ToDouble(stop.Substring(0, 2));
-                double h = stopH - startH;
-                //minutes
-                double startM = Convert.ToDouble(start.Substring(3, 2));
-                double stopM = Convert.ToDouble(stop.Substring(3, 2));
-                double m = (stopM - startM) / 60;
-                time = h + m;
-            }
-            return time;
-        }
+            DateTime s = Convert.ToDateTime(start);
+            DateTime e = Convert.ToDateTime(stop);
+            TimeSpan time = e - s;
+            return time.TotalHours;
+        }*/
 
+        /*
         private DateTime getDate(string s)
         {
             string sMonth = s.Substring(0, 2);
@@ -493,12 +590,7 @@ namespace ReportConverter
             DateTime date = new DateTime(nYear, nMonth, nDate);
 
             return date;
-        }
-
-        public int getDownTime()
-        {
-            return 0;
-        }
+        }*/
 
         private string getAssetNo(string n)
         {

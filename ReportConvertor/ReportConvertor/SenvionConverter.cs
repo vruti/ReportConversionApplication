@@ -94,7 +94,6 @@ namespace ReportConverter
         {
             fieldToCell = new Dictionary<string, int[]>();
             string key;
-            List<int> used = new List<int>();
 
             for (int i = 0; i < records.Count; i++)
             {
@@ -131,7 +130,7 @@ namespace ReportConverter
         {
             List<List<string>> data = info.getVendorData("Senvion");
             fieldNames = new Dictionary<string, List<string>>();
-            int i;
+            int i, j;
             List<string> row;
             bool isFieldTable = false;
 
@@ -149,12 +148,12 @@ namespace ReportConverter
                 }
                 if (isFieldTable)
                 {
-                    i = 0;
+                    j = 0;
                     List<string> fields = new List<string>();
-                    while (!row[i].Equals(" "))
+                    while (!row[j].Equals(" "))
                     {
-                        fields.Add(row[i]);
-                        i++;
+                        fields.Add(row[j].ToLower());
+                        j++;
                     }
                     fieldNames.Add(row[0], fields);
                 }
