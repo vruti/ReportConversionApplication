@@ -70,15 +70,21 @@ namespace ReportConverter
                 //check if it is the end of a line
                 if (currentText[i] == '\n')
                 {
-                    eachLine.Add(word);
-                    word = "";
+                    if (!word.Equals(""))
+                    {
+                        eachLine.Add(word);
+                        word = "";
+                    }
                     wholeFile.Add(eachLine);
                     eachLine = new List<string>();
                 }
                 else if (currentText[i] == ' ')
                 {
-                    eachLine.Add(word);
-                    word = "";
+                    if (!word.Equals(""))
+                    {
+                        eachLine.Add(word);
+                        word = "";
+                    }
                 }
                 else
                 {
