@@ -68,6 +68,7 @@
     <Compile Include="HTMLFileReader.cs" />
     <Compile Include="AppInfo.cs" />
     <Compile Include="NordexConverter.cs" />
+    <Compile Include="NordexExcelConverter.cs" />
     <Compile Include="Part.cs" />
     <Compile Include="PDFFileReader.cs" />
     <Compile Include="SenvionConverter.cs" />
