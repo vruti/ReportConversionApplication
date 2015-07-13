@@ -63,7 +63,6 @@ namespace ReportConverter
                 string file = Path.GetFileName(filePath);
                 string archiveFile = Path.Combine(archiveDir, file);
                 File.Move(filePath, archiveFile);
-                Console.WriteLine(file);
             }
         }
     }

@@ -7,17 +7,20 @@ using System.Threading.Tasks;
 
 namespace ReportConverter
 {
+    //A class to specify a range of dates
     public class DateRange
     {
         private DateTime start;
         private DateTime end;
 
+        //Requires a start date and end date
         public DateRange(DateTime s, DateTime e)
         {
             start = s;
             end = e;
         }
 
+        //getter and setter for start date
         public DateTime Start
         {
             get
@@ -30,6 +33,7 @@ namespace ReportConverter
             }
         }
 
+        //getter and setter for start date
         public DateTime End
         {
             get
@@ -42,6 +46,7 @@ namespace ReportConverter
             }
         }
 
+        //get the time in hours between start and end
         public double getHours()
         {
             TimeSpan difference = end - start;
@@ -51,16 +56,15 @@ namespace ReportConverter
 
     public class GamesaConverter : Converter
     {
-        //create a dictionary with all the fields and related titles?
-        private Dictionary<string, ArrayList> fieldNames;
+        //Global fields
         private AppInfo info;
         private Dictionary<string, WorkOrder> newWOs;
         private Dictionary<string, Part> newParts;
         private Dictionary<string, WorkOrder> flaggedWO;
+        Dictionary<string, List<string>> fieldNames;
 
         public GamesaConverter(AppInfo i)
         {
-            fieldNames = new Dictionary<string, ArrayList>();
             info = i;
             newParts = new Dictionary<string, Part>();
             flaggedWO = new Dictionary<string, WorkOrder>();
@@ -78,92 +82,27 @@ namespace ReportConverter
             hoursTabReader(keys, report);
             stopTimeTabReader(keys, report);
             partsTabReader(keys, report);
-
-            List<string> woKeys = newWOs.Keys.ToList();
-            foreach (string k in woKeys)
-            {
-                WorkOrder wo = newWOs[k];
-            }
-        }
-
-        public List<WorkOrder> getWorkOrders()
-        {
-            List<string> keys = newWOs.Keys.ToList();
-            List<WorkOrder> newWOList = new List<WorkOrder>();
-            foreach (string key in keys)
-            {
-                newWOs[key].createMPulseID();
-                newWOList.Add(newWOs[key]);
-            }
-            return newWOList;
-        }
-
-        public List<Part> getNewParts()
-        {
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
-            {
-                parts.Add(newParts[key]);
-            }
-            return parts;
         }
 
         public Dictionary<string, int> organizeFields(List<string> line, string tabName)
         {
-            //List<string> line = reportInfo[0];
             Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
-
-            Dictionary<string, List<string>> fieldNames = getFieldNames(tabName);
-
+            getFieldNames(tabName);
             List<string> fields = fieldNames.Keys.ToList();
             List<int> used = new List<int>();
 
             for (int i = 0; i < line.Count; i++)
             {
-                string key = isField(line[i], fieldNames);
+                string key = isField(line[i]);
                 if (key != null && !fieldToCell.ContainsKey(key) && !used.Contains(i))
                 {
                     fieldToCell.Add(key, i);
                 }
             }     
-
-                /*
-                foreach (string field in fields)
-                {
-                    if (tabName.Equals("Stop Times") && field.Equals("Start Time"))
-                    {
-                        fieldToCell.Add(field, fieldToCell["Start Date"]+1);
-                    }
-                    else if (tabName.Equals("Stop Times") && field.Equals("Stop Time"))
-                    {
-                        fieldToCell.Add(field, fieldToCell["Stop Date"] + 1);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < line.Count; i++)
-                        {
-                            string cell = line[i].ToLower();
-                            if (!fieldToCell.ContainsKey(field))
-                            {
-                                foreach (string val in fieldNames[field])
-                                {
-                                    string vall = val.ToLower();
-                                    if (cell.Contains(vall) && !used.Contains(i))
-                                    {
-                                        fieldToCell.Add(field, i);
-                                        used.Add(i);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }*/
-                return fieldToCell;
+            return fieldToCell;
         }
 
-        private string isField(string s, Dictionary<string, List<string>> fieldNames)
+        private string isField(string s)
         {
             List<string> fieldKeys = fieldNames.Keys.ToList();
             string name = s.ToLower();
@@ -173,6 +112,7 @@ namespace ReportConverter
                 {
                     if (name.Contains(field.ToLower()))
                     {
+                        fieldNames.Remove(key);
                         return key;
                     }
                 }
@@ -180,11 +120,10 @@ namespace ReportConverter
             return null;
         }
 
-        private Dictionary<string, List<string>> getFieldNames(string tab)
+        private void getFieldNames(string tab)
         {
             List<List<string>> data = info.getVendorData("Gamesa");
-            Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
-            //int rows = 0;
+            fieldNames = new Dictionary<string, List<string>>();
             int i, j;
             List<string> row;
             bool isFieldTable = false;
@@ -195,8 +134,9 @@ namespace ReportConverter
                 if (row[0].Contains("Tab") && isTab(tab, row))
                 {
                     isFieldTable = true;
+                    i++;
                 }
-                if (row[0].Equals(" "))
+                if (isFieldTable && row[0].Equals(" "))
                 {
                     isFieldTable = false;
                     break;
@@ -204,43 +144,16 @@ namespace ReportConverter
                 if (isFieldTable)
                 {
                     j = 0;
+                    row = data[i];
                     List<string> fields = new List<string>();
                     while (!row[j].Equals(" "))
                     {
                         fields.Add(row[j].ToLower());
                         j++;
                     }
-                    result.Add(row[0], fields);
+                    fieldNames.Add(row[0], fields);
                 }
             }
-            /*
-                for (i = 0; i < data.Count; i++)
-                {
-                    row = data[i];
-                    if (row[0].Contains("Tab"))
-                    {
-                        if (isTab(tab, row))
-                        {
-                            start = i + 1;
-                            rows = Convert.ToInt32(row[1]);
-                            break;
-                        }
-                    }
-                }
-
-            for (i = start; i < start + rows; i++)
-            {
-                row = new List<string>();
-                foreach (string val in data[i])
-                {
-                    if (!val.Equals(" "))
-                    {
-                        row.Add(val);
-                    }
-                }
-                result.Add(row[0], row);
-            }*/
-            return result;
         }
 
         private bool isTab(string tab, List<string> row)
@@ -274,36 +187,33 @@ namespace ReportConverter
             {
                 List<string> row = rows[i];
                 /* If the WO Type is ZPM7, it will not be imported*/
-                //if (!row[fieldToCell["Order Type"]].Contains("ZPM7"))
-                //{
-                    WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
-                    
-                    //CHANGE THIS
-                    string oType = row[fieldToCell["Order Type"]];
-                    List<string> taskInfo = table[oType];
-                    wo.WorkOrderType = taskInfo[0];
-                    wo.TaskID = taskInfo[1];
-                    wo.OutageType = taskInfo[2];
-                    wo.Planning = taskInfo[3];
-                    wo.UnplannedType = taskInfo[4];
-                    wo.Priority = taskInfo[5];
-                    wo.Description = row[fieldToCell["Description"]];
-                    wo.Status = "Closed";
-                    wo.Vendor = info.getVendor("Gamesa");
-                    wo.Site = info.getSite("Patton");
-                    //get asset ID
-                    wo.AssetID = getAssetNo(row[fieldToCell["Turbine No."]]);
+                
+                WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
+                string oType = row[fieldToCell["Order Type"]];
+                List<string> taskInfo = table[oType];
+                wo.WorkOrderType = taskInfo[0];
+                wo.TaskID = taskInfo[1];
+                wo.OutageType = taskInfo[2];
+                wo.Planning = taskInfo[3];
+                wo.UnplannedType = taskInfo[4];
+                wo.Priority = taskInfo[5];
+                wo.Description = row[fieldToCell["Description"]];
+                //Status will always be closed
+                wo.Status = "Closed";
+                wo.Vendor = info.getVendor("Gamesa");
+                wo.Site = info.getSite("Patton");
+                //get asset ID
+                wo.AssetID = getAssetNo(row[fieldToCell["Turbine No."]]);
 
-                    //if the dates are available in the general tab
-                    if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
-                    {
-                        wo.StartDate = getDateTime(row[fieldToCell["Start Date"]], " ");
-                        wo.EndDate = getDateTime(row[fieldToCell["End Date"]], " ");
-                        wo.OpenDate = wo.StartDate;
-                    }
-                    //add work order to list
-                    newWOs.Add(wo.OriginalID, wo);
-                //}
+                //if the dates are available in the general tab
+                if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
+                {
+                    wo.StartDate = getDateTime(row[fieldToCell["Start Date"]], " ");
+                    wo.EndDate = getDateTime(row[fieldToCell["End Date"]], " ");
+                    wo.OpenDate = wo.StartDate;
+                }
+                //add work order to list
+                newWOs.Add(wo.OriginalID, wo);
             }
         }
 
@@ -381,7 +291,6 @@ namespace ReportConverter
                         DateTime end = getDateTime("", row[fieldToCell["Stop Time"]]);
                         TimeSpan hours = end - start;
                         wo.ActualHours = hours.TotalHours;
-                        //wo.ActualHours += getLaborHours(row[fieldToCell["Start Time"]], row[fieldToCell["Stop Time"]]);
                     }
                     /*if description isn't in the main tab, take it from
                      * the remarks field here*/
@@ -437,10 +346,10 @@ namespace ReportConverter
                         List<DateRange> list = new List<DateRange>();
                         stopTimes.Add(id, list);
                     }
-                    if (row[fieldToCell["Stop Time"]] != null)
+                    if (!row[fieldToCell["Stop Time"]].Equals(" "))
                     {
                         DateTime start = getDateTime(row[fieldToCell["Start Date"]], row[fieldToCell["Start Time"]]);
-                        DateTime stop = getDateTime(row[fieldToCell["Stop Date"]], row[fieldToCell["Start Time"]]);
+                        DateTime stop = getDateTime(row[fieldToCell["Stop Date"]], row[fieldToCell["Stop Time"]]);
                         DateRange range = new DateRange(start, stop);
                         stopTimes[id].Add(range);
                     } else
@@ -481,8 +390,6 @@ namespace ReportConverter
                 string key = row[fieldToCell["Order ID"]];
                 if (newWOs.ContainsKey(key))
                 {
-                    //if (row[fieldToCell["MvT"]].Equals("965"))
-
                     string part = row[fieldToCell["Material"]];
                     WorkOrder wo = newWOs[key];
                     string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
@@ -568,30 +475,6 @@ namespace ReportConverter
             return dateTime;
         }
 
-        /*
-        private double getLaborHours(string start, string stop)
-        {
-            DateTime s = Convert.ToDateTime(start);
-            DateTime e = Convert.ToDateTime(stop);
-            TimeSpan time = e - s;
-            return time.TotalHours;
-        }*/
-
-        /*
-        private DateTime getDate(string s)
-        {
-            string sMonth = s.Substring(0, 2);
-            string sDate = s.Substring(3, 2);
-            string sYear = s.Substring(6, 4);
-
-            int nDate = Convert.ToInt32(sDate);
-            int nMonth = Convert.ToInt32(sMonth);
-            int nYear = Convert.ToInt32(sYear);
-            DateTime date = new DateTime(nYear, nMonth, nDate);
-
-            return date;
-        }*/
-
         private string getAssetNo(string n)
         {
             string num = "WTG-";
@@ -600,6 +483,8 @@ namespace ReportConverter
             {
                 if (count == 2)
                 {
+                    int len = n.Length - i;
+                    num += n.Substring(i, len).Trim();
                     if (!n[i].Equals(""))
                     {
                         if (n[i].Equals("-"))
@@ -611,13 +496,40 @@ namespace ReportConverter
                 }
                 else
                 {
-                    if (n[i].Equals("/"))
+                    string v = n.Substring(i, 1);
+                    if (v.Equals("/"))
                     {
                         count++;
                     }
                 }
             }
             return null;
+        }
+
+        public List<WorkOrder> getWorkOrders()
+        {
+            List<string> keys = newWOs.Keys.ToList();
+            List<WorkOrder> newWOList = new List<WorkOrder>();
+            foreach (string key in keys)
+            {
+                if (newWOs[key].DownTime > 0)
+                {
+                    newWOs[key].createMPulseID();
+                    newWOList.Add(newWOs[key]);
+                }
+            }
+            return newWOList;
+        }
+
+        public List<Part> getNewParts()
+        {
+            List<string> keys = newParts.Keys.ToList();
+            List<Part> parts = new List<Part>();
+            foreach (string key in keys)
+            {
+                parts.Add(newParts[key]);
+            }
+            return parts;
         }
     }
 }

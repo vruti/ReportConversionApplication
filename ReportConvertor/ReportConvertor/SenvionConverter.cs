@@ -10,7 +10,7 @@ namespace ReportConverter
     {
         private Dictionary<string, Part> newParts;
         private WorkOrder newWO;
-        private WorkOrder flaggedWO;
+        //private WorkOrder flaggedWO;
         private string site;
         AppInfo info;
         private Dictionary<string, int[]> fieldToCell;
@@ -27,17 +27,22 @@ namespace ReportConverter
 
         public void convertReport(Report report)
         {
-            records = report.getRecords("main");
+            records = report.getRecords("WIR");
             organizeFields();
-            newWO = new WorkOrder(records[fieldToCell["ID#"][0]][fieldToCell["ID#"][1]]);
+            int[] loc = fieldToCell["ID#"];
+            newWO = new WorkOrder(records[loc[0]+1][loc[1]]);
             newWO.Site = info.getSite(site);
             newWO.Vendor = info.getVendor("Senvion");
             calcLaborHours(fieldToCell["Time"]);
             addDates();
             getDownTime();
-            newWO.WorkOrderType = report.getWOType();
-            newWO.Description = records[fieldToCell["Description"][0]][fieldToCell["Description"][1]];
-            newWO.Comments = records[fieldToCell["Comments"][0]][fieldToCell["Comments"][1]];
+            newWO.WorkOrderType = report.checkedVals()[2];
+            loc = fieldToCell["Description"];
+            newWO.Description = records[loc[0]+2][loc[1]];
+            loc = fieldToCell["Comments"];
+            newWO.Comments = records[loc[0]][loc[1]+1];
+            newWO.Status = "Closed";
+            addParts();
         }
 
         private void getDownTime()
@@ -48,14 +53,14 @@ namespace ReportConverter
 
         private void addDates()
         {
-            int x = fieldToCell["Offline"][0]++;
-            int y = fieldToCell["Offline"][1]++;
+            int x = fieldToCell["Offline"][0];
+            int y = fieldToCell["Offline"][1]+3;
             newWO.StartDate = convertToDate(records[x][y]+","+records[x][y+1]);
-            x = fieldToCell["Online"][0]++;
-            y = fieldToCell["Online"][1]++;
+            x = fieldToCell["Online"][0];
+            y = fieldToCell["Online"][1]+3;
             newWO.EndDate = convertToDate(records[x][y]+","+records[x][y+1]);
             x = fieldToCell["Date"][0];
-            y = fieldToCell["Date"][1]++;
+            y = fieldToCell["Date"][1]+2;
             newWO.OpenDate = convertToDate(records[x][y]);
         }
 
@@ -94,7 +99,7 @@ namespace ReportConverter
         {
             fieldToCell = new Dictionary<string, int[]>();
             string key;
-
+            
             for (int i = 0; i < records.Count; i++)
             {
                 List<string> row = records[i];
@@ -106,7 +111,7 @@ namespace ReportConverter
                         fieldToCell.Add(key, new int[] {i, j});
                     }
                 }
-            }            
+            }
         }
 
         private string isField(string s)
@@ -140,6 +145,7 @@ namespace ReportConverter
                 if (row[0].Contains("Field Name"))
                 {
                     isFieldTable = true;
+                    i++;
                 }
                 if (row[0].Equals(" "))
                 {
@@ -148,12 +154,14 @@ namespace ReportConverter
                 }
                 if (isFieldTable)
                 {
-                    j = 0;
+                    row = data[i];
                     List<string> fields = new List<string>();
-                    while (!row[j].Equals(" "))
+                    for (j = 0; j < row.Count; j++)
                     {
-                        fields.Add(row[j].ToLower());
-                        j++;
+                        if (!row[j].Equals(" "))
+                        {
+                            fields.Add(row[j].ToLower());
+                        }
                     }
                     fieldNames.Add(row[0], fields);
                 }
@@ -162,13 +170,13 @@ namespace ReportConverter
 
         private void addParts()
         {
-            int x = fieldToCell["Parts"][0] + 2;
+            int x = fieldToCell["Parts"][0] + 3;
             int y = fieldToCell["Parts"][1] + 1;
 
-            while (!records[x][y].Equals(" "))
+            while (!records[x][y].Equals(""))
             {
-                string id = records[x][y + 4];
-                int qty = Convert.ToInt32(records[x][y + 5]);
+                string id = records[x][y + 5];
+                int qty = Convert.ToInt32(records[x][y + 6]);
                 string partID = newWO.Vendor.getPartID(id);
                 if (partID == null)
                 {
@@ -186,6 +194,7 @@ namespace ReportConverter
                     }
                 }
                 newWO.addPart(partID, qty);
+                x++;
             }
         }
 
@@ -214,6 +223,7 @@ namespace ReportConverter
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> newWOs = new List<WorkOrder>();
+            newWO.createMPulseID();
             newWOs.Add(newWO);
             return newWOs;
         }

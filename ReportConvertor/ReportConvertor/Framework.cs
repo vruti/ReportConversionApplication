@@ -46,22 +46,22 @@ namespace ReportConverter
                         switch (key)
                         {
                             case "Highland 1":
-                                c = new NordexConverter("Highland 1", info);
+                                c = new NordexConverter(key, info);
                                 break;
                             case "Highland North":
-                                c = new NordexConverter("Highland North", info);
+                                c = new NordexConverter(key, info);
                                 break;
                             case "Patton":
                                 c = new GamesaConverter(info);
                                 break;
                             case "Twin Ridges":
-                                if (key.Equals("xlsm"))
+                                if (sKey.Equals("xlsm"))
                                 {
-                                    c = new EVPConverter("Twin Ridges", info);
+                                    c = new EVPConverter(key, info);
                                 }
                                 else
                                 {
-                                    c = new SenvionConverter("Twin Ridges", info);
+                                    c = new SenvionConverter(key, info);
                                 }
                                 break;
                             case "Big Sky":
@@ -80,7 +80,6 @@ namespace ReportConverter
                             addNewParts(c.getNewParts());
                             addWorkOrders(c.getWorkOrders());
                         }
-                        // addWorkOrders(c.getWorkOrders());
                     }
                 }
 
@@ -118,7 +117,6 @@ namespace ReportConverter
             List<String> keys = newWO.Keys.ToList();
             foreach (string key in keys)
             {
-                newWO[key].createMPulseID();
                 workOrders.Add(newWO[key]);
             }
             return workOrders;
@@ -157,24 +155,29 @@ namespace ReportConverter
                 {
                     case "xlsx":
                         fR = new ExcelFileReader(info);
-                        ServiceReports.Add(key, fR.readFiles(files));
+                        
                         break;
                     case "xlsm":
                         fR = new ExcelFileReader(info);
-                        ServiceReports.Add(key, fR.readFiles(files));
+                        //ServiceReports.Add(key, fR.readFiles(files));
+                        break;
+                    case "xls":
+                        //fR = new XlsFileReader(info);
+                        //ServiceReports.Add(key, fR.readFile(files))
                         break;
                     case "pdf":
                         fR = new PDFFileReader(info);
-                        ServiceReports.Add(key, fR.readFiles(files));
+                        //ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "html":
                         fR = new HTMLFileReader(info);
-                        ServiceReports.Add(key, fR.readFiles(files));
+                        //ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     default:
                         ServiceReports = null;
                         break;
                 }
+                ServiceReports.Add(key, fR.readFiles(files));
                 dR.moveFiles(files);
             }
             return ServiceReports;

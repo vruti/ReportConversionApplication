@@ -14,7 +14,9 @@ namespace ReportConverter
         private Dictionary<string, int> fieldToCell;
         private string site;
         AppInfo info;
-
+        private Dictionary<string, List<string>> fieldNames;
+        List<List<string>> records;
+ 
         public EVPConverter(string s, AppInfo i)
         {
             info = i;
@@ -26,32 +28,34 @@ namespace ReportConverter
         public void convertReport(Report report)
         {
             newWO = new WorkOrder("temp ID");
-            List<List<string>> rec = report.getRecords("main");
-            organizeFields(rec);
+            records = report.getRecords("Entry");
+            organizeFields();
 
             newWO.Site = info.getSite(site);
             newWO.Vendor = newWO.Site.Contractor;
-            newWO.Description = rec[fieldToCell["Description"]][0];
-            newWO.WorkOrderType = rec[fieldToCell["Type"]][0];
-            DateTime date = toDate(rec);
+            newWO.Description = records[fieldToCell["Description"]][1];
+            newWO.WorkOrderType = records[fieldToCell["Type"]][1];
+            DateTime date = toDate(records);
             newWO.OpenDate = date;
             newWO.EndDate = date;
             newWO.StartDate = date;
-            newWO.DownTime = Convert.ToInt32(rec[fieldToCell["Down Time"]][0]);
-            newWO.ActualHours = Convert.ToInt32(rec[fieldToCell["Actual Hours"]][0]);
-            newWO.Comments = rec[fieldToCell["Comments"]][0];
+            newWO.DownTime = Convert.ToDouble(records[fieldToCell["Down Time"]][1]);
+            newWO.ActualHours = Convert.ToDouble(records[fieldToCell["Actual Hours"]][1]);
+            newWO.Comments = records[fieldToCell["Comments"]][1];
+            newWO.Status = "Closed";
+            addParts();
         }
 
-        private void addParts(List<List<string>> rec)
+        private void addParts()
         {
             int i = fieldToCell["Parts"] + 2;
-            while (!rec[i][0].Equals(""))
+            while (!records[i][0].Equals(" "))
             {
-                string id = rec[i][0];
+                string id = records[i][0];
                 string partID = newWO.Vendor.getPartID(id);
                 if (partID != null)
                 {
-                    int qty = Convert.ToInt32(rec[i][2]);
+                    int qty = Convert.ToInt32(records[i][2]);
                     newWO.addPart(partID, qty);
                 }
                 else
@@ -77,36 +81,88 @@ namespace ReportConverter
             }
         }
 
-        private void organizeFields(List<List<string>> records)
+        private void organizeFields()
         {
-            bool isTable = false;
+            fieldToCell = new Dictionary<string, int>();
+            getFieldNames();
+            string key;
+
             for (int i = 0; i < records.Count; i++)
             {
                 List<string> row = records[i];
-                if (row[0].Equals("Data Field"))
+                for (int j = 0; j < row.Count; j++)
                 {
-                    isTable = true;
-                }
-                if (isTable)
-                {
-                    if (row[0].Contains("Parts"))
+                    key = isField(row[j]);
+                    if (key != null && !fieldToCell.ContainsKey(key))
                     {
-                        fieldToCell.Add("Parts", i);
-                        isTable = false;
+                        fieldToCell.Add(key, i);
                     }
-                    fieldToCell.Add(row[0], i);
+                }
+            }
+        }
+
+        private string isField(string s)
+        {
+            List<string> fieldKeys = fieldNames.Keys.ToList();
+            string name = s.ToLower();
+            foreach (string key in fieldKeys)
+            {
+                foreach (string field in fieldNames[key])
+                {
+                    if (name.Contains(field.ToLower()))
+                    {
+                        return key;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void getFieldNames()
+        {
+            List<List<string>> data = info.getVendorData("EverPower");
+            fieldNames = new Dictionary<string, List<string>>();
+            int i, j;
+            List<string> row;
+            bool isFieldTable = false;
+
+            for (i = 0; i < data.Count; i++)
+            {
+                row = data[i];
+                if (row[0].Contains("Field Name"))
+                {
+                    isFieldTable = true;
+                    i++;
+                }
+                if (row[0].Equals(" "))
+                {
+                    isFieldTable = false;
+                    break;
+                }
+                if (isFieldTable)
+                {
+                    row = data[i];
+                    List<string> fields = new List<string>();
+                    for(j=0; j<row.Count; j++)
+                    {
+                        if (!row[j].Equals(" "))
+                        {
+                            fields.Add(row[j].ToLower());
+                        }
+                    }
+                    fieldNames.Add(row[0], fields);
                 }
             }
         }
 
         private DateTime toDate(List<List<string>> rec)
         {
-            string date = rec[fieldToCell["Date"]][0];
+            string date = rec[fieldToCell["Date"]][1];
 
             int day = Convert.ToInt32(date.Substring(0, 2));
             int month = Convert.ToInt32(date.Substring(3, 2));
             int year = Convert.ToInt32(date.Substring(6, 4));
-            DateTime dateTime = new DateTime(year, month, day);
+            DateTime dateTime = Convert.ToDateTime(date);
 
             return dateTime;
         }
@@ -125,6 +181,7 @@ namespace ReportConverter
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> newWOs = new List<WorkOrder>();
+            newWO.createMPulseID();
             newWOs.Add(newWO);
             return newWOs;
         }

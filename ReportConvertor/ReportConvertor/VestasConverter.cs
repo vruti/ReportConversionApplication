@@ -10,7 +10,7 @@ namespace ReportConverter
     {
         private Dictionary<string, Part> newParts;
         private WorkOrder newWO;
-        private Dictionary<string, WorkOrder> flaggedWO;
+        //private WorkOrder flaggedWO;
         private string site;
         AppInfo info;
         List<List<string>> records;
@@ -19,11 +19,14 @@ namespace ReportConverter
         {
             info = i;
             site = s;
+            newParts = new Dictionary<string, Part>();
         }
 
         public void convertReport(Report report)
         {
             records = report.getRecords("main");
+            string id = getID();
+            newWO = new WorkOrder(id);
         }
 
         private string getID()
@@ -99,6 +102,8 @@ namespace ReportConverter
 
         public List<WorkOrder> getWorkOrders()
         {
+            List<WorkOrder> newWOs = new List<WorkOrder>();
+            newWOs.Add(newWO);
             return newWOs;
         }
     }

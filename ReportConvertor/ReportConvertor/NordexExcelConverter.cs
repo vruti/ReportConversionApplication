@@ -11,7 +11,7 @@ namespace ReportConverter
         private string site;
         private AppInfo info;
         private WorkOrder wo;
-        private WorkOrder flaggedWO;
+        //private WorkOrder flaggedWO;
         private Dictionary<string, Part> newParts;
         private List<List<string>> records;
 
@@ -26,6 +26,7 @@ namespace ReportConverter
         {
             records = report.getRecords("main");
             string id = null;
+            //CHANGE THIS OR ELSE
             int i = 0, j = 0;
             while (id == null)
             {
@@ -35,12 +36,34 @@ namespace ReportConverter
                 }
             }
             wo = new WorkOrder(id);
-
+            wo.WorkOrderType = report.checkedVals()[0];
         }
 
-        private void get
+        private void getDownTime()
+        {
+            bool isStopTime = false;
+            foreach (List<string> row in records)
+            {
+                if (isStopTime && row[1].Equals(" "))
+                {
+                    break;
+                }
+                if (isStopTime)
+                {
+                    int last = row.Count - 1;
+                    double time = Convert.ToDouble(row[last]);
+                    wo.DownTime += time;
+                }
+                if (row[1].Contains("Turbine Stop"))
+                {
+                    isStopTime = true;
+                }
+            }
+        }
 
-        private void addNewParts(int start)
+        /*Find and add all the parts that are
+         * used in the work order*/
+        private void addParts(int start)
         {
 
         }

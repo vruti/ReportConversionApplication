@@ -59,9 +59,13 @@ namespace ReportConverter
             return allRecords.Keys.ToList();
         }
 
-        public string getWOType()
+        public List<string> checkedVals()
         {
-            return checklistVals[2];
+            if (checklistVals.Contains(""))
+            {
+                checklistVals.Remove("");
+            }
+            return checklistVals;
         }
     }
 }
