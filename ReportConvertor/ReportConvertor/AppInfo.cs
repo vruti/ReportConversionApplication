@@ -21,7 +21,7 @@ namespace ReportConverter
     public class AppInfo
     {
         private List<Vendor> vendors;
-        private List<Site> sites;
+        private Dictionary<string, Site> sites;
         private Dictionary<string, string> fileLocs;
         private Dictionary<string, List<List<string>>> vendorData;
         private Dictionary<string, List<string>> assets;
@@ -35,7 +35,7 @@ namespace ReportConverter
         public AppInfo()
         {
             vendors = new List<Vendor>();
-            sites = new List<Site>();
+            sites = new Dictionary<string, Site>();
             fileLocs = new Dictionary<string, string>();
             vendorData = new Dictionary<string, List<List<string>>>();
             assets = new Dictionary<string, List<string>>();
@@ -55,9 +55,9 @@ namespace ReportConverter
             Console.WriteLine(ws.Count);
             
             //read the individual tabs of the file
-            addFileLoc(ws[1]);
-            addVendors(ws[3]);
-            addSites(ws[2]);
+            addFileLoc(ws["FileLocations"]);
+            addVendors(ws["Vendor General"]);
+            addSites(ws["Site"]);
             addVendorData(ws);
         }
 
@@ -74,7 +74,6 @@ namespace ReportConverter
                     fileLocs.Add(worksheet.Cells[i, 1].Value.ToString(), worksheet.Cells[i, 2].Value.ToString());
                 }
             }
-
         }
 
         // Get the location of file/directory specified
@@ -118,28 +117,27 @@ namespace ReportConverter
                     }
                 }
                 //adding the new site to the list
-                sites.Add(site);
+                sites.Add(site.Name, site);
             }
         }
 
         //Get list of all the sites
         public List<Site> getSites()
         {
-            return sites;
+            List<Site> siteList = new List<Site>();
+            List<string> keys = sites.Keys.ToList();
+            foreach (string key in keys)
+            {
+                siteList.Add(sites[key]);
+            }
+            return siteList;
         }
 
         /* Getter class to retrieve a specific site
          * by name */
         public Site getSite(string name)
         {
-            foreach (Site site in sites)
-            {
-                if (site.Name == name)
-                {
-                    return site;
-                }
-            }
-            return null;
+            return sites[name];
         }
 
         /* Create a Vendor object for each of the vendors

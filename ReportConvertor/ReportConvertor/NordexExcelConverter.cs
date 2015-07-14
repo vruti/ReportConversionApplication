@@ -14,6 +14,8 @@ namespace ReportConverter
         //private WorkOrder flaggedWO;
         private Dictionary<string, Part> newParts;
         private List<List<string>> records;
+        private Dictionary<string, List<string>> fieldNames;
+        private Dictionary<string, int> fieldToCell;
 
         public NordexExcelConverter(string s, AppInfo i)
         {
@@ -25,18 +27,45 @@ namespace ReportConverter
         public void convertReport(Report report)
         {
             records = report.getRecords("main");
-            string id = null;
-            //CHANGE THIS OR ELSE
-            int i = 0, j = 0;
-            while (id == null)
-            {
-                if (records[i][j].Contains("SO #"))
-                {
-                    id =records[i][j+1];
-                }
-            }
+            string id = getID();
             wo = new WorkOrder(id);
             wo.WorkOrderType = report.checkedVals()[0];
+        }
+
+        private string getID()
+        {
+            string id = null;
+            List<string> idFields = fieldNames["ID"];
+            bool isID = false;
+            for (int i = 0; i < records.Count; i++)
+            {
+                if (!isID)
+                {
+                    List<string> row = records[i];
+                    for (int j = 0; j < row.Count; j++)
+                    {
+                        if (isID)
+                        {
+                            if (!row[j].Equals(" "))
+                            {
+                                id = row[j];
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            foreach (string field in idFields)
+                            {
+                                if (row[j].ToLower().Contains(field.ToLower()))
+                                {
+                                    isID = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+                return id;
         }
 
         private void getDownTime()

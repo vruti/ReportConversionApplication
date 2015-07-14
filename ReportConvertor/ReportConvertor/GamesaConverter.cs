@@ -190,6 +190,7 @@ namespace ReportConverter
                 
                 WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
                 string oType = row[fieldToCell["Order Type"]];
+                //Get subsequest task information from the work order type code
                 List<string> taskInfo = table[oType];
                 wo.WorkOrderType = taskInfo[0];
                 wo.TaskID = taskInfo[1];
