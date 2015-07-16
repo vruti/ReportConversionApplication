@@ -8,7 +8,7 @@ namespace ReportConverter
 {
     public class SenvionConverter : Converter
     {
-        private Dictionary<string, Part> newParts;
+        //private Dictionary<string, Part> newParts;
         private WorkOrder newWO;
         //private WorkOrder flaggedWO;
         private string site;
@@ -21,7 +21,7 @@ namespace ReportConverter
         {
             info = i;
             site = s;
-            newParts = new Dictionary<string, Part>();
+            //newParts = new Dictionary<string, Part>();
             getFieldNames();
         }
 
@@ -177,7 +177,18 @@ namespace ReportConverter
             {
                 string id = records[x][y + 5];
                 int qty = Convert.ToInt32(records[x][y + 6]);
-                string partID = newWO.Vendor.getPartID(id);
+                string partID = newWO.Vendor.getPartID(id, qty);
+                if (partID != null)
+                {
+                    newWO.addPart(partID, qty);
+                }
+                else
+                {
+                    string description = records[x][y];
+                    partID = newWO.Vendor.addNewPart(id, qty, description);
+                    newWO.addPart(partID, qty);
+                }
+                /*
                 if (partID == null)
                 {
                     if (newParts.ContainsKey(id))
@@ -193,11 +204,11 @@ namespace ReportConverter
                         newParts.Add(id, p);
                     }
                 }
-                newWO.addPart(partID, qty);
+                newWO.addPart(partID, qty);*/
                 x++;
             }
         }
-
+        /*
         private string getNewestPartID()
         {
             if (newParts.Count > 0)
@@ -207,17 +218,19 @@ namespace ReportConverter
                 return keys[i];
             }
             return newWO.Vendor.newestPartID();
-        }
+        }*/
 
         public List<Part> getNewParts()
         {
+            /*
             List<string> keys = newParts.Keys.ToList();
             List<Part> parts = new List<Part>();
             foreach (string key in keys)
             {
                 parts.Add(newParts[key]);
             }
-            return parts;
+            return parts;*/
+            return newWO.Vendor.getNewParts();
         }
 
         public List<WorkOrder> getWorkOrders()

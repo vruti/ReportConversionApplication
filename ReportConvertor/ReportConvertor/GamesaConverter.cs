@@ -59,14 +59,12 @@ namespace ReportConverter
         //Global fields
         private AppInfo info;
         private Dictionary<string, WorkOrder> newWOs;
-        private Dictionary<string, Part> newParts;
         private Dictionary<string, WorkOrder> flaggedWO;
         Dictionary<string, List<string>> fieldNames;
 
         public GamesaConverter(AppInfo i)
         {
             info = i;
-            newParts = new Dictionary<string, Part>();
             flaggedWO = new Dictionary<string, WorkOrder>();
         }
 
@@ -209,9 +207,13 @@ namespace ReportConverter
                 //if the dates are available in the general tab
                 if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
                 {
+                    wo.StartDate = Convert.ToDateTime(row[fieldToCell["Start Date"]]);
+                    wo.EndDate = Convert.ToDateTime(row[fieldToCell["End Date"]]);
+                    wo.OpenDate = wo.StartDate;
+                    /*
                     wo.StartDate = getDateTime(row[fieldToCell["Start Date"]], " ");
                     wo.EndDate = getDateTime(row[fieldToCell["End Date"]], " ");
-                    wo.OpenDate = wo.StartDate;
+                    wo.OpenDate = wo.StartDate;*/
                 }
                 //add work order to list
                 newWOs.Add(wo.OriginalID, wo);
@@ -393,40 +395,20 @@ namespace ReportConverter
                 {
                     string part = row[fieldToCell["Material"]];
                     WorkOrder wo = newWOs[key];
-                    string partID = newWOs[key].Vendor.getPartID(row[fieldToCell["Material"]]);
                     int qty = (int)Convert.ToDouble(row[fieldToCell["Quantity"]]);
                     qty = qty * (-1);
+                    string id = row[fieldToCell["Material"]];
+                    string partID = newWOs[key].Vendor.getPartID(id, qty);
 
                     if (partID != null)
                     {
-                        newWOs[key].addPart(partID, qty);
+                        wo.addPart(partID, qty);
                     }
                     else
                     {
-                        if (newParts.ContainsKey(part))
-                        {
-                            partID = newParts[part].ID;
-                            newWOs[key].addPart(partID, qty);
-                        }
-                        else
-                        {
-                            //create new part record
-                            Part newPart = new Part(part, wo.Vendor);
-                            if (newParts.Count > 1)
-                            {
-                                List<string> k = newParts.Keys.ToList();
-                                int len = k.Count;
-                                newPart.generateID(newParts[k[len - 1]].ID);
-                            }
-                            else
-                            {
-                                newPart.generateID(newWOs[key].Vendor.newestPartID());
-                            }
-                            newPart.Qty = qty;
-                            newPart.Description = row[fieldToCell["Description"]];
-                            newParts.Add(part, newPart);
-                            newWOs[key].addPart(newPart.ID, qty);
-                        }
+                        string description = row[fieldToCell["Description"]];
+                        partID = wo.Vendor.addNewPart(id, qty, description);
+                        wo.addPart(partID, qty);
                     }
                 }
             }
@@ -520,17 +502,6 @@ namespace ReportConverter
                 }
             }
             return newWOList;
-        }
-
-        public List<Part> getNewParts()
-        {
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
-            {
-                parts.Add(newParts[key]);
-            }
-            return parts;
         }
     }
 }

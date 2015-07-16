@@ -21,13 +21,15 @@ namespace ReportConverter
         private Dictionary<string, string> partsTable;
         private int partsTab;
         private int woTab;
-        string woFile;
-        string partsFile;
+        private string woFile;
+        private string partsFile;
+        private Dictionary<string, Part> newParts;
 
         public Vendor()
         {
             newWO = new Dictionary<string, int>();
             altNames = new ArrayList();
+            newParts = new Dictionary<string, Part>();
         }
 
         public string ID
@@ -246,12 +248,17 @@ namespace ReportConverter
             }
         }
 
-        public string getPartID(string cPart)
+        public string getPartID(string partID, int qty)
         {
             //return the mpulse part number if it exists
-            if (partsTable.ContainsKey(cPart))
+            if (partsTable.ContainsKey(partID))
             {
-                return partsTable[cPart];
+                return partsTable[partID];
+            }
+            else if (newParts.ContainsKey(partID))
+            {
+                newParts[partID].Qty += qty;
+                return newParts[partID].ID;
             }
             //return null if it doesn't
             //convertor should create a new part to be uploaded
@@ -260,9 +267,37 @@ namespace ReportConverter
 
         public string newestPartID()
         {
+            int len;
+            if (newParts.Count > 0)
+            {
+                List<string> k = newParts.Keys.ToList();
+                len = k.Count;
+                return newParts[k[len - 1]].ID;
+            }
             List<string> keys = partsTable.Keys.ToList();
-            int len = keys.Count;
+            len = keys.Count;
             return partsTable[keys[len-1]];
+        }
+
+        public string addNewPart(string id, int qty, string description)
+        {
+            Part newPart = new Part(id, this);
+            newPart.generateID(newestPartID());
+            newPart.Qty += qty;
+            newPart.Description = description;
+            newParts.Add(id, newPart);
+            return newPart.ID;
+        }
+
+        public List<Part> getNewParts()
+        {
+            List<Part> newPartList = new List<Part>();
+            List<string> keys = newParts.Keys.ToList();
+            foreach (string key in keys)
+            {
+                newPartList.Add(newParts[key]);
+            }
+            return newPartList;
         }
     }
 }

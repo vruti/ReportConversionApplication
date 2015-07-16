@@ -15,7 +15,7 @@ namespace ReportConverter
         private Dictionary<string, Part> newParts;
         private List<List<string>> records;
         private Dictionary<string, List<string>> fieldNames;
-        private Dictionary<string, int> fieldToCell;
+        private Dictionary<string, int[]> fieldToCell;
 
         public NordexExcelConverter(string s, AppInfo i)
         {
@@ -27,9 +27,14 @@ namespace ReportConverter
         public void convertReport(Report report)
         {
             records = report.getRecords("main");
+            organizeFields();
             string id = getID();
             wo = new WorkOrder(id);
             wo.WorkOrderType = report.checkedVals()[0];
+            wo.Site = info.getSite(site);
+            wo.Vendor = info.getVendor("Nordex");
+            wo.Status = "Closed";
+            
         }
 
         private string getID()
@@ -65,13 +70,94 @@ namespace ReportConverter
                     }
                 }
             }
-                return id;
+            return id;
+        }
+
+        private void organizeFields()
+        {
+            fieldToCell = new Dictionary<string, int[]>();
+            string key;
+
+            for (int i = 0; i < records.Count; i++)
+            {
+                List<string> row = records[i];
+                for (int j = 0; j < row.Count; j++)
+                {
+                    key = isField(row[j]);
+                    if (key != null && !fieldToCell.ContainsKey(key))
+                    {
+                        fieldToCell.Add(key, new int[] { i, j });
+                    }
+                }
+            }
+        }
+
+        private string isField(string s)
+        {
+            List<string> fieldKeys = fieldNames.Keys.ToList();
+            string name = s.ToLower();
+            foreach (string key in fieldKeys)
+            {
+                foreach (string field in fieldNames[key])
+                {
+                    if (name.Contains(field.ToLower()))
+                    {
+                        return key;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void getFieldNames()
+        {
+            List<List<string>> data = info.getVendorData("Senvion");
+            fieldNames = new Dictionary<string, List<string>>();
+            int i, j;
+            List<string> row;
+            bool isFieldTable = false;
+
+            for (i = 0; i < data.Count; i++)
+            {
+                row = data[i];
+                if (row[0].Contains("Field Name"))
+                {
+                    isFieldTable = true;
+                    i++;
+                }
+                if (row[0].Equals(" "))
+                {
+                    isFieldTable = false;
+                    break;
+                }
+                if (isFieldTable)
+                {
+                    row = data[i];
+                    List<string> fields = new List<string>();
+                    for (j = 0; j < row.Count; j++)
+                    {
+                        if (!row[j].Equals(" "))
+                        {
+                            fields.Add(row[j].ToLower());
+                        }
+                    }
+                    fieldNames.Add(row[0], fields);
+                }
+            }
         }
 
         private void getDownTime()
         {
             bool isStopTime = false;
-            foreach (List<string> row in records)
+            int i = fieldToCell["Stop Time"][0];
+            List<string> row = records[i+1];
+            while (!row[0].Equals(" "))
+            {
+                int last = row.Count - 1;
+                double time = Convert.ToDouble(row[last]);
+                wo.DownTime += time;
+            }/*
+            foreach (List<string> rowd in records)
             {
                 if (isStopTime && row[1].Equals(" "))
                 {
@@ -79,15 +165,13 @@ namespace ReportConverter
                 }
                 if (isStopTime)
                 {
-                    int last = row.Count - 1;
-                    double time = Convert.ToDouble(row[last]);
-                    wo.DownTime += time;
+                    
                 }
                 if (row[1].Contains("Turbine Stop"))
                 {
                     isStopTime = true;
                 }
-            }
+            }*/
         }
 
         /*Find and add all the parts that are
@@ -97,6 +181,9 @@ namespace ReportConverter
 
         }
 
+        /*Returns a list of the new parts in the
+         * work order so that they can be put into 
+         * the output file for upload*/
         public List<Part> getNewParts()
         {
             List<string> keys = newParts.Keys.ToList();

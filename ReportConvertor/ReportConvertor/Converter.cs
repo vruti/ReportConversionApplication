@@ -10,8 +10,6 @@ namespace ReportConverter
     {
         void convertReport(Report report);
 
-        List<Part> getNewParts();
-
         List<WorkOrder> getWorkOrders();
     }
 }

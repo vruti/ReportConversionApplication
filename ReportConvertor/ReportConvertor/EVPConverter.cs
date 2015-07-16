@@ -8,7 +8,6 @@ namespace ReportConverter
 {
     public class EVPConverter : Converter
     {
-        private Dictionary<string, Part> newParts;
         private WorkOrder newWO;
         private WorkOrder flaggedWO;
         private Dictionary<string, int> fieldToCell;
@@ -21,7 +20,6 @@ namespace ReportConverter
         {
             info = i;
             site = s;
-            newParts = new Dictionary<string, Part>();
             fieldToCell = new Dictionary<string, int>();
         }
 
@@ -52,10 +50,10 @@ namespace ReportConverter
             while (!records[i][0].Equals(" "))
             {
                 string id = records[i][0];
-                string partID = newWO.Vendor.getPartID(id);
+                int qty = Convert.ToInt32(records[i][2]);
+                string partID = newWO.Vendor.getPartID(id, qty);
                 if (partID != null)
                 {
-                    int qty = Convert.ToInt32(records[i][2]);
                     newWO.addPart(partID, qty);
                 }
                 else
@@ -158,24 +156,9 @@ namespace ReportConverter
         private DateTime toDate(List<List<string>> rec)
         {
             string date = rec[fieldToCell["Date"]][1];
-
-            int day = Convert.ToInt32(date.Substring(0, 2));
-            int month = Convert.ToInt32(date.Substring(3, 2));
-            int year = Convert.ToInt32(date.Substring(6, 4));
             DateTime dateTime = Convert.ToDateTime(date);
 
             return dateTime;
-        }
-
-        public List<Part> getNewParts()
-        {
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
-            {
-                parts.Add(newParts[key]);
-            }
-            return parts;
         }
 
         public List<WorkOrder> getWorkOrders()

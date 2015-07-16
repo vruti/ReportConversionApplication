@@ -12,7 +12,7 @@ namespace ReportConverter
         private string inputDirectory;
         public Dictionary<string, WorkOrder> newWO;
         public Dictionary<string, List<WorkOrder>> flaggedWO;
-        public List<Part> newParts;
+        //public List<Part> newParts;
         private string archiveDirectory;
 
         public Framework()
@@ -22,7 +22,7 @@ namespace ReportConverter
             archiveDirectory = info.getFileLoc("Archive");
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new Dictionary<string,List<WorkOrder>>();
-            newParts = new List<Part>();
+            //newParts = new List<Part>();
         }
 
         public void start(Main m)
@@ -77,38 +77,28 @@ namespace ReportConverter
                         foreach (Report report in ServiceReports[sKey][key])
                         {
                             c.convertReport(report);
-                            addNewParts(c.getNewParts());
                             addWorkOrders(c.getWorkOrders());
                         }
                     }
                 }
 
                 ExcelFileWriter writer = new ExcelFileWriter(info);
+                List<Part> newParts = getParts();
                 writer.writeFiles(getListofWO(), newParts, null);
                 m.showDoneMessage();
             }
             m.activateForm();
         }
 
-        private void addNewParts(List<Part> parts)
+        private List<Part> getParts()
         {
-            if (newParts.Count == 0)
+            List<Part> newParts = new List<Part>();
+            List<Vendor> vendors = info.getAllVendors();
+            foreach (Vendor v in vendors)
             {
-                foreach (Part part in parts)
-                {
-                    newParts.Add(part);
-                }
+                newParts.AddRange(v.getNewParts());
             }
-            else
-            {
-                foreach (Part part in parts)
-                {
-                    if (!newParts.Contains(part))
-                    {
-                        newParts.Add(part);
-                    }
-                }
-            }
+            return newParts;
         }
 
         private List<WorkOrder> getListofWO()
@@ -178,7 +168,7 @@ namespace ReportConverter
                         break;
                 }
                 ServiceReports.Add(key, fR.readFiles(files));
-                dR.moveFiles(files);
+                //dR.moveFiles(files);
             }
             return ServiceReports;
         }

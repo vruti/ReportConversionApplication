@@ -8,68 +8,70 @@ namespace ReportConverter
 {
     public class NordexConverter : Converter
     {
-        private Dictionary<string, Part> newParts;
-        WorkOrder newWO;
-        private Dictionary<string, WorkOrder> flaggedWO;
+        private WorkOrder newWO;
+        private WorkOrder flaggedWO;
         private string site;
-        AppInfo info;
+        private AppInfo info;
+        private List<List<string>> records;
 
         public NordexConverter(string s, AppInfo i)
         {
-            newParts = new Dictionary<string,Part>();
-            flaggedWO = new Dictionary<string, WorkOrder>();
             site = s;
             info = i;
         }
 
         public void convertReport(Report report)
-        {
-            
-            List<List<string>> rec = report.getRecords("main");
-            string id = getOrderNo(rec);
+        { 
+            records = report.getRecords("main");
+            string id = getOrderNo();
             newWO = new WorkOrder(id);
-            newWO.Site=info.getSite(site);
+            newWO.Site = info.getSite(site);
             newWO.Vendor = info.getVendor("Nordex");
             newWO.Status = "Closed";
-            //newWOs.Add(id, wo);
             int countS = 1;
             int countC = 1;
 
-            for (int i = 0; i < rec.Count; i++)
+            for (int i = 0; i < records.Count; i++)
             {
-                List<string> row = rec[i];
+                List<string> row = records[i];
                 if (row[0].Equals("Date"))
                 {
-                    newWO.OpenDate = toDate(row[1].Trim());
+                    newWO.OpenDate = Convert.ToDateTime(row[1].Trim());
                 } 
                 else if (row[0].Contains("Start Date") && countS == 1)
                 {
-                    i = timeUsed(rec, (i + 1), id);
+                    i = timeUsed((i + 1), id);
                     countS++;
                 }
                 else if (row[0].Contains("Oper.") && countC == 1)
                 {
-                    i = componentsUsed(rec, (i + 1), id);
+                    i = componentsUsed((i + 1), id);
                     countC++;
                 }
             }
-
-
         }
 
-        private DateTime toDate(string date)
+        private DateTime toDate(string d)
         {
-            int day = Convert.ToInt32(date.Substring(0, 2));
-            int month = Convert.ToInt32(date.Substring(3, 2));
-            int year = Convert.ToInt32(date.Substring(6, 4));
-            DateTime dateTime = new DateTime(year, month, day);
+            int day = Convert.ToInt32(d.Substring(0, 2));
+            int month = Convert.ToInt32(d.Substring(3, 2));
+            int year = Convert.ToInt32(d.Substring(6, 4));
+            DateTime date;
+            if (month > 12)
+            {
+                date = new DateTime(year, day, month);
+            }
+            else
+            {
+                date = new DateTime(year, month, day);
+            }
 
-            return dateTime;
+            return date;
         }
 
-        private string getOrderNo(List<List<string>> rec)
+        private string getOrderNo()
         {
-            foreach (List<string> row in rec)
+            foreach (List<string> row in records)
             {
                 if (row[0].Contains("Order No."))
                 {
@@ -79,6 +81,7 @@ namespace ReportConverter
             return null;
         }
 
+        //DEAL WITH THIS SOOOOONNNNNN
         private Dictionary<string, int> organizeFields(List<string> record)
         {
             Dictionary<string, int> result = new Dictionary<string, int>();
@@ -97,11 +100,10 @@ namespace ReportConverter
             }
             return result;
         }
-
-        private int timeUsed(List<List<string>> records, int i, string id)
+        
+        private int timeUsed(int i, string id)
         {
             Dictionary<string, int> fieldToCell = organizeFields(records[i-1]);
-            //WorkOrder wo = newWOs[id];
             DateTime def = new DateTime();
             while (!records[i][0].Contains("Oper. Ref."))
             {
@@ -109,8 +111,10 @@ namespace ReportConverter
 
                 if(newWO.StartDate == def)
                 {
-                    newWO.StartDate = toDate(row[fieldToCell["Start Date"]]);
-                } else 
+                    DateTime s = toDate(row[fieldToCell["Start Date"]]);
+                    newWO.StartDate = s;
+                } 
+                else 
                 {
                     DateTime d = toDate(row[fieldToCell["Start Date"]]);
                     if (d < newWO.StartDate)
@@ -160,6 +164,7 @@ namespace ReportConverter
                 if (row[fieldToCell["Description of"]].Contains("Start/Stop"))
                 {
                     newWO.DownTime += getHours(startTime, endTime);
+                    newWO.ActualHours += getHours(startTime, endTime);
                 }
                 else
                 {
@@ -167,71 +172,44 @@ namespace ReportConverter
                 }
                 i++;
             }
-            //newWOs[id] = wo;
             return (i-1);
         }
 
         private double getHours(string start, string end)
         {
-            double sHour = Convert.ToDouble(start.Substring(0, 2));
-            double sMin = Convert.ToDouble(start.Substring(3, 2));
-
-            double eHour = Convert.ToDouble(end.Substring(0, 2));
-            double eMin = Convert.ToDouble(end.Substring(3, 2));
-
-            double time = (eHour - sHour) + ((eMin - sMin) / 60);
-            return time;
+            DateTime s = Convert.ToDateTime(start);
+            DateTime e = Convert.ToDateTime(end);
+            TimeSpan time = e - s;
+            double hours = time.TotalHours;
+            return hours;
         }
 
-        private int componentsUsed(List<List<string>> records, int i, string id)
+        private int componentsUsed(int i, string id)
         {
-            //WorkOrder wo = newWOs[id];
             Dictionary<string, int> fieldToCell = organizeFields(records[i-1]);
             while (!records[i][0].Contains("Measurement"))
             {
                 List<string> record = records[i];
                 string partNo = record[fieldToCell["Product Ref."]];
-                string partID = newWO.Vendor.getPartID(partNo);
                 double dQty = Convert.ToDouble(record[fieldToCell["Quantity"]]);
                 int qty = Convert.ToInt32(dQty);
+                string partID = newWO.Vendor.getPartID(partNo, qty);
                 if (partID != null)
                 {
                     newWO.addPart(partID, qty);
                 }
                 else
                 {
-                    if (newParts.ContainsKey(partNo))
-                    {
-                        partID = newParts[partNo].ID;
-                        newWO.addPart(partID, qty);
-                    }
-                    else
-                    {
-                        Part newPart = new Part(partNo, newWO.Vendor);
-                        if (newParts.Count > 1)
-                        {
-                            List<string> k = newParts.Keys.ToList();
-                            int len = k.Count;
-                            newPart.generateID(newParts[k[len - 1]].ID);
-                        }
-                        else
-                        {
-                            newPart.generateID(newWO.Vendor.newestPartID());
-                            //newPart.generateID(newWOs[id].Vendor.newestPartID());
-                        }
-                        newPart.Qty = qty;
-                        newPart.Description = record[fieldToCell["Description"]];
-                        newParts.Add(partNo, newPart);
-                        //newWOs[id].addPart(newPart.ID, qty);
-                        newWO.addPart(newPart.ID, qty);
-                    }
+                    string description = record[fieldToCell["Description"]];
+                    partID = newWO.Vendor.addNewPart(partNo, qty, description);
+                    newWO.addPart(partID, qty);
                 }
                 i++;
             }
             return (i - 1);
         }
 
-        private int counterReadings(List<List<string>> records, int i)
+        private int counterReadings(int i)
         {
             
             while (records[i].Count > 1)
@@ -241,23 +219,12 @@ namespace ReportConverter
             return (i-1);
         }
 
-        private void comments(List<List<string>> records, int i)
+        private void comments(int i)
         {
             for (int j = i; j < records.Count; j++)
             {
                 
             }
-        }
-
-        public List<Part> getNewParts()
-        {
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
-            {
-                parts.Add(newParts[key]);
-            }
-            return parts;
         }
 
         public List<WorkOrder> getWorkOrders()

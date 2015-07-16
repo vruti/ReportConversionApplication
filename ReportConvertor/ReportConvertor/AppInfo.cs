@@ -188,6 +188,11 @@ namespace ReportConverter
             return null;
         }
 
+        public List<Vendor> getAllVendors()
+        {
+            return vendors;
+        }
+
         /* reading the specific information about
          * a vendor by the tab */
         private void addVendorData(ExcelWorksheets ws)
