@@ -8,7 +8,6 @@ namespace ReportConverter
 {
     public class SenvionConverter : Converter
     {
-        //private Dictionary<string, Part> newParts;
         private WorkOrder newWO;
         //private WorkOrder flaggedWO;
         private string site;
@@ -21,7 +20,6 @@ namespace ReportConverter
         {
             info = i;
             site = s;
-            //newParts = new Dictionary<string, Part>();
             getFieldNames();
         }
 
@@ -188,49 +186,8 @@ namespace ReportConverter
                     partID = newWO.Vendor.addNewPart(id, qty, description);
                     newWO.addPart(partID, qty);
                 }
-                /*
-                if (partID == null)
-                {
-                    if (newParts.ContainsKey(id))
-                    {
-                        partID = newParts[id].ID;
-                    }
-                    else
-                    {
-                        string newID = getNewestPartID();
-                        Part p = new Part(id, newWO.Vendor);
-                        p.generateID(newID);
-                        partID = p.ID;
-                        newParts.Add(id, p);
-                    }
-                }
-                newWO.addPart(partID, qty);*/
                 x++;
             }
-        }
-        /*
-        private string getNewestPartID()
-        {
-            if (newParts.Count > 0)
-            {
-                List<string> keys = newParts.Keys.ToList();
-                int i = keys.Count - 1;
-                return keys[i];
-            }
-            return newWO.Vendor.newestPartID();
-        }*/
-
-        public List<Part> getNewParts()
-        {
-            /*
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
-            {
-                parts.Add(newParts[key]);
-            }
-            return parts;*/
-            return newWO.Vendor.getNewParts();
         }
 
         public List<WorkOrder> getWorkOrders()

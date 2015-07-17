@@ -76,7 +76,6 @@ namespace ReportConverter
                     report.addCheckedVals(vals);
                 }
             }
-
             return Tuple.Create(siteName, report);
         }
 

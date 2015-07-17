@@ -46,10 +46,24 @@ namespace ReportConverter
                         switch (key)
                         {
                             case "Highland 1":
-                                c = new NordexConverter(key, info);
+                                if (sKey.Equals("xls"))
+                                {
+                                    c = new NordexExcelConverter(key, info);
+                                }
+                                else
+                                {
+                                    c = new NordexConverter(key, info);
+                                }
                                 break;
                             case "Highland North":
-                                c = new NordexConverter(key, info);
+                                if (sKey.Equals("xls"))
+                                {
+                                    c = new NordexExcelConverter(key, info);
+                                }
+                                else
+                                {
+                                    c = new NordexConverter(key, info);
+                                }
                                 break;
                             case "Patton":
                                 c = new GamesaConverter(info);
@@ -168,7 +182,7 @@ namespace ReportConverter
                         break;
                 }
                 ServiceReports.Add(key, fR.readFiles(files));
-                //dR.moveFiles(files);
+                dR.moveFiles(files);
             }
             return ServiceReports;
         }

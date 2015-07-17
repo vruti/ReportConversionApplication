@@ -39,8 +39,10 @@ namespace ReportConverter
 
         private string getID()
         {
-            string id = null;
-            List<string> idFields = fieldNames["ID"];
+            //string id = null;
+            int[] loc = fieldToCell["ID"];
+            return records[loc[0]][loc[1] + 1];
+            /*List<string> idFields = fieldNames["ID"];
             bool isID = false;
             for (int i = 0; i < records.Count; i++)
             {
@@ -70,7 +72,7 @@ namespace ReportConverter
                     }
                 }
             }
-            return id;
+            return id;*/
         }
 
         private void organizeFields()
@@ -146,9 +148,9 @@ namespace ReportConverter
             }
         }
 
-        private void getDownTime()
+        private void addDownTime()
         {
-            bool isStopTime = false;
+            //bool isStopTime = false;
             int i = fieldToCell["Stop Time"][0];
             List<string> row = records[i+1];
             while (!row[0].Equals(" "))
@@ -174,11 +176,101 @@ namespace ReportConverter
             }*/
         }
 
+        private void addDates()
+        {
+            int[] loc = fieldToCell["Report Date"];
+            wo.OpenDate = Convert.ToDateTime(records[loc[0]][loc[1] + 1]);
+            loc = fieldToCell["Start Date"];
+            wo.StartDate = Convert.ToDateTime(records[loc[0]+1][loc[1]]);
+            loc = fieldToCell["End Date"];
+            wo.EndDate = Convert.ToDateTime(records[loc[0] + 1][loc[1]]);
+        }
+
+        private void addDescription()
+        {
+            int x = fieldToCell["Description"][0]+1;
+            int y = fieldToCell["Description"][1];
+            string d = records[x][y];
+            int i = d.IndexOf(".");
+            string first;
+
+            if (i > 0)
+            {
+                first = d.Substring(0, i);
+            }
+            else
+            {
+                first = d;
+            }
+            wo.Description = first;
+            wo.Comments = d;
+        }
+
+        private void addActualHours()
+        {
+            int start = fieldToCell["Actual Hours"][0]+2;
+            int y = fieldToCell["Hrs"][1];
+            int end = fieldToCell["Description"][0];
+            double total = 0;
+            for (int i = start; i < end; i++)
+            {
+                string time = records[i][y].Trim();
+                double hour = Convert.ToDouble(time.Substring(0, 2));
+                double min = Convert.ToDouble(time.Substring(3, 2));
+                total += hour + (min / 60);
+            }
+
+            wo.ActualHours = total;
+        }
+
+        private void addMaterials()
+        {
+            int start = fieldToCell["Materials"][0]+2;
+            int y = fieldToCell["Materials"][1];
+            int end = fieldToCell["Parts"][0];
+
+            for (int i = start; i < end; i++)
+            {
+                string id = records[i][y+2];
+                int qty = Convert.ToInt32(records[i][y+1]);
+                string partID = wo.Vendor.getPartID(id, qty);
+                if (partID != null)
+                {
+                    wo.addPart(partID, qty);
+                }
+                else
+                {
+                    string description = records[i][y+3];
+                    partID = wo.Vendor.addNewPart(id, qty, description);
+                    wo.addPart(partID, qty);
+                }
+            }
+        }
+
         /*Find and add all the parts that are
          * used in the work order*/
-        private void addParts(int start)
+        private void addParts()
         {
+            int start = fieldToCell["Parts"][0] + 2;
+            int y = fieldToCell["Materials"][1];
+            int end = fieldToCell["Tools"][0];
 
+            for (int i = start; i < end; i++)
+            {
+                string id = records[i][y + 2];
+                int qty = Convert.ToInt32(records[i][y + 1]);
+                string partID = wo.Vendor.getPartID(id, qty);
+                if (partID != null)
+                {
+                    wo.addPart(partID, qty);
+                }
+                else
+                {
+                    string description = records[i][y + 3];
+                    partID = wo.Vendor.addNewPart(id, qty, description);
+                    wo.addPart(partID, qty);
+                }
+            }
         }
 
         /*Returns a list of the new parts in the
