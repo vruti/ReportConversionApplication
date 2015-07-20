@@ -7,7 +7,7 @@ using System.Collections;
 using System.IO;
 using System.Diagnostics;
 using OfficeOpenXml;
-using OfficeOpenXml.Drawing;
+//using OfficeOpenXml.Drawing;
 using System.Data;
 using System.Data.OleDb;
 using Microsoft.Office.Interop.Excel;
@@ -60,6 +60,7 @@ namespace ReportConverter
             foreach (ExcelWorksheet wk in ws){
                 report.addReportTab(wk.Name);
                 report.changeCurrentTab(wk.Name);
+                getNameOfSite(wk.Name);
                 tuple = readWorksheet(wk);
                 //add the records to the report
                 report.addRecords(tuple.Item2);

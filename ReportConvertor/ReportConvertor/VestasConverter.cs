@@ -24,7 +24,7 @@ namespace ReportConverter
 
         public void convertReport(Report report)
         {
-            records = report.getRecords("main");
+            records = report.getRecords("Main");
             string id = getID();
             newWO = new WorkOrder(id);
         }

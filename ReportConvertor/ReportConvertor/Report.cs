@@ -26,6 +26,10 @@ namespace ReportConverter
                 //already contains this tab
                 return false;
             }
+            if (allRecords.Count == 0)
+            {
+                tabName = "Main";
+            }
             List<List<string>> records = new List<List<string>>();
             allRecords.Add(tabName, records);
             return true;
@@ -33,6 +37,10 @@ namespace ReportConverter
 
         public void changeCurrentTab(string tabName)
         {
+            if (allRecords.Count == 1)
+            {
+                tabName = "Main";
+            }
             currentTab = tabName;
         }
 

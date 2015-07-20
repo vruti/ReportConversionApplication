@@ -22,11 +22,13 @@ namespace ReportConverter
             newParts = new Dictionary<string, Part>();
             site = s;
             info = i;
+            
         }
 
         public void convertReport(Report report)
         {
-            records = report.getRecords("main");
+            records = report.getRecords("Main");
+            getFieldNames();
             organizeFields();
             string id = getID();
             wo = new WorkOrder(id);
@@ -34,45 +36,26 @@ namespace ReportConverter
             wo.Site = info.getSite(site);
             wo.Vendor = info.getVendor("Nordex");
             wo.Status = "Closed";
-            
+            addDescription();
+            addActualHours();
+            addDownTime();
+            addMaterials();
+            addParts();
+            addDates();
         }
 
         private string getID()
         {
-            //string id = null;
             int[] loc = fieldToCell["ID"];
-            return records[loc[0]][loc[1] + 1];
-            /*List<string> idFields = fieldNames["ID"];
-            bool isID = false;
-            for (int i = 0; i < records.Count; i++)
+            int x = loc[0];
+            int y = loc[1]+1;
+            string id = " ";
+            while (id == " ")
             {
-                if (!isID)
-                {
-                    List<string> row = records[i];
-                    for (int j = 0; j < row.Count; j++)
-                    {
-                        if (isID)
-                        {
-                            if (!row[j].Equals(" "))
-                            {
-                                id = row[j];
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            foreach (string field in idFields)
-                            {
-                                if (row[j].ToLower().Contains(field.ToLower()))
-                                {
-                                    isID = true;
-                                }
-                            }
-                        }
-                    }
-                }
+                id = records[x][y];
+                y++;
             }
-            return id;*/
+            return id;
         }
 
         private void organizeFields()
@@ -85,10 +68,13 @@ namespace ReportConverter
                 List<string> row = records[i];
                 for (int j = 0; j < row.Count; j++)
                 {
-                    key = isField(row[j]);
-                    if (key != null && !fieldToCell.ContainsKey(key))
+                    if (!row[j].Equals(" "))
                     {
-                        fieldToCell.Add(key, new int[] { i, j });
+                        key = isField(row[j]);
+                        if (key != null && !fieldToCell.ContainsKey(key))
+                        {
+                            fieldToCell.Add(key, new int[] { i, j });
+                        }
                     }
                 }
             }
@@ -104,6 +90,7 @@ namespace ReportConverter
                 {
                     if (name.Contains(field.ToLower()))
                     {
+                        fieldNames.Remove(key);
                         return key;
                     }
                 }
@@ -113,7 +100,7 @@ namespace ReportConverter
 
         private void getFieldNames()
         {
-            List<List<string>> data = info.getVendorData("Senvion");
+            List<List<string>> data = info.getVendorData("Nordex");
             fieldNames = new Dictionary<string, List<string>>();
             int i, j;
             List<string> row;
@@ -136,7 +123,7 @@ namespace ReportConverter
                 {
                     row = data[i];
                     List<string> fields = new List<string>();
-                    for (j = 0; j < row.Count; j++)
+                    for (j = 1; j < row.Count; j++)
                     {
                         if (!row[j].Equals(" "))
                         {
@@ -150,35 +137,24 @@ namespace ReportConverter
 
         private void addDownTime()
         {
-            //bool isStopTime = false;
-            int i = fieldToCell["Stop Time"][0];
-            List<string> row = records[i+1];
-            while (!row[0].Equals(" "))
+            int i = fieldToCell["Down Time"][0]+2;
+            List<string> row = records[i];
+            while (!row[1].Equals(" "))
             {
-                int last = row.Count - 1;
-                double time = Convert.ToDouble(row[last]);
-                wo.DownTime += time;
-            }/*
-            foreach (List<string> rowd in records)
-            {
-                if (isStopTime && row[1].Equals(" "))
-                {
-                    break;
-                }
-                if (isStopTime)
-                {
-                    
-                }
-                if (row[1].Contains("Turbine Stop"))
-                {
-                    isStopTime = true;
-                }
-            }*/
+                int last = fieldToCell["Stoppage"][1];
+                string time = row[last].Trim();
+                int count = time.IndexOf(":");
+                double hour = Convert.ToDouble(time.Substring(0, count));
+                double min = Convert.ToDouble(time.Substring(count + 1, 2));
+                wo.DownTime += hour + (min / 60);
+                i++;
+                row = records[i];
+            }
         }
 
         private void addDates()
         {
-            int[] loc = fieldToCell["Report Date"];
+            int[] loc = fieldToCell["Open Date"];
             wo.OpenDate = Convert.ToDateTime(records[loc[0]][loc[1] + 1]);
             loc = fieldToCell["Start Date"];
             wo.StartDate = Convert.ToDateTime(records[loc[0]+1][loc[1]]);
@@ -196,7 +172,7 @@ namespace ReportConverter
 
             if (i > 0)
             {
-                first = d.Substring(0, i);
+                first = d.Substring(0, i+1);
             }
             else
             {
@@ -215,8 +191,9 @@ namespace ReportConverter
             for (int i = start; i < end; i++)
             {
                 string time = records[i][y].Trim();
-                double hour = Convert.ToDouble(time.Substring(0, 2));
-                double min = Convert.ToDouble(time.Substring(3, 2));
+                int count = time.IndexOf(":");
+                double hour = Convert.ToDouble(time.Substring(0, count));
+                double min = Convert.ToDouble(time.Substring(count+1, 2));
                 total += hour + (min / 60);
             }
 
@@ -225,24 +202,27 @@ namespace ReportConverter
 
         private void addMaterials()
         {
-            int start = fieldToCell["Materials"][0]+2;
+            int start = fieldToCell["Materials"][0]+3;
             int y = fieldToCell["Materials"][1];
             int end = fieldToCell["Parts"][0];
 
             for (int i = start; i < end; i++)
             {
                 string id = records[i][y+2];
-                int qty = Convert.ToInt32(records[i][y+1]);
-                string partID = wo.Vendor.getPartID(id, qty);
-                if (partID != null)
+                if (!id.Equals(" "))
                 {
-                    wo.addPart(partID, qty);
-                }
-                else
-                {
-                    string description = records[i][y+3];
-                    partID = wo.Vendor.addNewPart(id, qty, description);
-                    wo.addPart(partID, qty);
+                    int qty = Convert.ToInt32(records[i][y + 1]);
+                    string partID = wo.Vendor.getPartID(id, qty);
+                    if (partID != null)
+                    {
+                        wo.addPart(partID, qty);
+                    }
+                    else
+                    {
+                        string description = records[i][y + 3];
+                        partID = wo.Vendor.addNewPart(id, qty, description);
+                        wo.addPart(partID, qty);
+                    }
                 }
             }
         }
@@ -258,17 +238,20 @@ namespace ReportConverter
             for (int i = start; i < end; i++)
             {
                 string id = records[i][y + 2];
-                int qty = Convert.ToInt32(records[i][y + 1]);
-                string partID = wo.Vendor.getPartID(id, qty);
-                if (partID != null)
+                if (!id.Equals(" "))
                 {
-                    wo.addPart(partID, qty);
-                }
-                else
-                {
-                    string description = records[i][y + 3];
-                    partID = wo.Vendor.addNewPart(id, qty, description);
-                    wo.addPart(partID, qty);
+                    int qty = Convert.ToInt32(records[i][y + 1]);
+                    string partID = wo.Vendor.getPartID(id, qty);
+                    if (partID != null)
+                    {
+                        wo.addPart(partID, qty);
+                    }
+                    else
+                    {
+                        string description = records[i][y + 3];
+                        partID = wo.Vendor.addNewPart(id, qty, description);
+                        wo.addPart(partID, qty);
+                    }
                 }
             }
         }

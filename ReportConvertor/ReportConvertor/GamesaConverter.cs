@@ -171,7 +171,7 @@ namespace ReportConverter
             string tab = null;
             foreach (string key in keys)
             {
-                if (key.ToLower().Contains("general"))
+                if (key.ToLower().Contains("Main"))
                 {
                     tab = key;
                 }
@@ -210,10 +210,6 @@ namespace ReportConverter
                     wo.StartDate = Convert.ToDateTime(row[fieldToCell["Start Date"]]);
                     wo.EndDate = Convert.ToDateTime(row[fieldToCell["End Date"]]);
                     wo.OpenDate = wo.StartDate;
-                    /*
-                    wo.StartDate = getDateTime(row[fieldToCell["Start Date"]], " ");
-                    wo.EndDate = getDateTime(row[fieldToCell["End Date"]], " ");
-                    wo.OpenDate = wo.StartDate;*/
                 }
                 //add work order to list
                 newWOs.Add(wo.OriginalID, wo);

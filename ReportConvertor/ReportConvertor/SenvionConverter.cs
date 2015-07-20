@@ -25,7 +25,7 @@ namespace ReportConverter
 
         public void convertReport(Report report)
         {
-            records = report.getRecords("WIR");
+            records = report.getRecords("Main");
             organizeFields();
             int[] loc = fieldToCell["ID#"];
             newWO = new WorkOrder(records[loc[0]+1][loc[1]]);

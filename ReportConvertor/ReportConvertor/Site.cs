@@ -80,13 +80,15 @@ namespace ReportConverter
 
         public bool isSite(string n)
         {
-            if (n.Contains(name))
+            string noSpaces = name.Replace(" ", "");
+            string lowerCase = n.ToLower();
+            if (n.Contains(name) || n.Contains(noSpaces))
             {
                 return true;
             }
             foreach (string s in altNames)
             {
-                if (n.Contains(s))
+                if (n.Contains(s) || lowerCase.Contains(s))
                 {
                     return true;
                 }

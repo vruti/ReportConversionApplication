@@ -26,7 +26,7 @@ namespace ReportConverter
         public void convertReport(Report report)
         {
             newWO = new WorkOrder("temp ID");
-            records = report.getRecords("Entry");
+            records = report.getRecords("Main");
             organizeFields();
 
             newWO.Site = info.getSite(site);

@@ -79,13 +79,13 @@ namespace ReportConverter
                                 }
                                 break;
                             case "Big Sky":
-                                //c = new VestasConverter(info);
+                                c = new SuzlonConverter(key, info);
                                 break;
                             case "Howard":
-                                //c = new SenvionConverter(info, "Howard");
+                                c = new SenvionConverter(key, info);
                                 break;
                             case "Mustang Hills":
-                                //c = new SuzlonConverter(info);
+                                c = new VestasConverter(key, info);
                                 break;
                         }
                         foreach (Report report in ServiceReports[sKey][key])
@@ -166,8 +166,8 @@ namespace ReportConverter
                         //ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "xls":
-                        //fR = new XlsFileReader(info);
-                        //ServiceReports.Add(key, fR.readFile(files))
+                        fR = new XLSFileReader(info);
+                        //ServiceReports.Add(key, fR.readFile(files));
                         break;
                     case "pdf":
                         fR = new PDFFileReader(info);
@@ -182,7 +182,7 @@ namespace ReportConverter
                         break;
                 }
                 ServiceReports.Add(key, fR.readFiles(files));
-                dR.moveFiles(files);
+                //dR.moveFiles(files);
             }
             return ServiceReports;
         }

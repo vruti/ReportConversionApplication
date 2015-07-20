@@ -94,6 +94,7 @@
     <Compile Include="Settings.Designer.cs">
       <DependentUpon>Settings.cs</DependentUpon>
     </Compile>
+    <Compile Include="SuzlonConverter.cs" />
     <Compile Include="Vendor.cs" />
     <Compile Include="VestasConverter.cs" />
     <Compile Include="WorkOrder.cs" />

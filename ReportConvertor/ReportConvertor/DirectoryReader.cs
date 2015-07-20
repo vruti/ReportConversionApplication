@@ -27,9 +27,24 @@ namespace ReportConverter
 
             //excel files. All the report files are .xlsx
             string[] filePathsXlsx = Directory.GetFiles(@inputDir, "*.xlsx");
+            List<string> filePaths = filePathsXlsx.ToList();
             if (filePathsXlsx.Length > 0)
             {
                 dict.Add("xlsx", filePathsXlsx);
+            }
+            
+            List<string> filePathsXls = Directory.GetFiles(@inputDir, "*.xls").ToList();
+            for (int i = 0; i < filePathsXls.Count; i++)
+            {
+                string file = filePathsXls[i];
+                if (file.Contains("xlsx"))
+                {
+                    filePathsXls.Remove(file);
+                }
+            }
+            if (filePathsXls.Count > 0)
+            {
+                dict.Add("xls", filePathsXls.ToArray());
             }
 
             //adding the evp format reports

@@ -1,12 +1,16 @@
-﻿using Excel;
-using Microsoft.Office.Interop.Excel;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections;
+using System.IO;
+using System.Diagnostics;
+using OfficeOpenXml;
+using OfficeOpenXml.Drawing;
+using System.Data;
+using System.Data.OleDb;
+using Microsoft.Office.Interop.Excel;
 
 namespace ReportConverter
 {
@@ -44,56 +48,25 @@ namespace ReportConverter
             return reportsBySite;
         }
 
-        private IExcelDataReader getExcelDataReader(string file)
-        {
-            FileStream stream = File.Open(file, FileMode.Open, FileAccess.Read);
-
-            IExcelDataReader reader = null;
-            try
-            {
-                if (file.EndsWith(".xls"))
-                {
-                    reader = ExcelReaderFactory.CreateBinaryReader(stream);
-                }
-                return reader;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
         public Tuple<string, Report> readFile(string file)
         {
             Application app = new Application();
+            app.DisplayAlerts = false;
+            app.AutomationSecurity = Microsoft.Office.Core.MsoAutomationSecurity.msoAutomationSecurityForceDisable;
             Workbooks wbs = app.Workbooks;
-            Workbook wb = wbs.Open(file);
-
-            //Data Reader methods
-            foreach (DataTable table in result.Tables)
-            {
-                for (int i = 0; i < table.Rows.Count; i++)
-                {
-                    for (int j = 0; j < table.Columns.Count; j++)
-                        Console.Write("\"" + table.Rows[i].ItemArray[j] + "\";");
-                    Console.WriteLine();
-                }
-            }
-            
-            //////////////////////////
-            FileInfo newFile = new FileInfo(file);
-            ExcelPackage pck = new ExcelPackage(newFile);
-            ExcelWorksheets ws = pck.Workbook.Worksheets;
+            Workbook wb = wbs.Open(file, ReadOnly: true);
+            wb.DoNotPromptForConvert = true;
+            Worksheet wk = wb.Worksheets[1];
             Report report = new Report();
             Tuple<string, List<List<string>>> tuple = null;
             string siteName = null;
+            siteName = getNameOfSite(file);
 
-            foreach (ExcelWorksheet wk in ws)
+            //foreach (Worksheet wk in wb.Worksheets)
             {
                 report.addReportTab(wk.Name);
                 report.changeCurrentTab(wk.Name);
                 tuple = readWorksheet(wk);
-                //add the records to the report
                 report.addRecords(tuple.Item2);
 
                 if (siteName == null)
@@ -102,13 +75,95 @@ namespace ReportConverter
                 }
 
                 //if the vendor is senvion, there are checkboxes
-                if (siteName.Equals("Twin Ridges") || siteName.Equals("Howard"))
+                List<string> vals = getCheckedValues(wk);
+                report.addCheckedVals(vals);
+            }
+            //wb.Close();
+            //Marshal.ReleaseComObject(wk);
+            wb.Close();
+            return Tuple.Create(siteName, report);
+        }
+
+        private Tuple<string, List<List<string>>> readWorksheet(Worksheet worksheet)
+        {
+            int totalRows = worksheet.UsedRange.Rows.Count;
+            int totalCols = worksheet.UsedRange.Columns.Count;
+            string siteName = null;
+            List<List<string>> wk = new List<List<string>>();
+            List<string> rows;
+
+            for (int i = 1; i <= totalRows; i++)
+            {
+                rows = new List<string>();
+                for (int j = 1; j <= totalCols; j++)
                 {
-                    List<string> vals = getCheckedValues(file, wk.Index);
-                    report.addCheckedVals(vals);
+                    var v = worksheet.Cells[i, j].Value;
+                    if (worksheet.Cells[i, j].Value != null)
+                    {
+                        string val = String.Format("{0}", worksheet.Cells[i, j].Text);
+                        if (siteName == null)
+                        {
+                            siteName = getNameOfSite(val);
+                        }
+                        rows.Add(val);
+                    }
+                    else
+                    {
+                        rows.Add(" ");
+                    }
+                }
+                wk.Add(rows);
+            }
+            if (siteName == null)
+            {
+                //RAISE AN ERROR!!!!!!!!!!!
+                //tell user
+                //open file
+                //ask for user input
+                //siteName = "Twin Ridges";
+            }
+
+            return Tuple.Create(siteName, wk);
+        }
+
+        public string getNameOfSite(string n)
+        {
+            List<Site> sites = info.getSites();
+
+            foreach (Site s in sites)
+            {
+                if (s.isSite(n))
+                {
+                    return s.Name;
                 }
             }
-            return Tuple.Create(siteName, report);
+
+            return null;
+        }
+
+        public List<string> getCheckedValues(Worksheet wk)
+        {
+            List<string> checkedVals = new List<string>();
+            //shapes involve all vba objects and pictures in the worksheet
+            Shapes shapes = wk.Shapes;
+            foreach (Shape shape in shapes)
+            {
+                //checking if the object is a checkbox
+                if (shape.Name.Contains("Check"))
+                {
+                    //if the checkbox value is > 0 it is true
+                    if (shape.OLEFormat.Object.Value > 0)
+                    {
+                        //adding the text value of the checked checke
+                        checkedVals.Add(shape.AlternativeText);
+                    }
+                }
+            }
+
+            //Important to close file as not done automatically
+            
+
+            return checkedVals;
         }
     }
 }
