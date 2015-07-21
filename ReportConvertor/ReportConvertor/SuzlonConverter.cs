@@ -20,6 +20,7 @@ namespace ReportConverter
         {
             info = i;
             site = info.getSite(s);
+            getFieldNames();
         }
 
         public void convertReport(Report report)
@@ -46,6 +47,9 @@ namespace ReportConverter
             addParts();
         }
 
+        /* This function maps the fields to locations so
+         * that when parsing data, the locations are already
+         * pre-determined*/
         private void organizeFields()
         {
             fieldToCell = new Dictionary<string, int[]>();
@@ -84,38 +88,24 @@ namespace ReportConverter
 
         private void getFieldNames()
         {
-            List<List<string>> data = info.getVendorData("Senvion");
+            List<List<string>> data = info.getVendorData("Suzlon");
             fieldNames = new Dictionary<string, List<string>>();
-            int i, j;
+            int len = Convert.ToInt32(data[0][1]);
+            int start = 1;
             List<string> row;
-            bool isFieldTable = false;
-
-            for (i = 0; i < data.Count; i++)
+            for (int i = start; i < start + len; i++)
             {
                 row = data[i];
-                if (row[0].Contains("Field Name"))
+                row = data[i];
+                List<string> fields = new List<string>();
+                for (int j = 0; j < row.Count; j++)
                 {
-                    isFieldTable = true;
-                    i++;
-                }
-                if (row[0].Equals(" "))
-                {
-                    isFieldTable = false;
-                    break;
-                }
-                if (isFieldTable)
-                {
-                    row = data[i];
-                    List<string> fields = new List<string>();
-                    for (j = 0; j < row.Count; j++)
+                    if (!row[j].Equals(" "))
                     {
-                        if (!row[j].Equals(" "))
-                        {
-                            fields.Add(row[j].ToLower());
-                        }
+                        fields.Add(row[j].ToLower());
                     }
-                    fieldNames.Add(row[0], fields);
                 }
+                fieldNames.Add(row[0], fields);
             }
         }
 

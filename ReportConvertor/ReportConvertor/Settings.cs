@@ -28,8 +28,12 @@ namespace ReportConverter
 
         private void Settings_Load(object sender, EventArgs e)
         {
-
+            dirLoc.Text = f.info.getFileLoc("Directory");
+            outputLoc.Text = f.info.getFileLoc("Output");
+            archiveLoc.Text = f.info.getFileLoc("Archive");
+            partsLoc.Text = f.info.getFileLoc("Parts");
+            assetsLoc.Text = f.info.getFileLoc("Assets");
+            pastLoc.Text = f.info.getFileLoc("WOHistory");
         }
-
     }
 }

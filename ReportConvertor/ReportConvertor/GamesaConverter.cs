@@ -60,12 +60,16 @@ namespace ReportConverter
         private AppInfo info;
         private Dictionary<string, WorkOrder> newWOs;
         private Dictionary<string, WorkOrder> flaggedWO;
-        Dictionary<string, List<string>> fieldNames;
+        private Dictionary<string, List<string>> fieldNames;
+        private List<List<string>> data;
+        private Dictionary<string, int> tableLoc;
 
         public GamesaConverter(AppInfo i)
         {
             info = i;
             flaggedWO = new Dictionary<string, WorkOrder>();
+            data = info.getVendorData("Gamesa");
+            getTableLoc();
         }
 
         public void convertReport(Report report)
@@ -80,6 +84,22 @@ namespace ReportConverter
             hoursTabReader(keys, report);
             stopTimeTabReader(keys, report);
             partsTabReader(keys, report);
+        }
+
+        private void getTableLoc()
+        {
+            tableLoc = new Dictionary<string, int>();
+            int i = 1;
+            int loc;
+            string n;
+
+            while (!data[i][0].Equals(" "))
+            {
+                loc = Convert.ToInt32(data[i][1]);
+                n = data[i][0];
+                tableLoc.Add(n, loc);
+                i++;
+            }
         }
 
         public Dictionary<string, int> organizeFields(List<string> line, string tabName)
@@ -120,50 +140,27 @@ namespace ReportConverter
 
         private void getFieldNames(string tab)
         {
-            List<List<string>> data = info.getVendorData("Gamesa");
+
             fieldNames = new Dictionary<string, List<string>>();
-            int i, j;
+            int start = tableLoc[tab] - 1;
+            int len = Convert.ToInt32(data[start][1]);
+            start++;
+            int cols;
             List<string> row;
-            bool isFieldTable = false;
 
-            for (i = 0; i < data.Count; i++)
+            for (int i = start; i < start + len; i++)
             {
-                row = data[i];
-                if (row[0].Contains("Tab") && isTab(tab, row))
+                cols = data[i].Count;
+                row = new List<string>();
+                for (int j = 1; j < cols; j++)
                 {
-                    isFieldTable = true;
-                    i++;
-                }
-                if (isFieldTable && row[0].Equals(" "))
-                {
-                    isFieldTable = false;
-                    break;
-                }
-                if (isFieldTable)
-                {
-                    j = 0;
-                    row = data[i];
-                    List<string> fields = new List<string>();
-                    while (!row[j].Equals(" "))
+                    if (!data[i][j].Equals(" "))
                     {
-                        fields.Add(row[j].ToLower());
-                        j++;
+                        row.Add(data[i][j]);
                     }
-                    fieldNames.Add(row[0], fields);
                 }
+                fieldNames.Add(data[i][0], row);
             }
-        }
-
-        private bool isTab(string tab, List<string> row)
-        {
-            for (int i = 2; i < row.Count; i++)
-            {
-                if (tab.Contains(row[i]) && !row[i].Equals(" "))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         public void generalInfoReader(List<string> keys, Report report)
@@ -171,9 +168,10 @@ namespace ReportConverter
             string tab = null;
             foreach (string key in keys)
             {
-                if (key.ToLower().Contains("Main"))
+                if (key.ToLower().Contains("main"))
                 {
                     tab = key;
+                    break;
                 }
             }
 
@@ -201,8 +199,6 @@ namespace ReportConverter
                 wo.Status = "Closed";
                 wo.Vendor = info.getVendor("Gamesa");
                 wo.Site = info.getSite("Patton");
-                //get asset ID
-                wo.AssetID = getAssetNo(row[fieldToCell["Turbine No."]]);
 
                 //if the dates are available in the general tab
                 if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
@@ -219,48 +215,22 @@ namespace ReportConverter
         private Dictionary<string, List<string>> getTableData()
         {
             Dictionary<string, List<string>> table = new Dictionary<string, List<string>>();
+            int start = tableLoc["Table"]-1;
+            int len = Convert.ToInt32(data[start][1]);
+            start+=2;
+            int cols;
 
-            List<List<string>> wk = info.getVendorData("Gamesa");
-            List<string> row;
-            bool isTable = false;
-            int rows = wk.Count;
-            int tableR = 0;
-
-            for(int i = 0; i<rows; i++)
+            for (int i = start; i < start + len; i++)
             {
-                row = new List<string>();
-                int cols = wk[i].Count;
+                List<string> line = data[i];
+                cols = line.Count;
+                List<string> row = new List<string>();
                 for (int j = 1; j < cols; j++)
                 {
-                    if (wk[i][0].Equals(" "))
-                    {
-                        return table;
-                    }
-                    if (isTable)
-                    {
-                        if (i > tableR + 1)
-                        {
-                            row.Add(wk[i][j]);
-                        }
-                    }
-                    else
-                    {
-                        if (wk[i][j].ToLower().Contains("type"))
-                        {
-                            isTable = true;
-                            tableR = i;
-                        }
-                    }
+                    row.Add(line[j]);
                 }
-                if (isTable)
-                {
-                    if (i > tableR + 1)
-                    {
-                        table.Add(wk[i][0], row);
-                    }
-                }
+                table.Add(line[0], row);
             }
-
             return table;
         }
 
@@ -276,7 +246,7 @@ namespace ReportConverter
             }
 
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Labor");
 
             foreach (List<string> row in rows)
             {
@@ -303,7 +273,7 @@ namespace ReportConverter
 
         private Dictionary<string, int> startStopFields(List<string> row, string tab)
         {
-            Dictionary<string, int> fieldToCell = organizeFields(row, tab);
+            Dictionary<string, int> fieldToCell = organizeFields(row, "Stop Time");
             int s = fieldToCell["Start Date"];
             int e = fieldToCell["Stop Date"];
             if (s > e)
@@ -382,7 +352,7 @@ namespace ReportConverter
             }
 
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
+            Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Consumption");
 
             foreach (List<string> row in rows)
             {
@@ -392,7 +362,12 @@ namespace ReportConverter
                     string part = row[fieldToCell["Material"]];
                     WorkOrder wo = newWOs[key];
                     int qty = (int)Convert.ToDouble(row[fieldToCell["Quantity"]]);
-                    qty = qty * (-1);
+                    string mVT = row[fieldToCell["MvT"]];
+                    qty = Math.Abs(qty);
+                    if (!mVT.Equals("965"))
+                    {
+                        qty = qty * (-1);
+                    }
                     string id = row[fieldToCell["Material"]];
                     string partID = newWOs[key].Vendor.getPartID(id, qty);
 
@@ -406,10 +381,10 @@ namespace ReportConverter
                         partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
+                    newWOs[key] = wo;
                 }
             }
         }
-
 
         private double calculateStopTime(List<DateRange> times)
         {
@@ -452,37 +427,6 @@ namespace ReportConverter
             DateTime dateTime = Convert.ToDateTime(combined);
 
             return dateTime;
-        }
-
-        private string getAssetNo(string n)
-        {
-            string num = "WTG-";
-            int count=0;
-            for (int i = 1; i < n.Length; i++)
-            {
-                if (count == 2)
-                {
-                    int len = n.Length - i;
-                    num += n.Substring(i, len).Trim();
-                    if (!n[i].Equals(""))
-                    {
-                        if (n[i].Equals("-"))
-                        {
-                            return info.getAssetID(num);
-                        }
-                        num += n[i];
-                    }
-                }
-                else
-                {
-                    string v = n.Substring(i, 1);
-                    if (v.Equals("/"))
-                    {
-                        count++;
-                    }
-                }
-            }
-            return null;
         }
 
         public List<WorkOrder> getWorkOrders()

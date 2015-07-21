@@ -166,7 +166,6 @@ namespace ReportConverter
                     return s.Name;
                 }
             }
-
             return null;
         }
     }

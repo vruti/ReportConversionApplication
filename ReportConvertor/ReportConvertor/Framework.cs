@@ -8,11 +8,10 @@ namespace ReportConverter
 {
     public class Framework
     {
-        private AppInfo info;
+        public AppInfo info;
         private string inputDirectory;
         public Dictionary<string, WorkOrder> newWO;
         public Dictionary<string, List<WorkOrder>> flaggedWO;
-        //public List<Part> newParts;
         private string archiveDirectory;
 
         public Framework()
@@ -22,7 +21,6 @@ namespace ReportConverter
             archiveDirectory = info.getFileLoc("Archive");
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new Dictionary<string,List<WorkOrder>>();
-            //newParts = new List<Part>();
         }
 
         public void start(Main m)
