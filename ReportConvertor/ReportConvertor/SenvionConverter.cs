@@ -8,19 +8,28 @@ namespace ReportConverter
 {
     public class SenvionConverter : Converter
     {
-        private WorkOrder newWO;
-        //private WorkOrder flaggedWO;
+        private WorkOrder wo;
+        private WorkOrder flaggedWO;
         private string site;
-        AppInfo info;
+        private AppInfo info;
         private Dictionary<string, int[]> fieldToCell;
-        Dictionary<string, List<string>> fieldNames;
-        List<List<string>> records;
+        private Dictionary<string, List<string>> fieldNames;
+        private List<List<string>> records;
+        private List<List<string>> vendorData;
+        private Dictionary<string, int> tableLoc;
+        private Dictionary<string, List<string>> table;
+        private PartsTable partsTable;
 
-        public SenvionConverter(string s, AppInfo i)
+        public SenvionConverter(string s, AppInfo i, PartsTable p)
         {
             info = i;
             site = s;
+            partsTable = p;
+            vendorData = info.getVendorData("Senvion");
+            tableLoc = new Dictionary<string, int>();
+            getTableLoc();
             getFieldNames();
+            getTableData();
         }
 
         public void convertReport(Report report)
@@ -28,38 +37,71 @@ namespace ReportConverter
             records = report.getRecords("Main");
             organizeFields();
             int[] loc = fieldToCell["ID#"];
-            newWO = new WorkOrder(records[loc[0]+1][loc[1]]);
-            newWO.Site = info.getSite(site);
-            newWO.Vendor = info.getVendor("Senvion");
+            wo = new WorkOrder(records[loc[0]+1][loc[1]]);
+            wo.Site = info.getSite(site);
+            wo.Vendor = info.getVendor("Senvion");
             calcLaborHours(fieldToCell["Time"]);
             addDates();
             getDownTime();
-            newWO.WorkOrderType = report.checkedVals()[2];
+            wo.WorkOrderType = report.checkedVals()[2];
+            List<string> taskInfo = table[wo.WorkOrderType];
+            wo.OutageType = taskInfo[0];
+            wo.Priority = taskInfo[1];
+            wo.Planning = taskInfo[2];
+            wo.UnplannedType = taskInfo[3];
+            wo.TaskID = taskInfo[4];
             loc = fieldToCell["Description"];
-            newWO.Description = records[loc[0]+2][loc[1]];
+            wo.Description = records[loc[0]+2][loc[1]];
             loc = fieldToCell["Comments"];
-            newWO.Comments = records[loc[0]][loc[1]+1];
-            newWO.Status = "Closed";
+            wo.Comments = records[loc[0]][loc[1]+1];
+            wo.Status = "Closed";
             addParts();
+            Validator v = new Validator();
+            if (!v.isValid(wo))
+            {
+                flaggedWO = wo;
+                wo = null;
+            }
+        }
+        
+        private void getTableData()
+        {
+            table = new Dictionary<string, List<string>>();
+            int start = tableLoc["Table"] - 1;
+            int len = Convert.ToInt32(vendorData[start][1]);
+            start+=2;
+            int cols;
+
+            for (int i = start; i < start + len; i++)
+            {
+                List<string> line = vendorData[i];
+                cols = line.Count;
+                List<string> row = new List<string>();
+                for (int j = 1; j < cols; j++)
+                {
+                    row.Add(line[j]);
+                }
+                table.Add(line[0], row);
+            }
         }
 
         private void getDownTime()
         {
-            TimeSpan t = newWO.EndDate - newWO.StartDate;
-            newWO.DownTime = t.TotalHours;
+            TimeSpan t = wo.EndDate - wo.StartDate;
+            wo.DownTime = t.TotalHours;
         }
 
         private void addDates()
         {
             int x = fieldToCell["Offline"][0];
             int y = fieldToCell["Offline"][1]+3;
-            newWO.StartDate = convertToDate(records[x][y]+","+records[x][y+1]);
+            wo.StartDate = convertToDate(records[x][y]+","+records[x][y+1]);
             x = fieldToCell["Online"][0];
             y = fieldToCell["Online"][1]+3;
-            newWO.EndDate = convertToDate(records[x][y]+","+records[x][y+1]);
+            wo.EndDate = convertToDate(records[x][y]+","+records[x][y+1]);
             x = fieldToCell["Date"][0];
             y = fieldToCell["Date"][1]+2;
-            newWO.OpenDate = convertToDate(records[x][y]);
+            wo.OpenDate = convertToDate(records[x][y]);
         }
 
         private DateTime convertToDate(string s)
@@ -81,7 +123,7 @@ namespace ReportConverter
                 result += timeTaken;
                 i++;
             }
-            newWO.ActualHours = result;
+            wo.ActualHours = result;
         }
 
         private double convertToTime(string s)
@@ -131,38 +173,41 @@ namespace ReportConverter
 
         private void getFieldNames()
         {
-            List<List<string>> data = info.getVendorData("Senvion");
             fieldNames = new Dictionary<string, List<string>>();
-            int i, j;
+            int start = tableLoc["Fields"]-1;
+            int len = Convert.ToInt32(vendorData[start][2]);
+            start++;
+            int cols;
             List<string> row;
-            bool isFieldTable = false;
 
-            for (i = 0; i < data.Count; i++)
+            for (int i = start; i < start + len; i++)
             {
-                row = data[i];
-                if (row[0].Contains("Field Name"))
+                cols = vendorData[i].Count;
+                row = new List<string>();
+                for (int j = 1; j < cols; j++)
                 {
-                    isFieldTable = true;
-                    i++;
-                }
-                if (row[0].Equals(" "))
-                {
-                    isFieldTable = false;
-                    break;
-                }
-                if (isFieldTable)
-                {
-                    row = data[i];
-                    List<string> fields = new List<string>();
-                    for (j = 0; j < row.Count; j++)
+                    if (!vendorData[i][j].Equals(" "))
                     {
-                        if (!row[j].Equals(" "))
-                        {
-                            fields.Add(row[j].ToLower());
-                        }
+                        row.Add(vendorData[i][j]);
                     }
-                    fieldNames.Add(row[0], fields);
                 }
+                fieldNames.Add(vendorData[i][0], row);
+            }
+        }
+
+        private void getTableLoc()
+        {
+            
+            int i = 1;
+            int loc;
+            string n;
+
+            while (!vendorData[i][0].Equals(" "))
+            {
+                loc = Convert.ToInt32(vendorData[i][1]);
+                n = vendorData[i][0];
+                tableLoc.Add(n.Trim(), loc);
+                i++;
             }
         }
 
@@ -175,27 +220,45 @@ namespace ReportConverter
             {
                 string id = records[x][y + 5];
                 int qty = Convert.ToInt32(records[x][y + 6]);
-                string partID = newWO.Vendor.getPartID(id, qty);
+                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                //string partID = wo.Vendor.getPartID(id, qty);
                 if (partID != null)
                 {
-                    newWO.addPart(partID, qty);
+                    wo.addPart(partID, qty);
                 }
                 else
                 {
                     string description = records[x][y];
-                    partID = newWO.Vendor.addNewPart(id, qty, description);
-                    newWO.addPart(partID, qty);
+                    partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                    //partID = wo.Vendor.addNewPart(id, qty, description);
+                    wo.addPart(partID, qty);
                 }
                 x++;
             }
         }
 
+        public List<WorkOrder> getFlaggedWO()
+        {
+            if (flaggedWO != null)
+            {
+                List<WorkOrder> flaggedWOs = new List<WorkOrder>();
+                flaggedWO.createMPulseID();
+                flaggedWOs.Add(flaggedWO);
+                return flaggedWOs;
+            }
+            return null;
+        }
+
         public List<WorkOrder> getWorkOrders()
         {
-            List<WorkOrder> newWOs = new List<WorkOrder>();
-            newWO.createMPulseID();
-            newWOs.Add(newWO);
-            return newWOs;
+            if (wo != null)
+            {
+                List<WorkOrder> wos = new List<WorkOrder>();
+                wo.createMPulseID();
+                wos.Add(wo);
+                return wos;
+            }
+            return null;
         }
     }
 }

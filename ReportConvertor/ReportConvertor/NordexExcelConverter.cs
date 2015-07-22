@@ -16,13 +16,14 @@ namespace ReportConverter
         private List<List<string>> records;
         private Dictionary<string, List<string>> fieldNames;
         private Dictionary<string, int[]> fieldToCell;
+        private PartsTable partsTable;
 
-        public NordexExcelConverter(string s, AppInfo i)
+        public NordexExcelConverter(string s, AppInfo i, PartsTable p)
         {
             newParts = new Dictionary<string, Part>();
             site = s;
             info = i;
-            
+            partsTable = p;
         }
 
         public void convertReport(Report report)
@@ -212,7 +213,8 @@ namespace ReportConverter
                 if (!id.Equals(" "))
                 {
                     int qty = Convert.ToInt32(records[i][y + 1]);
-                    string partID = wo.Vendor.getPartID(id, qty);
+                    string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                    //string partID = wo.Vendor.getPartID(id, qty);
                     if (partID != null)
                     {
                         wo.addPart(partID, qty);
@@ -220,7 +222,8 @@ namespace ReportConverter
                     else
                     {
                         string description = records[i][y + 3];
-                        partID = wo.Vendor.addNewPart(id, qty, description);
+                        partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                        //partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
                 }
@@ -241,7 +244,8 @@ namespace ReportConverter
                 if (!id.Equals(" "))
                 {
                     int qty = Convert.ToInt32(records[i][y + 1]);
-                    string partID = wo.Vendor.getPartID(id, qty);
+                    string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                    //string partID = wo.Vendor.getPartID(id, qty);
                     if (partID != null)
                     {
                         wo.addPart(partID, qty);
@@ -249,7 +253,8 @@ namespace ReportConverter
                     else
                     {
                         string description = records[i][y + 3];
-                        partID = wo.Vendor.addNewPart(id, qty, description);
+                        partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                        //partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
                 }

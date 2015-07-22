@@ -15,10 +15,10 @@ namespace ReportConverter
         private string name;
         private string v3Code;
         private string v5Code;
-        private ArrayList altNames;
+        private List<string> altNames;
         private Dictionary<string, int> newWO;
         private Dictionary<string, int> oldWO;
-        private Dictionary<string, string> partsTable;
+//        private Dictionary<string, string> partsTable;
         private int partsTab;
         private int woTab;
         private string woFile;
@@ -28,7 +28,7 @@ namespace ReportConverter
         public Vendor()
         {
             newWO = new Dictionary<string, int>();
-            altNames = new ArrayList();
+            altNames = new List<string>();
             newParts = new Dictionary<string, Part>();
         }
 
@@ -109,7 +109,7 @@ namespace ReportConverter
             altNames.Add(n);
         }
 
-        public ArrayList getAltNames()
+        public List<string> getAltNames()
         {
             return altNames;
         }
@@ -219,12 +219,12 @@ namespace ReportConverter
                 }
             }
         }
-
+/*
         public void generatePartsTable()
         {
-            /* initializing the dictionary to store the 
-             * contractor part number to mpulse part number 
-             */
+            // initializing the dictionary to store the 
+             // contractor part number to mpulse part number 
+             /
             partsTable = new Dictionary<string, string>();
             FileInfo newFile = new FileInfo(partsFile);
             ExcelPackage pck = new ExcelPackage(newFile);
@@ -232,20 +232,37 @@ namespace ReportConverter
 
             /*chosing the tab number in the file based
              * on the contractor name
-             */
-            ExcelWorksheet wk = ws[partsTab];
+             /
+            ExcelWorksheet wk = ws[1];
 
             int totalRows = wk.Dimension.End.Row;
 
-            for (int i = 2; i <= totalRows; i++)
+            for (int i = 1; i <= totalRows; i++)
             {
-                //1st column has contractor part name
-                //2nd column has mpulse part name
-                if (wk.Cells[i, 1].Value != null && wk.Cells[i, 2].Value != null)
+                string id = wk.Cells[i, 1].Value.ToString();
+                string ownedBy = wk.Cells[i, 11].Text;
+                if (id.Contains(FiveLetterCode) || id.Contains(ThreeLetterCode) || isVendor(ownedBy))
                 {
-                    partsTable.Add(wk.Cells[i, 1].Text, wk.Cells[i, 2].Text);
+                    //1st column has contractor part name
+                    //2nd column has mpulse part name
+                    var partID = wk.Cells[i, 8].Value;
+                    if (/*wk.Cells[i, 1].Value != null &&/ partID != null && !partsTable.ContainsKey(partID.ToString()))
+                    {
+                        partsTable.Add(partID.ToString(), id);
+                    }
                 }
             }
+        }
+
+        private bool isVendor(string s)
+        {
+            string ownedBy = s.ToLower();
+            if (ownedBy.Contains(name)) return true;
+            foreach (string alt in altNames)
+            {
+                if (ownedBy.Contains(alt.ToLower())) return true;
+            }
+            return false;
         }
 
         public string getPartID(string partID, int qty)
@@ -260,8 +277,8 @@ namespace ReportConverter
                 newParts[partID].Qty += qty;
                 return newParts[partID].ID;
             }
-            //return null if it doesn't
-            //convertor should create a new part to be uploaded
+            /*return null if it doesn't convertor should 
+             * create a new part to be uploaded/
             return null;
         }
 
@@ -298,6 +315,11 @@ namespace ReportConverter
                 newPartList.Add(newParts[key]);
             }
             return newPartList;
+        }*/
+
+        public string getAssetID(string s)
+        {
+            return "";
         }
     }
 }

@@ -63,10 +63,12 @@ namespace ReportConverter
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> data;
         private Dictionary<string, int> tableLoc;
+        private PartsTable partsTable;
 
-        public GamesaConverter(AppInfo i)
+        public GamesaConverter(AppInfo i, PartsTable p)
         {
             info = i;
+            partsTable = p;
             flaggedWO = new Dictionary<string, WorkOrder>();
             data = info.getVendorData("Gamesa");
             getTableLoc();
@@ -369,7 +371,8 @@ namespace ReportConverter
                         qty = qty * (-1);
                     }
                     string id = row[fieldToCell["Material"]];
-                    string partID = newWOs[key].Vendor.getPartID(id, qty);
+                    string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                    //string partID = newWOs[key].Vendor.getPartID(id, qty);
 
                     if (partID != null)
                     {
@@ -378,7 +381,8 @@ namespace ReportConverter
                     else
                     {
                         string description = row[fieldToCell["Description"]];
-                        partID = wo.Vendor.addNewPart(id, qty, description);
+                        partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                        //partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
                     newWOs[key] = wo;

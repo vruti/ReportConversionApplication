@@ -36,7 +36,6 @@ namespace ReportConverter
         {
             if (active)
             {
-                Console.WriteLine("In Go to Settings");
                 active = false;
                 Settings s = new Settings(f, this);
                 s.Show();
@@ -62,6 +61,15 @@ namespace ReportConverter
         private void button4_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (active)
+            {
+                active = false;
+                f.archiveOutput(this);
+            }
         }
     }
 }

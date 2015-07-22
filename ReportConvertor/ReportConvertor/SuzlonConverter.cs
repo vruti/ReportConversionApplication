@@ -15,11 +15,13 @@ namespace ReportConverter
         private Dictionary<string, int[]> fieldToCell;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
+        private PartsTable partsTable;
 
-        public SuzlonConverter(String s, AppInfo i)
+        public SuzlonConverter(String s, AppInfo i, PartsTable p)
         {
             info = i;
             site = info.getSite(s);
+            partsTable = p;
             getFieldNames();
         }
 
@@ -43,8 +45,24 @@ namespace ReportConverter
             loc = fieldToCell["Actual Hours"];
             wo.ActualHours = Convert.ToDouble(records[loc[0]][loc[1]+1]);
             loc = fieldToCell["Down Time"];
-            wo.DownTime = Convert.ToDouble(records[loc[0]][loc[1]+1]);
+            string downtime = records[loc[0]][loc[1] + 1];
+            if (downtime.Equals(" "))
+            {
+                wo.DownTime = 0;
+            }
+            else
+            {
+                wo.DownTime = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
+            }
+            loc = fieldToCell["Description"];
+            wo.Description = records[loc[0]][loc[1] + 1];
+            wo.Comments = wo.Description;
             addParts();
+        }
+
+        private bool isEmpty(string s)
+        {
+            return s.Equals(" ");
         }
 
         /* This function maps the fields to locations so
@@ -58,12 +76,12 @@ namespace ReportConverter
             for (int i = 0; i < records.Count; i++)
             {
                 List<string> row = records[i];
-                for (int j = 0; j < row.Count; j++)
+                //for (int j = 0; j < row.Count; j++)
                 {
-                    key = isField(row[j]);
+                    key = isField(row[0]);
                     if (key != null && !fieldToCell.ContainsKey(key))
                     {
-                        fieldToCell.Add(key, new int[] { i, j });
+                        fieldToCell.Add(key, new int[] { i, 0 });
                     }
                 }
             }
@@ -73,6 +91,7 @@ namespace ReportConverter
         {
             List<string> fieldKeys = fieldNames.Keys.ToList();
             string name = s.ToLower();
+            if (name.Equals(" ")) return null;
             foreach (string key in fieldKeys)
             {
                 foreach (string field in fieldNames[key])
@@ -112,16 +131,19 @@ namespace ReportConverter
         private void addParts()
         {
             int[] loc = fieldToCell["Parts"];
-            int i = loc[0];
-            int idLoc = loc[1]+1;
+            int i = loc[0]+1;
+            int j = loc[1];
+            int idLoc = j+1;
             int qLoc = idLoc+1;
             int desLoc = qLoc+2;
 
             while (!records[i][idLoc].Equals(" "))
             {
                 string id = records[i][idLoc];
-                int qty = Convert.ToInt32(records[i][qLoc]);
-                string partID = wo.Vendor.getPartID(id, qty);
+                double dQty = Convert.ToDouble(records[i][qLoc]);
+                int qty = Convert.ToInt32(dQty);
+                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                //string partID = wo.Vendor.getPartID(id, qty);
                 if (partID != null)
                 {
                     wo.addPart(partID, qty);
@@ -129,9 +151,11 @@ namespace ReportConverter
                 else
                 {
                     string description = records[i][desLoc];
-                    partID = wo.Vendor.addNewPart(id, qty, description);
+                    partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                    //partID = wo.Vendor.addNewPart(id, qty, description);
                     wo.addPart(partID, qty);
                 }
+                i++;
             }
         }
 

@@ -14,11 +14,13 @@ namespace ReportConverter
         private string site;
         AppInfo info;
         List<List<string>> records;
+        PartsTable partsTable;
 
-        public VestasConverter(string s, AppInfo i)
+        public VestasConverter(string s, AppInfo i, PartsTable p)
         {
             info = i;
             site = s;
+            partsTable = p;
             newParts = new Dictionary<string, Part>();
         }
 

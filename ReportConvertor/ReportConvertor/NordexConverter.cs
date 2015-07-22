@@ -8,26 +8,28 @@ namespace ReportConverter
 {
     public class NordexConverter : Converter
     {
-        private WorkOrder newWO;
+        private WorkOrder wo;
         private WorkOrder flaggedWO;
         private string site;
         private AppInfo info;
         private List<List<string>> records;
+        private PartsTable partsTable;
 
-        public NordexConverter(string s, AppInfo i)
+        public NordexConverter(string s, AppInfo i, PartsTable p)
         {
             site = s;
             info = i;
+            partsTable = p;
         }
 
         public void convertReport(Report report)
         { 
             records = report.getRecords("Main");
             string id = getOrderNo();
-            newWO = new WorkOrder(id);
-            newWO.Site = info.getSite(site);
-            newWO.Vendor = info.getVendor("Nordex");
-            newWO.Status = "Closed";
+            wo = new WorkOrder(id);
+            wo.Site = info.getSite(site);
+            wo.Vendor = info.getVendor("Nordex");
+            wo.Status = "Closed";
             int countS = 1;
             int countC = 1;
 
@@ -36,7 +38,7 @@ namespace ReportConverter
                 List<string> row = records[i];
                 if (row[0].Equals("Date"))
                 {
-                    newWO.OpenDate = Convert.ToDateTime(row[1].Trim());
+                    wo.OpenDate = Convert.ToDateTime(row[1].Trim());
                 } 
                 else if (row[0].Contains("Start Date") && countS == 1)
                 {
@@ -45,9 +47,15 @@ namespace ReportConverter
                 }
                 else if (row[0].Contains("Oper.") && countC == 1)
                 {
-                    i = componentsUsed((i + 1), id);
+                    i = componentsUsed((i + 1));//, id);
                     countC++;
                 }
+            }
+            Validator v = new Validator();
+            if (!v.isValid(wo))
+            {
+                flaggedWO = wo;
+                wo = null;
             }
         }
 
@@ -109,66 +117,66 @@ namespace ReportConverter
             {
                 List<string> row = records[i];
 
-                if(newWO.StartDate == def)
+                if(wo.StartDate == def)
                 {
                     DateTime s = toDate(row[fieldToCell["Start Date"]]);
-                    newWO.StartDate = s;
+                    wo.StartDate = s;
                 } 
                 else 
                 {
                     DateTime d = toDate(row[fieldToCell["Start Date"]]);
-                    if (d < newWO.StartDate)
+                    if (d < wo.StartDate)
                     {
-                        newWO.StartDate = d;
+                        wo.StartDate = d;
                     }
                 }
 
-                if (newWO.EndDate == def)
+                if (wo.EndDate == def)
                 {
-                    newWO.EndDate = toDate(row[fieldToCell["End Date"]]);
+                    wo.EndDate = toDate(row[fieldToCell["End Date"]]);
                 }
                 else
                 {
                     DateTime d = toDate(row[fieldToCell["End Date"]]);
-                    if (d > newWO.EndDate)
+                    if (d > wo.EndDate)
                     {
-                        newWO.StartDate = d;
+                        wo.StartDate = d;
                     }
                 }
-                if (newWO.Description == null)
+                if (wo.Description == null)
                 {
-                    newWO.Description = row[fieldToCell["Description of"]];
+                    wo.Description = row[fieldToCell["Description of"]];
                 }
                 else
                 {
                     string d = row[fieldToCell["Description of"]];
-                    if (d.Length > newWO.Description.Length)
+                    if (d.Length > wo.Description.Length)
                     {
-                        newWO.Description = d;
+                        wo.Description = d;
                     }
                 }
-                if (newWO.Comments == null)
+                if (wo.Comments == null)
                 {
-                    newWO.Comments = row[fieldToCell["Longtext of"]];
+                    wo.Comments = row[fieldToCell["Longtext of"]];
                 }
                 else
                 {
                     string c = row[fieldToCell["Longtext of"]];
-                    if (c.Length > newWO.Comments.Length)
+                    if (c.Length > wo.Comments.Length)
                     {
-                        newWO.Comments = c;
+                        wo.Comments = c;
                     }
                 }
                 string startTime = row[fieldToCell["Start Time"]];
                 string endTime = row[fieldToCell["End Time"]];
                 if (row[fieldToCell["Description of"]].Contains("Start/Stop"))
                 {
-                    newWO.DownTime += getHours(startTime, endTime);
-                    newWO.ActualHours += getHours(startTime, endTime);
+                    wo.DownTime += getHours(startTime, endTime);
+                    wo.ActualHours += getHours(startTime, endTime);
                 }
                 else
                 {
-                    newWO.ActualHours += getHours(startTime, endTime);
+                    wo.ActualHours += getHours(startTime, endTime);
                 }
                 i++;
             }
@@ -184,25 +192,27 @@ namespace ReportConverter
             return hours;
         }
 
-        private int componentsUsed(int i, string id)
+        private int componentsUsed(int i)//, string id)
         {
             Dictionary<string, int> fieldToCell = organizeFields(records[i-1]);
             while (!records[i][0].Contains("Measurement"))
             {
                 List<string> record = records[i];
-                string partNo = record[fieldToCell["Product Ref."]];
+                string id = record[fieldToCell["Product Ref."]];
                 double dQty = Convert.ToDouble(record[fieldToCell["Quantity"]]);
                 int qty = Convert.ToInt32(dQty);
-                string partID = newWO.Vendor.getPartID(partNo, qty);
+                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                //string partID = wo.Vendor.getPartID(partNo, qty);
                 if (partID != null)
                 {
-                    newWO.addPart(partID, qty);
+                    wo.addPart(partID, qty);
                 }
                 else
                 {
                     string description = record[fieldToCell["Description"]];
-                    partID = newWO.Vendor.addNewPart(partNo, qty, description);
-                    newWO.addPart(partID, qty);
+                    partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                    //partID = wo.Vendor.addNewPart(partNo, qty, description);
+                    wo.addPart(partID, qty);
                 }
                 i++;
             }
@@ -227,12 +237,28 @@ namespace ReportConverter
             }
         }
 
+        public List<WorkOrder> getFlaggedWO()
+        {
+            if (flaggedWO != null)
+            {
+                List<WorkOrder> flaggedWOs = new List<WorkOrder>();
+                flaggedWO.createMPulseID();
+                flaggedWOs.Add(flaggedWO);
+                return flaggedWOs;
+            }
+            return null;
+        }
+
         public List<WorkOrder> getWorkOrders()
         {
-            List<WorkOrder> newWOs = new List<WorkOrder>();
-            newWO.createMPulseID();
-            newWOs.Add(newWO);
-            return newWOs;
+            if (wo != null)
+            {
+                List<WorkOrder> wos = new List<WorkOrder>();
+                wo.createMPulseID();
+                wos.Add(wo);
+                return wos;
+            }
+            return null;
         }
 
     }

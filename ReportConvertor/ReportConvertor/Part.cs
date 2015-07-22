@@ -23,7 +23,9 @@ namespace ReportConverter
 
         public void generateID(string newestID)
         {
-            string num = newestID.Substring(10, 4);
+            int len = newestID.Length;
+            int start = len - 5;
+            string num = newestID.Substring(start, 4);
             int n = Convert.ToInt32(num);
             n++;
             id = vendor.FiveLetterCode+"-PRT-" + n.ToString("D4");

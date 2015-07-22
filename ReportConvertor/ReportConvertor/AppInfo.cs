@@ -162,7 +162,7 @@ namespace ReportConverter
                 v.WOArchiveTabNo = Convert.ToInt32(wk.Cells[i, 7].Value.ToString());
                 v.PartsFile=(fileLocs["Parts"]);
                 v.WOArchiveFile=(fileLocs["WOHistory"]);
-                v.generatePartsTable();
+                //v.generatePartsTable();
                 v.generateWOHistory();
                 //if there is an alternate name that we have to look for
                 if (wk.Cells[i, 2].Value != null)

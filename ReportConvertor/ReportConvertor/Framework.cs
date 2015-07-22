@@ -13,12 +13,14 @@ namespace ReportConverter
         public Dictionary<string, WorkOrder> newWO;
         public Dictionary<string, List<WorkOrder>> flaggedWO;
         private string archiveDirectory;
+        private PartsTable partsTable;
 
         public Framework()
         {
             info = new AppInfo();
             inputDirectory = info.getFileLoc("Directory");
             archiveDirectory = info.getFileLoc("Archive");
+            partsTable = new PartsTable(info.getAllVendors(), info.getFileLoc("Parts"));
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new Dictionary<string,List<WorkOrder>>();
         }
@@ -46,44 +48,44 @@ namespace ReportConverter
                             case "Highland 1":
                                 if (sKey.Equals("xls"))
                                 {
-                                    c = new NordexExcelConverter(key, info);
+                                    c = new NordexExcelConverter(key, info, partsTable);
                                 }
                                 else
                                 {
-                                    c = new NordexConverter(key, info);
+                                    c = new NordexConverter(key, info, partsTable);
                                 }
                                 break;
                             case "Highland North":
                                 if (sKey.Equals("xls"))
                                 {
-                                    c = new NordexExcelConverter(key, info);
+                                    c = new NordexExcelConverter(key, info, partsTable);
                                 }
                                 else
                                 {
-                                    c = new NordexConverter(key, info);
+                                    c = new NordexConverter(key, info, partsTable);
                                 }
                                 break;
                             case "Patton":
-                                c = new GamesaConverter(info);
+                                c = new GamesaConverter(info, partsTable);
                                 break;
                             case "Twin Ridges":
                                 if (sKey.Equals("xlsm"))
                                 {
-                                    c = new EVPConverter(key, info);
+                                    c = new EVPConverter(key, info, partsTable);
                                 }
                                 else
                                 {
-                                    c = new SenvionConverter(key, info);
+                                    c = new SenvionConverter(key, info, partsTable);
                                 }
                                 break;
                             case "Big Sky":
-                                c = new SuzlonConverter(key, info);
+                                c = new SuzlonConverter(key, info, partsTable);
                                 break;
                             case "Howard":
-                                c = new SenvionConverter(key, info);
+                                c = new SenvionConverter(key, info, partsTable);
                                 break;
                             case "Mustang Hills":
-                                c = new VestasConverter(key, info);
+                                c = new VestasConverter(key, info, partsTable);
                                 break;
                         }
                         foreach (Report report in ServiceReports[sKey][key])
@@ -106,10 +108,11 @@ namespace ReportConverter
         {
             List<Part> newParts = new List<Part>();
             List<Vendor> vendors = info.getAllVendors();
-            foreach (Vendor v in vendors)
+            /*foreach (Vendor v in vendors)
             {
                 newParts.AddRange(v.getNewParts());
-            }
+            }*/
+            newParts = partsTable.getNewParts();
             return newParts;
         }
 
@@ -188,6 +191,15 @@ namespace ReportConverter
         public void changeInputDirectory(string dir)
         {
             inputDirectory = dir;
+        }
+
+        public void archiveOutput(Main m)
+        {
+            string oDir = info.getFileLoc("Output");
+            string aDir = info.getFileLoc("Archive");
+            Archive a = new Archive(oDir, aDir);
+            a.startArchive();
+            m.activateForm();
         }
     }
 }
