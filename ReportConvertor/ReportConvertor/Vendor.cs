@@ -18,7 +18,6 @@ namespace ReportConverter
         private List<string> altNames;
         private Dictionary<string, int> newWO;
         private Dictionary<string, int> oldWO;
-//        private Dictionary<string, string> partsTable;
         private int partsTab;
         private int woTab;
         private string woFile;
@@ -218,108 +217,6 @@ namespace ReportConverter
 
                 }
             }
-        }
-/*
-        public void generatePartsTable()
-        {
-            // initializing the dictionary to store the 
-             // contractor part number to mpulse part number 
-             /
-            partsTable = new Dictionary<string, string>();
-            FileInfo newFile = new FileInfo(partsFile);
-            ExcelPackage pck = new ExcelPackage(newFile);
-            ExcelWorksheets ws = pck.Workbook.Worksheets;
-
-            /*chosing the tab number in the file based
-             * on the contractor name
-             /
-            ExcelWorksheet wk = ws[1];
-
-            int totalRows = wk.Dimension.End.Row;
-
-            for (int i = 1; i <= totalRows; i++)
-            {
-                string id = wk.Cells[i, 1].Value.ToString();
-                string ownedBy = wk.Cells[i, 11].Text;
-                if (id.Contains(FiveLetterCode) || id.Contains(ThreeLetterCode) || isVendor(ownedBy))
-                {
-                    //1st column has contractor part name
-                    //2nd column has mpulse part name
-                    var partID = wk.Cells[i, 8].Value;
-                    if (/*wk.Cells[i, 1].Value != null &&/ partID != null && !partsTable.ContainsKey(partID.ToString()))
-                    {
-                        partsTable.Add(partID.ToString(), id);
-                    }
-                }
-            }
-        }
-
-        private bool isVendor(string s)
-        {
-            string ownedBy = s.ToLower();
-            if (ownedBy.Contains(name)) return true;
-            foreach (string alt in altNames)
-            {
-                if (ownedBy.Contains(alt.ToLower())) return true;
-            }
-            return false;
-        }
-
-        public string getPartID(string partID, int qty)
-        {
-            //return the mpulse part number if it exists
-            if (partsTable.ContainsKey(partID))
-            {
-                return partsTable[partID];
-            }
-            else if (newParts.ContainsKey(partID))
-            {
-                newParts[partID].Qty += qty;
-                return newParts[partID].ID;
-            }
-            /*return null if it doesn't convertor should 
-             * create a new part to be uploaded/
-            return null;
-        }
-
-        public string newestPartID()
-        {
-            int len;
-            if (newParts.Count > 0)
-            {
-                List<string> k = newParts.Keys.ToList();
-                len = k.Count;
-                return newParts[k[len - 1]].ID;
-            }
-            List<string> keys = partsTable.Keys.ToList();
-            len = keys.Count;
-            return partsTable[keys[len-1]];
-        }
-
-        public string addNewPart(string id, int qty, string description)
-        {
-            Part newPart = new Part(id, this);
-            newPart.generateID(newestPartID());
-            newPart.Qty += qty;
-            newPart.Description = description;
-            newParts.Add(id, newPart);
-            return newPart.ID;
-        }
-
-        public List<Part> getNewParts()
-        {
-            List<Part> newPartList = new List<Part>();
-            List<string> keys = newParts.Keys.ToList();
-            foreach (string key in keys)
-            {
-                newPartList.Add(newParts[key]);
-            }
-            return newPartList;
-        }*/
-
-        public string getAssetID(string s)
-        {
-            return "";
         }
     }
 }

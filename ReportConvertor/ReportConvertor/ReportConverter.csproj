@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archive.cs" />
+    <Compile Include="AssetTable.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="DirectoryReader.cs" />
     <Compile Include="EVPConverter.cs" />

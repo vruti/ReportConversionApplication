@@ -16,13 +16,19 @@ namespace ReportConverter
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
         private PartsTable partsTable;
+        private List<List<string>> vendorData;
+        private Dictionary<string, int> tableLoc;
+        private Dictionary<string, List<string>> table;
 
         public SuzlonConverter(String s, AppInfo i, PartsTable p)
         {
             info = i;
             site = info.getSite(s);
             partsTable = p;
-            getFieldNames();
+            vendorData = info.getVendorData("Suzlon");
+            addTableLoc();
+            addFieldNames();
+            addTableData();
         }
 
         public void convertReport(Report report)
@@ -105,26 +111,65 @@ namespace ReportConverter
             return null;
         }
 
-        private void getFieldNames()
+        private void addFieldNames()
         {
-            List<List<string>> data = info.getVendorData("Suzlon");
             fieldNames = new Dictionary<string, List<string>>();
-            int len = Convert.ToInt32(data[0][1]);
-            int start = 1;
+            int start = tableLoc["Fields"] - 1;
+            int len = Convert.ToInt32(vendorData[start][2]);
+            start++;
+            int cols;
             List<string> row;
+
             for (int i = start; i < start + len; i++)
             {
-                row = data[i];
-                row = data[i];
-                List<string> fields = new List<string>();
-                for (int j = 0; j < row.Count; j++)
+                cols = vendorData[i].Count;
+                row = new List<string>();
+                for (int j = 0; j < cols; j++)
                 {
-                    if (!row[j].Equals(" "))
+                    if (!vendorData[i][j].Equals(" "))
                     {
-                        fields.Add(row[j].ToLower());
+                        row.Add(vendorData[i][j]);
                     }
                 }
-                fieldNames.Add(row[0], fields);
+                fieldNames.Add(vendorData[i][0], row);
+            }
+        }
+
+        private void addTableLoc()
+        {
+            tableLoc = new Dictionary<string, int>();
+            int i = 1;
+            int loc;
+            string n;
+
+            while (!vendorData[i][0].Equals(" "))
+            {
+                loc = Convert.ToInt32(vendorData[i][1]);
+                n = vendorData[i][0];
+                tableLoc.Add(n.Trim(), loc);
+                i++;
+            }
+        }
+
+        private void addTableData()
+        {
+            table = new Dictionary<string, List<string>>();
+            int start = tableLoc["Table"];
+            start -= 1;
+            int len = Convert.ToInt32(vendorData[start][1]);
+            start += 2;
+            int cols;
+
+            for (int i = start; i < start + len; i++)
+            {
+                List<string> line = vendorData[i];
+                cols = line.Count;
+                List<string> row = new List<string>();
+                for (int j = 1; j < cols; j++)
+                {
+                    row.Add(line[j]);
+                }
+                table.Add(line[0], row);
             }
         }
 

@@ -27,9 +27,9 @@ namespace ReportConverter
             partsTable = p;
             fieldToCell = new Dictionary<string, int>();
             vendorData = info.getVendorData("EverPower");
-            getTableLoc();
-            getFieldNames();
-            getTableData();
+            addTableLoc();
+            addFieldNames();
+            addTableData();
         }
 
         public void convertReport(Report report)
@@ -57,7 +57,7 @@ namespace ReportConverter
             wo.Comments = records[fieldToCell["Comments"]][1];
             wo.Status = "Closed";
             string asset = records[fieldToCell["Asset"]][1];
-            wo.AssetID = wo.Vendor.getAssetID(asset);
+            wo.AssetID = wo.Site.getAssetID(asset);
             addParts();
             Validator v = new Validator();
             if (!v.isValid(wo))
@@ -75,7 +75,6 @@ namespace ReportConverter
                 string id = records[i][0];
                 int qty = Convert.ToInt32(records[i][2]);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                //string partID = wo.Vendor.getPartID(id, qty);
                 if (partID != null)
                 {
                     wo.addPart(partID, qty);
@@ -95,12 +94,9 @@ namespace ReportConverter
             while (!rec[i][4].Equals(""))
             {
                 string id = rec[i][4];
-                //Part p = new Part(id, wo.Vendor);
                 string des= rec[i][5];
                 int qty = Convert.ToInt32(rec[i][6]);
                 string pID = partsTable.addNewPart(id, qty, des, wo.Vendor);
-
-                //p.generateID(wo.Vendor.newestPartID());
                 wo.addPart(pID, qty);
             }
         }
@@ -108,19 +104,16 @@ namespace ReportConverter
         private void organizeFields()
         {
             fieldToCell = new Dictionary<string, int>();
-            getFieldNames();
+            //getFieldNames();
             string key;
 
             for (int i = 0; i < records.Count; i++)
             {
                 List<string> row = records[i];
-                //for (int j = 0; j < row.Count; j++)
+                key = isField(row[0]);
+                if (key != null && !fieldToCell.ContainsKey(key))
                 {
-                    key = isField(row[0]);
-                    if (key != null && !fieldToCell.ContainsKey(key))
-                    {
-                        fieldToCell.Add(key, i);
-                    }
+                    fieldToCell.Add(key, i);
                 }
             }
         }
@@ -143,7 +136,7 @@ namespace ReportConverter
             return null;
         }
 
-        private void getFieldNames()
+        private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
             int start = tableLoc["Fields"] - 1;
@@ -167,7 +160,7 @@ namespace ReportConverter
             }
         }
 
-        private void getTableLoc()
+        private void addTableLoc()
         {
             tableLoc = new Dictionary<string, int>();
             int i = 1;
@@ -183,7 +176,7 @@ namespace ReportConverter
             }
         }
 
-        private void getTableData()
+        private void addTableData()
         {
             table = new Dictionary<string, List<string>>();
             int start = tableLoc["Table"];

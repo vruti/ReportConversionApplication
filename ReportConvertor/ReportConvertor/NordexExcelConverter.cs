@@ -11,19 +11,26 @@ namespace ReportConverter
         private string site;
         private AppInfo info;
         private WorkOrder wo;
-        //private WorkOrder flaggedWO;
-        private Dictionary<string, Part> newParts;
+        private WorkOrder flaggedWO;
+        //private Dictionary<string, Part> newParts;
         private List<List<string>> records;
         private Dictionary<string, List<string>> fieldNames;
         private Dictionary<string, int[]> fieldToCell;
         private PartsTable partsTable;
+        private List<List<string>> vendorData;
+        private Dictionary<string, int> tableLoc;
+        private Dictionary<string, List<string>> table;
+
 
         public NordexExcelConverter(string s, AppInfo i, PartsTable p)
         {
-            newParts = new Dictionary<string, Part>();
+            //newParts = new Dictionary<string, Part>();
             site = s;
             info = i;
             partsTable = p;
+            vendorData = info.getVendorData("Nordex");
+            addTableLoc();
+            addTableData();
         }
 
         public void convertReport(Report report)
@@ -34,6 +41,12 @@ namespace ReportConverter
             string id = getID();
             wo = new WorkOrder(id);
             wo.WorkOrderType = report.checkedVals()[0];
+            List<string> taskInfo = table[wo.WorkOrderType];
+            wo.OutageType = taskInfo[0];
+            wo.Priority = taskInfo[1];
+            wo.Planning = taskInfo[2];
+            wo.UnplannedType = taskInfo[3];
+            wo.TaskID = taskInfo[4];
             wo.Site = info.getSite(site);
             wo.Vendor = info.getVendor("Nordex");
             wo.Status = "Closed";
@@ -101,38 +114,63 @@ namespace ReportConverter
 
         private void getFieldNames()
         {
-            List<List<string>> data = info.getVendorData("Nordex");
             fieldNames = new Dictionary<string, List<string>>();
-            int i, j;
+            int start = tableLoc["Fields"] - 1;
+            int len = Convert.ToInt32(vendorData[start][2]);
+            start++;
+            int cols;
             List<string> row;
-            bool isFieldTable = false;
 
-            for (i = 0; i < data.Count; i++)
+            for (int i = start; i < start + len; i++)
             {
-                row = data[i];
-                if (row[0].Contains("Field Name"))
+                row = new List<string>();
+                cols = vendorData[i].Count;
+                for (int j = 1; j < cols; j++)
                 {
-                    isFieldTable = true;
-                    i++;
-                }
-                if (row[0].Equals(" "))
-                {
-                    isFieldTable = false;
-                    break;
-                }
-                if (isFieldTable)
-                {
-                    row = data[i];
-                    List<string> fields = new List<string>();
-                    for (j = 1; j < row.Count; j++)
+                    if (!vendorData[i][j].Equals(" "))
                     {
-                        if (!row[j].Equals(" "))
-                        {
-                            fields.Add(row[j].ToLower());
-                        }
+                        row.Add(vendorData[i][j]);
                     }
-                    fieldNames.Add(row[0], fields);
                 }
+                fieldNames.Add(vendorData[i][0], row);
+            }
+        }
+
+        private void addTableLoc()
+        {
+            tableLoc = new Dictionary<string, int>();
+            int i = 1;
+            int loc;
+            string n;
+
+            while (!vendorData[i][0].Equals(" "))
+            {
+                loc = Convert.ToInt32(vendorData[i][1]);
+                n = vendorData[i][0];
+                tableLoc.Add(n.Trim(), loc);
+                i++;
+            }
+        }
+
+        private void addTableData()
+        {
+            table = new Dictionary<string, List<string>>();
+            int start = tableLoc["Table"];
+            start -= 1;
+            int len = Convert.ToInt32(vendorData[start][1]);
+            start += 2;
+            int cols;
+
+            for (int i = start; i < start + len; i++)
+            {
+                List<string> line = vendorData[i];
+                cols = line.Count;
+                List<string> row = new List<string>();
+                for (int j = 1; j < cols; j++)
+                {
+                    row.Add(line[j]);
+                }
+                table.Add(line[0], row);
             }
         }
 
@@ -192,10 +230,13 @@ namespace ReportConverter
             for (int i = start; i < end; i++)
             {
                 string time = records[i][y].Trim();
-                int count = time.IndexOf(":");
-                double hour = Convert.ToDouble(time.Substring(0, count));
-                double min = Convert.ToDouble(time.Substring(count+1, 2));
-                total += hour + (min / 60);
+                if (!time.Equals(""))
+                {
+                    int count = time.IndexOf(":");
+                    double hour = Convert.ToDouble(time.Substring(0, count));
+                    double min = Convert.ToDouble(time.Substring(count + 1, 2));
+                    total += hour + (min / 60);
+                }
             }
 
             wo.ActualHours = total;
@@ -214,7 +255,6 @@ namespace ReportConverter
                 {
                     int qty = Convert.ToInt32(records[i][y + 1]);
                     string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                    //string partID = wo.Vendor.getPartID(id, qty);
                     if (partID != null)
                     {
                         wo.addPart(partID, qty);
@@ -223,7 +263,6 @@ namespace ReportConverter
                     {
                         string description = records[i][y + 3];
                         partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                        //partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
                 }
@@ -245,7 +284,6 @@ namespace ReportConverter
                 {
                     int qty = Convert.ToInt32(records[i][y + 1]);
                     string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                    //string partID = wo.Vendor.getPartID(id, qty);
                     if (partID != null)
                     {
                         wo.addPart(partID, qty);
@@ -254,7 +292,6 @@ namespace ReportConverter
                     {
                         string description = records[i][y + 3];
                         partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                        //partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
                 }
@@ -264,7 +301,7 @@ namespace ReportConverter
         /*Returns a list of the new parts in the
          * work order so that they can be put into 
          * the output file for upload*/
-        public List<Part> getNewParts()
+        /*public List<Part> getNewParts()
         {
             List<string> keys = newParts.Keys.ToList();
             List<Part> parts = new List<Part>();
@@ -273,7 +310,7 @@ namespace ReportConverter
                 parts.Add(newParts[key]);
             }
             return parts;
-        }
+        }*/
 
         public List<WorkOrder> getWorkOrders()
         {

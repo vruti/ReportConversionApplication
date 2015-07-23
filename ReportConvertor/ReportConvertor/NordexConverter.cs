@@ -47,7 +47,7 @@ namespace ReportConverter
                 }
                 else if (row[0].Contains("Oper.") && countC == 1)
                 {
-                    i = componentsUsed((i + 1));//, id);
+                    i = componentsUsed((i + 1));
                     countC++;
                 }
             }
@@ -89,7 +89,6 @@ namespace ReportConverter
             return null;
         }
 
-        //DEAL WITH THIS SOOOOONNNNNN
         private Dictionary<string, int> organizeFields(List<string> record)
         {
             Dictionary<string, int> result = new Dictionary<string, int>();
@@ -192,7 +191,7 @@ namespace ReportConverter
             return hours;
         }
 
-        private int componentsUsed(int i)//, string id)
+        private int componentsUsed(int i)
         {
             Dictionary<string, int> fieldToCell = organizeFields(records[i-1]);
             while (!records[i][0].Contains("Measurement"))
@@ -202,7 +201,6 @@ namespace ReportConverter
                 double dQty = Convert.ToDouble(record[fieldToCell["Quantity"]]);
                 int qty = Convert.ToInt32(dQty);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                //string partID = wo.Vendor.getPartID(partNo, qty);
                 if (partID != null)
                 {
                     wo.addPart(partID, qty);
@@ -211,7 +209,6 @@ namespace ReportConverter
                 {
                     string description = record[fieldToCell["Description"]];
                     partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                    //partID = wo.Vendor.addNewPart(partNo, qty, description);
                     wo.addPart(partID, qty);
                 }
                 i++;

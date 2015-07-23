@@ -34,10 +34,6 @@ namespace ReportConverter
             FileInfo newFile = new FileInfo(partsFile);
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
-
-            /*chosing the tab number in the file based
-             * on the contractor name
-             */
             ExcelWorksheet wk = ws[1];
 
             int totalRows = wk.Dimension.End.Row;

@@ -305,31 +305,14 @@ namespace ReportConverter
 
             ArrayList record;
 
-            if (comments == null)
+            if (comments == null || comments.Equals("") || comments.Equals(" "))
             {
                 comments = description;
             }
 
             if (keys.Count == 0 || (keys.Count == 1 && partsList[keys[0]] < 1))
             {
-                record = new ArrayList();
-                record.Add(mPulseID);
-                record.Add(description);
-                record.Add(status);
-                record.Add(woType);
-                record.Add(outageType);
-                record.Add(priority);
-                record.Add(openDate.ToShortDateString());
-                record.Add(startDate.ToShortDateString());
-                record.Add(dateDone.ToShortDateString());
-                record.Add(downTime);
-                record.Add(site.Name);
-                record.Add(planning);
-                record.Add(unplannedType);
-                record.Add(taskID);
-                record.Add(assetID);
-                record.Add(vendor.ID);
-                record.Add(actualHours);
+                record = addValues();
                 record.Add(" ");
                 record.Add(" ");
                 record.Add(comments);
@@ -343,24 +326,7 @@ namespace ReportConverter
             {
                 if (partsList[key] > 0)
                 {
-                    record = new ArrayList();
-                    record.Add(mPulseID);
-                    record.Add(description);
-                    record.Add(status);
-                    record.Add(woType);
-                    record.Add(outageType);
-                    record.Add(priority);
-                    record.Add(openDate.ToShortDateString());
-                    record.Add(startDate.ToShortDateString());
-                    record.Add(dateDone.ToShortDateString());
-                    record.Add(downTime);
-                    record.Add(site.Name);
-                    record.Add(planning);
-                    record.Add(unplannedType);
-                    record.Add(taskID);
-                    record.Add(assetID);
-                    record.Add(vendor.ID);
-                    record.Add(actualHours);
+                    record = addValues();
                     record.Add(key);
                     record.Add(partsList[key]);
                     record.Add(comments);
@@ -370,6 +336,30 @@ namespace ReportConverter
                 }
             }
             return records;
+        }
+
+        private ArrayList addValues()
+        {
+            ArrayList record = new ArrayList();
+            record.Add(mPulseID);
+            record.Add(description);
+            record.Add(status);
+            record.Add(woType);
+            record.Add(outageType);
+            record.Add(priority);
+            record.Add(openDate.ToShortDateString());
+            record.Add(startDate.ToShortDateString());
+            record.Add(dateDone.ToShortDateString());
+            record.Add(downTime);
+            record.Add(site.Name);
+            record.Add(planning);
+            record.Add(unplannedType);
+            record.Add(taskID);
+            record.Add(assetID);
+            record.Add(vendor.ID);
+            record.Add(actualHours);
+
+            return record;
         }
     }
 }

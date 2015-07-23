@@ -12,12 +12,13 @@ namespace ReportConverter
         private string name;
         private string code3;
         private string code5;
-        private ArrayList altNames;
+        private List<string> altNames;
         private Vendor vendor;
+        private Dictionary<string, string> assets;
 
         public Site()
         {
-            altNames = new ArrayList();
+            altNames = new List<string>();
         }
 
         public Vendor Contractor
@@ -72,11 +73,11 @@ namespace ReportConverter
         {
             altNames.Add(n);
         }
-
-        public ArrayList getAltNames()
+        /*
+        public List<string> getAltNames()
         {
             return altNames;
-        }
+        }*/
 
         public bool isSite(string n)
         {
@@ -94,6 +95,21 @@ namespace ReportConverter
                 }
             }
             return false;
+        }
+
+        public Dictionary<string, string> Assets
+        {
+            set
+            {
+                assets = value;
+            }
+        }
+
+        public string getAssetID(string s)
+        {
+            string vendorAssetID = s.ToLower();
+            //return assets[vendorAssetID];
+            return "";
         }
     }
 }

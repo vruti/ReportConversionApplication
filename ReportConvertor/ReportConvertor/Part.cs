@@ -24,7 +24,7 @@ namespace ReportConverter
         public void generateID(string newestID)
         {
             int len = newestID.Length;
-            int start = len - 5;
+            int start = len - 4;
             string num = newestID.Substring(start, 4);
             int n = Convert.ToInt32(num);
             n++;
