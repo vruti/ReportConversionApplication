@@ -14,12 +14,14 @@ namespace ReportConverter
         private AppInfo info;
         private List<List<string>> records;
         private PartsTable partsTable;
+        private AssetTable aTable;
 
-        public NordexConverter(string s, AppInfo i, PartsTable p)
+        public NordexConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
             site = s;
             info = i;
             partsTable = p;
+            aTable = a;
         }
 
         public void convertReport(Report report)
@@ -49,6 +51,11 @@ namespace ReportConverter
                 {
                     i = componentsUsed((i + 1));
                     countC++;
+                }
+                else if (row[0].Contains("Equipment Ref"))
+                {
+                    string asset = row[1].Trim();
+                    wo.AssetID = aTable.getAssetID(asset, site);
                 }
             }
             Validator v = new Validator();

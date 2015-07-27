@@ -46,29 +46,35 @@ namespace ReportConverter
         {
             Report report = new Report();
             string siteName="";
+            report.addReportTab("main");
+            report.changeCurrentTab("main");
 
             //PDF READER IMPLEMENTATION
             var doc1 = new Document();
             PdfReader reader = new PdfReader(file);
 
+            int nPages = reader.NumberOfPages;
+            string currentText = null;
             ITextExtractionStrategy s = new SimpleTextExtractionStrategy();
-
-            //only one page
-            var currentText = PdfTextExtractor.GetTextFromPage(reader, 1, s);
-            currentText = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(currentText)));
-            report.addReportTab("main");
-            report.changeCurrentTab("main");
-
-            int lengthOfFile = currentText.Length;
             List<List<string>> wholeFile = new List<List<string>>();
 
-            siteName = getNameOfSite(currentText);
+            for (int i = 1; i <= nPages; i++)
+            {
+                currentText = PdfTextExtractor.GetTextFromPage(reader, i, s);
+                currentText = Encoding.UTF8.GetString(Encoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(currentText)));               
+            }
+
+            int lengthOfFile = currentText.Length;
+            if (siteName.Equals(""))
+            {
+                siteName = getNameOfSite(currentText);
+            }
             List<string> eachLine = new List<string>();
             string word = "";
-            for (int i = 0; i < lengthOfFile; i++)
+            for (int j = 0; j < lengthOfFile; j++)
             {
                 //check if it is the end of a line
-                if (currentText[i] == '\n')
+                if (currentText[j] == '\n')
                 {
                     if (!word.Equals(""))
                     {
@@ -78,7 +84,7 @@ namespace ReportConverter
                     wholeFile.Add(eachLine);
                     eachLine = new List<string>();
                 }
-                else if (currentText[i] == ' ')
+                else if (currentText[j] == ' ')
                 {
                     if (!word.Equals(""))
                     {
@@ -88,9 +94,11 @@ namespace ReportConverter
                 }
                 else
                 {
-                    word += currentText[i];
+                    word += currentText[j];
                 }
             }
+
+            //only one page
             report.addRecords(wholeFile);
 
             return Tuple.Create(siteName, report);

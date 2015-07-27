@@ -9,17 +9,19 @@ namespace ReportConverter
     public class VestasConverter : Converter
     {
         private Dictionary<string, Part> newParts;
-        private WorkOrder newWO;
+        private WorkOrder wo;
         //private WorkOrder flaggedWO;
-        private string site;
-        AppInfo info;
-        List<List<string>> records;
-        PartsTable partsTable;
+        private Site site;
+        private Vendor vendor;
+        private AppInfo info;
+        private List<List<string>> records;
+        private PartsTable partsTable;
 
         public VestasConverter(string s, AppInfo i, PartsTable p)
         {
             info = i;
-            site = s;
+            site = i.getSite(s);
+            vendor = i.getVendor("Vestas");
             partsTable = p;
             newParts = new Dictionary<string, Part>();
         }
@@ -28,7 +30,27 @@ namespace ReportConverter
         {
             records = report.getRecords("Main");
             string id = getID();
-            newWO = new WorkOrder(id);
+            wo = new WorkOrder(id);
+            wo.Status = "Closed";
+            wo.Site = site;
+            wo.Vendor = vendor;
+
+            for (int i = 0; i < records.Count; i++)
+            {
+                List<string> row = records[i];
+                if (row.Contains("Offline") && row.Contains("Date:"))
+                {
+                    addDownTime(i);
+                }
+                else if (row.Contains("Total") && row.Contains("Consumption:"))
+                {
+                    wo.ActualHours = Convert.ToDouble(row[3]);
+                }
+                else if (row.Contains("Start") && row.Contains("Date:"))
+                {
+                    addDates();
+                }
+            }
         }
 
         private string getID()
@@ -38,18 +60,19 @@ namespace ReportConverter
             for (int i = 0; i < len; i++)
             {
                 List<string> row = records[i];
-                if (row.Contains("Service") && row.Contains("Order"))
+                if (row.Contains("Service") && row.Contains("Order:"))
                 {
+                    int loc = row.IndexOf("Service")/2;
                     row = records[i + 1];
-
+                    id = row[loc];
                 }
             }
+            Console.WriteLine(id);
             return id;
         }
-
+        /*
         private void rearrangeHeaders(List<string> headers)
         {
-
             int i;
             for (i = 0; i < records.Count; i++)
             {
@@ -90,7 +113,37 @@ namespace ReportConverter
             }
             return false;
         }
+        */
 
+        private void addDownTime(int i)
+        {
+            List<string> headers = records[i];
+            List<string> values = records[i + 1];
+
+            string offline = values[0] + "," + values[1];
+            string online = values[2] + "," + values[3];
+            DateTime offlineD = Convert.ToDateTime(offline);
+            DateTime onlineD = Convert.ToDateTime(online);
+            double downTime = (onlineD - offlineD).TotalHours;
+            wo.DownTime = downTime;
+        }
+
+        private void addDates(int i)
+        {
+            List<string> values = records[i + 1];
+            DateTime s = Convert.ToDateTime(values[1]);
+            wo.StartDate = s;
+            wo.OpenDate = s;
+            if (values.Count < 3)
+            {
+                wo.EndDate = s;
+            }
+            else
+            {
+                wo.EndDate = Convert.ToDateTime(values[2]);
+            }
+        }
+ 
         public List<Part> getNewParts()
         {
             List<string> keys = newParts.Keys.ToList();
@@ -104,9 +157,10 @@ namespace ReportConverter
 
         public List<WorkOrder> getWorkOrders()
         {
-            List<WorkOrder> newWOs = new List<WorkOrder>();
-            newWOs.Add(newWO);
-            return newWOs;
+            List<WorkOrder> wos = new List<WorkOrder>();
+            wo.createMPulseID();
+            wos.Add(wo);
+            return wos;
         }
     }
 }

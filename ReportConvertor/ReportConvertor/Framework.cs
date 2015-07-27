@@ -14,6 +14,7 @@ namespace ReportConverter
         public Dictionary<string, List<WorkOrder>> flaggedWO;
         private string archiveDirectory;
         private PartsTable partsTable;
+        private AssetTable assetTable;
 
         public Framework()
         {
@@ -23,6 +24,7 @@ namespace ReportConverter
             partsTable = new PartsTable(info.getAllVendors(), info.getFileLoc("Parts"));
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new Dictionary<string,List<WorkOrder>>();
+            assetTable = new AssetTable(info.getSites(), info.getFileLoc("Assets"));
         }
 
         public void start(Main m)
@@ -52,7 +54,7 @@ namespace ReportConverter
                                 }
                                 else
                                 {
-                                    c = new NordexConverter(key, info, partsTable);
+                                    c = new NordexConverter(key, info, partsTable, assetTable);
                                 }
                                 break;
                             case "Highland North":
@@ -62,11 +64,11 @@ namespace ReportConverter
                                 }
                                 else
                                 {
-                                    c = new NordexConverter(key, info, partsTable);
+                                    c = new NordexConverter(key, info, partsTable, assetTable);
                                 }
                                 break;
                             case "Patton":
-                                c = new GamesaConverter(info, partsTable);
+                                c = new GamesaConverter(info, partsTable, assetTable);
                                 break;
                             case "Twin Ridges":
                                 if (sKey.Equals("xlsm"))
@@ -95,7 +97,6 @@ namespace ReportConverter
                         }
                     }
                 }
-
                 ExcelFileWriter writer = new ExcelFileWriter(info);
                 List<Part> newParts = getParts();
                 writer.writeFiles(getListofWO(), newParts, null);

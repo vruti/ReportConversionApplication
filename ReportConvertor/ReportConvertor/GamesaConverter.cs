@@ -64,11 +64,13 @@ namespace ReportConverter
         private List<List<string>> data;
         private Dictionary<string, int> tableLoc;
         private PartsTable partsTable;
+        private AssetTable aTable;
 
-        public GamesaConverter(AppInfo i, PartsTable p)
+        public GamesaConverter(AppInfo i, PartsTable p, AssetTable a)
         {
             info = i;
             partsTable = p;
+            aTable = a;
             flaggedWO = new Dictionary<string, WorkOrder>();
             data = info.getVendorData("Gamesa");
             getTableLoc();
@@ -188,36 +190,44 @@ namespace ReportConverter
                 
                 WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
                 string oType = row[fieldToCell["Order Type"]];
-                //Get subsequest task information from the work order type code
-                List<string> taskInfo = table[oType];
-                wo.WorkOrderType = taskInfo[0];
-                wo.TaskID = taskInfo[1];
-                wo.OutageType = taskInfo[2];
-                wo.Planning = taskInfo[3];
-                wo.UnplannedType = taskInfo[4];
-                wo.Priority = taskInfo[5];
-                wo.Description = row[fieldToCell["Description"]];
-                //Status will always be closed
-                wo.Status = "Closed";
-                wo.Vendor = info.getVendor("Gamesa");
-                wo.Site = info.getSite("Patton");
-
-                //if the dates are available in the general tab
-                if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
+                if (!oType.Contains("ZPM7"))
                 {
-                    wo.StartDate = Convert.ToDateTime(row[fieldToCell["Start Date"]]);
-                    wo.EndDate = Convert.ToDateTime(row[fieldToCell["End Date"]]);
-                    wo.OpenDate = wo.StartDate;
+                    //Get subsequest task information from the work order type code
+                    List<string> taskInfo = table[oType];
+                    wo.WorkOrderType = taskInfo[0];
+                    wo.TaskID = taskInfo[1];
+                    wo.OutageType = taskInfo[2];
+                    wo.Planning = taskInfo[3];
+                    wo.UnplannedType = taskInfo[4];
+                    wo.Priority = taskInfo[5];
+                    wo.Description = row[fieldToCell["Description"]];
+                    //Status will always be closed
+                    wo.Status = "Closed";
+                    wo.Vendor = info.getVendor("Gamesa");
+                    wo.Site = info.getSite("Patton");
+                    string asset = row[fieldToCell["Asset"]];
+                    wo.AssetID = aTable.getAssetID(asset, "Patton");
+
+                    //if the dates are available in the general tab
+                    if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
+                    {
+                        wo.StartDate = Convert.ToDateTime(row[fieldToCell["Start Date"]]);
+                        wo.EndDate = Convert.ToDateTime(row[fieldToCell["End Date"]]);
+                        wo.OpenDate = wo.StartDate;
+                    }
+                    //add work order to list
+                    newWOs.Add(wo.OriginalID, wo);
                 }
-                //add work order to list
-                newWOs.Add(wo.OriginalID, wo);
             }
         }
 
+        /* Arrange all the information obtained from the table 
+         * of data in the excel file into a dictionary with the
+         * order type being the key*/
         private Dictionary<string, List<string>> getTableData()
         {
             Dictionary<string, List<string>> table = new Dictionary<string, List<string>>();
-            int start = tableLoc["Table"]-1;
+            int start = tableLoc["Table"] - 1;
             int len = Convert.ToInt32(data[start][1]);
             start+=2;
             int cols;
