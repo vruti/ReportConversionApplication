@@ -8,7 +8,6 @@ namespace ReportConverter
 {
     public class VestasConverter : Converter
     {
-        private Dictionary<string, Part> newParts;
         private WorkOrder wo;
         //private WorkOrder flaggedWO;
         private Site site;
@@ -16,21 +15,25 @@ namespace ReportConverter
         private AppInfo info;
         private List<List<string>> records;
         private PartsTable partsTable;
+        private AssetTable aTable;
 
-        public VestasConverter(string s, AppInfo i, PartsTable p)
+        public VestasConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
             info = i;
             site = i.getSite(s);
+            aTable = a;
             vendor = i.getVendor("Vestas");
             partsTable = p;
-            newParts = new Dictionary<string, Part>();
         }
 
         public void convertReport(Report report)
         {
             records = report.getRecords("Main");
-            string id = getID();
+            int idLoc = getID();
+            string id = records[idLoc][1];
             wo = new WorkOrder(id);
+            string asset = records[idLoc][0];
+            wo.AssetID = aTable.getAssetID(asset, site.Name);
             wo.Status = "Closed";
             wo.Site = site;
             wo.Vendor = vendor;
@@ -48,16 +51,25 @@ namespace ReportConverter
                 }
                 else if (row.Contains("Start") && row.Contains("Date:"))
                 {
-                    addDates();
+                    addDates(i);
+                }
+                else if (row[0].Contains("Item"))
+                {
+                    addParts(i+1);
+                }
+                else if (row.Contains("Work") && row.Contains("Performed"))
+                {
+                    addDescription(i + 2);
                 }
             }
         }
 
-        private string getID()
+        private int getID()
         {
             int len = records.Count;
             string id = null;
-            for (int i = 0; i < len; i++)
+            int i;
+            for (i = 0; i < len; i++)
             {
                 List<string> row = records[i];
                 if (row.Contains("Service") && row.Contains("Order:"))
@@ -65,55 +77,12 @@ namespace ReportConverter
                     int loc = row.IndexOf("Service")/2;
                     row = records[i + 1];
                     id = row[loc];
+                    break;
                 }
             }
             Console.WriteLine(id);
-            return id;
+            return i + 1;
         }
-        /*
-        private void rearrangeHeaders(List<string> headers)
-        {
-            int i;
-            for (i = 0; i < records.Count; i++)
-            {
-                List<string> row = records[i];
-                if (isHeader(row[0], headers))
-                {
-                    List<string> newR = new List<string>();          
-                    while (row.Count != 0)
-                    {
-                        string word = "";
-                        foreach (string v in row)
-                        {
-                            if (v.Contains(":"))
-                            {
-                                word += v;
-                                newR.Add(word);
-                                word = "";
-                            }
-                            else
-                            {
-                                word += v + " ";
-                            }
-                        }
-                    }
-                    records[i] = newR;
-                }
-            }
-        }
-
-        private bool isHeader(string firstVal, List<string> indicators)
-        {
-            foreach (string val in indicators)
-            {
-                if (val.ToLower().Contains(firstVal))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        */
 
         private void addDownTime(int i)
         {
@@ -143,16 +112,51 @@ namespace ReportConverter
                 wo.EndDate = Convert.ToDateTime(values[2]);
             }
         }
- 
-        public List<Part> getNewParts()
+
+        private void addParts(int i)
         {
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
+            while (!records[i][0].Contains("_"))
             {
-                parts.Add(newParts[key]);
+                string id = records[i][0];
+                int len = records[i].Count;
+                int qty = Convert.ToInt32(Convert.ToDouble(records[i][len-2]));
+                string pID = partsTable.getPartID(id, vendor.Name, qty);
+                if (pID == null)
+                {
+                    string description = records[i][1];
+                    pID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                }
+                wo.addPart(pID, qty);
+                i++;
             }
-            return parts;
+        }
+
+        private void addDescription(int i)
+        {
+            string d = "";
+            for (int y = i; y < i + 2; y++)
+            {
+                List<string> row = records[y];
+                for (int x = 1; x < row.Count; x++)
+                {
+                    d += row[x] + " ";
+                }
+                d += " ";
+            }
+            d = d.Trim();
+            int loc = d.IndexOf(".");
+            string first;
+
+            if (loc > 0)
+            {
+                first = d.Substring(0, loc + 1);
+            }
+            else
+            {
+                first = d;
+            }
+            wo.Description = first;
+            wo.Comments = d;
         }
 
         public List<WorkOrder> getWorkOrders()

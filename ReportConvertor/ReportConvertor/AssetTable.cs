@@ -55,11 +55,11 @@ namespace ReportConverter
 
         public string getAssetID(string vendorID, string site)
         {
-            //if (assets[site].ContainsKey(vendorID))
-            //{
+            if (assets[site].ContainsKey(vendorID))
+            {
                 return assets[site][vendorID];
-            //}
-            //else return "";
+            }
+            else return "";
         }
     }
 }

@@ -48,6 +48,7 @@ namespace ReportConverter
             string curDir = Environment.CurrentDirectory;
             string[] filePathsXlsx = Directory.GetFiles(@curDir, "*.xlsx");
             string path = filePathsXlsx[0];
+            fileLocs.Add("AppInfo", path);
             FileInfo newFile = new FileInfo(path);
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
@@ -76,6 +77,11 @@ namespace ReportConverter
             }
         }
 
+        public Dictionary<string, string> getFileLocs()
+        {
+            return fileLocs;
+        }
+
         // Get the location of file/directory specified
         public string getFileLoc(string n)
         {
@@ -84,6 +90,11 @@ namespace ReportConverter
                 return fileLocs[n];
             }
             return null;
+        }
+
+        public void changeFileLoc(string f, string tab)
+        {
+            fileLocs[tab] = f;
         }
 
         /*Reads all the site information and creates

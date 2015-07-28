@@ -52,6 +52,10 @@ namespace ReportConverter
         private void writeWO(List<WorkOrder> woList, ExcelWorksheets ws)
         {
             ExcelWorksheet wk = ws["Work Orders"];
+            if (wk == null)
+            {
+                wk = ws.Add("Work Orders");
+            }
             List<ArrayList> records = getRecords(woList);
             int totalRows = records.Count;
             int totalCols = records[0].Count;
@@ -69,6 +73,10 @@ namespace ReportConverter
         private void writeParts(List<Part> parts, ExcelWorksheets ws)
         {
             ExcelWorksheet wk = ws["Parts"];
+            if (wk == null)
+            {
+                wk = ws.Add("Parts");
+            }
             int totalRows = parts.Count;
 
             for (int i = 0; i < totalRows; i++)
@@ -80,6 +88,25 @@ namespace ReportConverter
                     wk.Cells[(i + 2), (j + 1)].Value = record[j];
                 }
             }
+        }
+
+        public void writeFileLocs()
+        {
+            Dictionary<string, string> fileLocs = info.getFileLocs();
+            string appInfoFile = fileLocs["AppInfo"];
+            FileInfo newFile = new FileInfo(appInfoFile);
+            ExcelPackage pck = new ExcelPackage(newFile);
+            ExcelWorksheets ws = pck.Workbook.Worksheets;
+            ExcelWorksheet wk = ws["FileLocations"];
+            fileLocs.Remove("AppInfo");
+            List<string> keys = fileLocs.Keys.ToList();
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                wk.Cells[(i + 2), 1].Value = keys[i];
+                wk.Cells[(i + 2), 2].Value = fileLocs[keys[i]];
+            }
+            pck.Save();
         }
     }
 }

@@ -15,12 +15,16 @@ namespace ReportConverter
     {
         private Framework f;
         private bool active;
+        private AppInfo a;
+        private ExcelFileWriter eWriter;
 
-        public Main(Framework framework)
+        public Main(Framework framework, AppInfo appInfo)
         {
             InitializeComponent();
             f = framework;
+            a = appInfo;
             active = true;
+            eWriter = new ExcelFileWriter(a);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -37,7 +41,7 @@ namespace ReportConverter
             if (active)
             {
                 active = false;
-                Settings s = new Settings(f, this);
+                Settings s = new Settings(f, this, a);
                 s.Show();
             }
         }
@@ -60,6 +64,7 @@ namespace ReportConverter
 
         private void button4_Click(object sender, EventArgs e)
         {
+            eWriter.writeFileLocs();
             Application.Exit();
         }
 
@@ -70,6 +75,11 @@ namespace ReportConverter
                 active = false;
                 f.archiveOutput(this);
             }
+        }
+
+        private void Main_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            eWriter.writeFileLocs();
         }
     }
 }

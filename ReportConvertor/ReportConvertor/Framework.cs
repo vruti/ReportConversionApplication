@@ -16,10 +16,10 @@ namespace ReportConverter
         private PartsTable partsTable;
         private AssetTable assetTable;
 
-        public Framework()
+        public Framework(AppInfo i)
         {
-            info = new AppInfo();
-            inputDirectory = info.getFileLoc("Directory");
+            info = i;
+            inputDirectory = info.getFileLoc("Input");
             archiveDirectory = info.getFileLoc("Archive");
             partsTable = new PartsTable(info.getAllVendors(), info.getFileLoc("Parts"));
             newWO = new Dictionary<string, WorkOrder>();
@@ -87,7 +87,7 @@ namespace ReportConverter
                                 c = new SenvionConverter(key, info, partsTable);
                                 break;
                             case "Mustang Hills":
-                                c = new VestasConverter(key, info, partsTable);
+                                c = new VestasConverter(key, info, partsTable, assetTable);
                                 break;
                         }
                         foreach (Report report in ServiceReports[sKey][key])
@@ -109,10 +109,6 @@ namespace ReportConverter
         {
             List<Part> newParts = new List<Part>();
             List<Vendor> vendors = info.getAllVendors();
-            /*foreach (Vendor v in vendors)
-            {
-                newParts.AddRange(v.getNewParts());
-            }*/
             newParts = partsTable.getNewParts();
             return newParts;
         }
@@ -165,19 +161,15 @@ namespace ReportConverter
                         break;
                     case "xlsm":
                         fR = new ExcelFileReader(info);
-                        //ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "xls":
                         fR = new XLSFileReader(info);
-                        //ServiceReports.Add(key, fR.readFile(files));
                         break;
                     case "pdf":
                         fR = new PDFFileReader(info);
-                        //ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     case "html":
                         fR = new HTMLFileReader(info);
-                        //ServiceReports.Add(key, fR.readFiles(files));
                         break;
                     default:
                         ServiceReports = null;

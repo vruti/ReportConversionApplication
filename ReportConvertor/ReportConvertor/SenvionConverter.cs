@@ -221,18 +221,12 @@ namespace ReportConverter
                 string id = records[x][y + 5];
                 int qty = Convert.ToInt32(records[x][y + 6]);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                //string partID = wo.Vendor.getPartID(id, qty);
-                if (partID != null)
-                {
-                    wo.addPart(partID, qty);
-                }
-                else
+                if (partID == null)
                 {
                     string description = records[x][y];
                     partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                    //partID = wo.Vendor.addNewPart(id, qty, description);
-                    wo.addPart(partID, qty);
                 }
+                wo.addPart(partID, qty);
                 x++;
             }
         }
