@@ -9,7 +9,7 @@ namespace ReportConverter
     public class VestasConverter : Converter
     {
         private WorkOrder wo;
-        //private WorkOrder flaggedWO;
+        private WorkOrder flaggedWO;
         private Site site;
         private Vendor vendor;
         private AppInfo info;
@@ -165,6 +165,13 @@ namespace ReportConverter
             wo.createMPulseID();
             wos.Add(wo);
             return wos;
+        }
+
+        public List<WorkOrder> getFlaggedWO()
+        {
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            flagged.Add(flaggedWO);
+            return flagged;
         }
     }
 }

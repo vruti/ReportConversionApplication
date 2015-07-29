@@ -241,18 +241,6 @@ namespace ReportConverter
             }
         }
 
-        public List<WorkOrder> getFlaggedWO()
-        {
-            if (flaggedWO != null)
-            {
-                List<WorkOrder> flaggedWOs = new List<WorkOrder>();
-                flaggedWO.createMPulseID();
-                flaggedWOs.Add(flaggedWO);
-                return flaggedWOs;
-            }
-            return null;
-        }
-
         public List<WorkOrder> getWorkOrders()
         {
             if (wo != null)
@@ -265,5 +253,11 @@ namespace ReportConverter
             return null;
         }
 
+        public List<WorkOrder> getFlaggedWO()
+        {
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            flagged.Add(flaggedWO);
+            return flagged;
+        }
     }
 }

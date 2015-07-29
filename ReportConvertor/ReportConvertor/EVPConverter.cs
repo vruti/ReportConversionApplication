@@ -11,25 +11,23 @@ namespace ReportConverter
         private WorkOrder wo;
         private WorkOrder flaggedWO;
         private Dictionary<string, int> fieldToCell;
-        private string site;
+        private Site site;
         private AppInfo info;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
         private List<List<string>> vendorData;
-        private Dictionary<string, int> tableLoc;
-        private Dictionary<string, List<string>> table;
         private PartsTable partsTable;
+        private AssetTable aTable;
  
-        public EVPConverter(string s, AppInfo i, PartsTable p)
+        public EVPConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
             info = i;
-            site = s;
+            site = i.getSite(s);
             partsTable = p;
+            aTable = a;
             fieldToCell = new Dictionary<string, int>();
             vendorData = info.getVendorData("EverPower");
-            addTableLoc();
             addFieldNames();
-            addTableData();
         }
 
         public void convertReport(Report report)
@@ -38,26 +36,27 @@ namespace ReportConverter
             records = report.getRecords("Main");
             organizeFields();
 
-            wo.Site = info.getSite(site);
+            wo.Site = site;
             wo.Vendor = wo.Site.Contractor;
             wo.Description = records[fieldToCell["Description"]][1];
-            wo.WorkOrderType = records[fieldToCell["Type"]][1];
-            List<string> taskInfo = table[wo.WorkOrderType];
-            wo.OutageType = taskInfo[0];
-            wo.Priority = taskInfo[1];
-            wo.Planning = taskInfo[2];
-            wo.UnplannedType = taskInfo[3];
-            wo.TaskID = taskInfo[4];
+            string workOrderType = records[fieldToCell["Type"]][1];
+            List<string> taskInfo = info.getTypeInfo(workOrderType);
+            wo.WorkOrderType = taskInfo[0];
+            wo.TaskID = taskInfo[1];
+            wo.OutageType = taskInfo[2];
+            wo.Planning = taskInfo[3];
+            wo.UnplannedType = taskInfo[4];
+            wo.Priority = taskInfo[5];
             DateTime date = toDate(records);
             wo.OpenDate = date;
             wo.EndDate = date;
             wo.StartDate = date;
-            wo.DownTime = Convert.ToDouble(records[fieldToCell["Down Time"]][1]);
-            wo.ActualHours = Convert.ToDouble(records[fieldToCell["Actual Hours"]][1]);
+            wo.DownTime = convertToDouble(fieldToCell["Down Time"]);
+            wo.ActualHours = convertToDouble(fieldToCell["Actual Hours"]);
             wo.Comments = records[fieldToCell["Comments"]][1];
             wo.Status = "Closed";
             string asset = records[fieldToCell["Asset"]][1];
-            wo.AssetID = wo.Site.getAssetID(asset);
+            wo.AssetID = aTable.getAssetID(asset, site.Name);
             addParts();
             Validator v = new Validator();
             if (!v.isValid(wo))
@@ -67,13 +66,27 @@ namespace ReportConverter
             }
         }
 
+        private double convertToDouble(int x)
+        {
+            string downTime = records[x][1];
+            int i = downTime.IndexOf(":");
+            /* If the down time is in the hours format,
+             * we replace the ':' with '.' so that it
+             * can be converted to a double*/
+            if (i > -1)
+            {
+                downTime = downTime.Replace(":", ".");
+            }
+            return Convert.ToDouble(downTime);
+        }
+
         private void addParts()
         {
             int i = fieldToCell["Parts"] + 2;
             while (!records[i][0].Equals(" "))
             {
                 string id = records[i][0];
-                int qty = Convert.ToInt32(records[i][2]);
+                int qty = Convert.ToInt32(records[i][3]);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
                 if (partID != null)
                 {
@@ -104,7 +117,6 @@ namespace ReportConverter
         private void organizeFields()
         {
             fieldToCell = new Dictionary<string, int>();
-            //getFieldNames();
             string key;
 
             for (int i = 0; i < records.Count; i++)
@@ -139,7 +151,7 @@ namespace ReportConverter
         private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = tableLoc["Fields"] - 1;
+            int start = 0;// tableLoc["Fields"] - 1;
             int len = Convert.ToInt32(vendorData[start][2]);
             start++;
             int cols;
@@ -160,44 +172,6 @@ namespace ReportConverter
             }
         }
 
-        private void addTableLoc()
-        {
-            tableLoc = new Dictionary<string, int>();
-            int i = 1;
-            int loc;
-            string n;
-
-            while (!vendorData[i][0].Equals(" "))
-            {
-                loc = Convert.ToInt32(vendorData[i][1]);
-                n = vendorData[i][0];
-                tableLoc.Add(n.Trim(), loc);
-                i++;
-            }
-        }
-
-        private void addTableData()
-        {
-            table = new Dictionary<string, List<string>>();
-            int start = tableLoc["Table"];
-            start -= 1;
-            int len = Convert.ToInt32(vendorData[start][1]);
-            start += 2;
-            int cols;
-
-            for (int i = start; i < start + len; i++)
-            {
-                List<string> line = vendorData[i];
-                cols = line.Count;
-                List<string> row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    row.Add(line[j]);
-                }
-                table.Add(line[0], row);
-            }
-        }
-
         private DateTime toDate(List<List<string>> rec)
         {
             string date = rec[fieldToCell["Date"]][1];
@@ -212,6 +186,13 @@ namespace ReportConverter
             wo.createMPulseID();
             wos.Add(wo);
             return wos;
+        }
+
+        public List<WorkOrder> getFlaggedWO()
+        {
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            flagged.Add(flaggedWO);
+            return flagged;
         }
     }
 }

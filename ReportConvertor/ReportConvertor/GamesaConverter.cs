@@ -59,7 +59,7 @@ namespace ReportConverter
         //Global fields
         private AppInfo info;
         private Dictionary<string, WorkOrder> newWOs;
-        private Dictionary<string, WorkOrder> flaggedWO;
+        private List<WorkOrder> flaggedWO;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> data;
         private Dictionary<string, int> tableLoc;
@@ -71,7 +71,7 @@ namespace ReportConverter
             info = i;
             partsTable = p;
             aTable = a;
-            flaggedWO = new Dictionary<string, WorkOrder>();
+            flaggedWO = new List<WorkOrder>();
             data = info.getVendorData("Gamesa");
             getTableLoc();
         }
@@ -99,7 +99,8 @@ namespace ReportConverter
 
             while (!data[i][0].Equals(" "))
             {
-                loc = Convert.ToInt32(data[i][1]);
+                double v = Convert.ToDouble(data[i][1]);
+                loc = Convert.ToInt32(v);
                 n = data[i][0];
                 tableLoc.Add(n, loc);
                 i++;
@@ -147,7 +148,8 @@ namespace ReportConverter
 
             fieldNames = new Dictionary<string, List<string>>();
             int start = tableLoc[tab] - 1;
-            int len = Convert.ToInt32(data[start][1]);
+            double tempV = Convert.ToDouble(data[start][1]);
+            int len = Convert.ToInt32(tempV);
             start++;
             int cols;
             List<string> row;
@@ -182,7 +184,6 @@ namespace ReportConverter
             //Parsing the general info tab
             List<List<string>> rows = report.getRecords(tab);
             Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
-            Dictionary<string, List<string>> table = getTableData();
             for(int i =1; i<rows.Count;i++)
             {
                 List<string> row = rows[i];
@@ -193,7 +194,7 @@ namespace ReportConverter
                 if (!oType.Contains("ZPM7"))
                 {
                     //Get subsequest task information from the work order type code
-                    List<string> taskInfo = table[oType];
+                    List<string> taskInfo = info.getTypeInfo(oType);
                     wo.WorkOrderType = taskInfo[0];
                     wo.TaskID = taskInfo[1];
                     wo.OutageType = taskInfo[2];
@@ -219,31 +220,6 @@ namespace ReportConverter
                     newWOs.Add(wo.OriginalID, wo);
                 }
             }
-        }
-
-        /* Arrange all the information obtained from the table 
-         * of data in the excel file into a dictionary with the
-         * order type being the key*/
-        private Dictionary<string, List<string>> getTableData()
-        {
-            Dictionary<string, List<string>> table = new Dictionary<string, List<string>>();
-            int start = tableLoc["Table"] - 1;
-            int len = Convert.ToInt32(data[start][1]);
-            start+=2;
-            int cols;
-
-            for (int i = start; i < start + len; i++)
-            {
-                List<string> line = data[i];
-                cols = line.Count;
-                List<string> row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    row.Add(line[j]);
-                }
-                table.Add(line[0], row);
-            }
-            return table;
         }
 
         private void hoursTabReader(List<string> keys, Report report)
@@ -382,7 +358,6 @@ namespace ReportConverter
                     }
                     string id = row[fieldToCell["Material"]];
                     string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                    //string partID = newWOs[key].Vendor.getPartID(id, qty);
 
                     if (partID != null)
                     {
@@ -392,7 +367,6 @@ namespace ReportConverter
                     {
                         string description = row[fieldToCell["Description"]];
                         partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                        //partID = wo.Vendor.addNewPart(id, qty, description);
                         wo.addPart(partID, qty);
                     }
                     newWOs[key] = wo;
@@ -456,6 +430,11 @@ namespace ReportConverter
                 }
             }
             return newWOList;
+        }
+
+        public List<WorkOrder> getFlaggedWO()
+        {
+            return flaggedWO;
         }
     }
 }

@@ -15,7 +15,7 @@ namespace ReportConverter
 
         public bool isValid(WorkOrder wo)
         {
-            //if (wo.AssetID == null) return false;
+            if (wo.AssetID == " ") return false;
             //if (wo.OutageType == null) return false;
             return true;
         }

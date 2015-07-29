@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -102,6 +103,16 @@ namespace ReportConverter
                 string fileName = openFileDialog1.FileName;
                 a.changeFileLoc(fileName, "WOHistory");
                 dirLoc.Text = f.info.getFileLoc("WOHistory");
+            }
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            string file = a.getFileLoc("AppInfo");
+            FileInfo fileI = new FileInfo(file);
+            if (fileI.Exists)
+            {
+                System.Diagnostics.Process.Start(file);
             }
         }
     }

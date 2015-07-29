@@ -30,6 +30,11 @@
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.PastWOButton = new System.Windows.Forms.Button();
+            this.AssetsButton = new System.Windows.Forms.Button();
+            this.PartsButton = new System.Windows.Forms.Button();
+            this.ArchiveButton = new System.Windows.Forms.Button();
+            this.OutputButton = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
@@ -45,20 +50,22 @@
             this.dirLoc = new System.Windows.Forms.TextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.OutputButton = new System.Windows.Forms.Button();
-            this.ArchiveButton = new System.Windows.Forms.Button();
-            this.PartsButton = new System.Windows.Forms.Button();
-            this.AssetsButton = new System.Windows.Forms.Button();
-            this.PastWOButton = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.tabPage3.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Location = new System.Drawing.Point(2, 12);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -92,6 +99,56 @@
             this.tabPage1.Size = new System.Drawing.Size(314, 260);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "File Locations";
+            // 
+            // PastWOButton
+            // 
+            this.PastWOButton.Location = new System.Drawing.Point(200, 225);
+            this.PastWOButton.Name = "PastWOButton";
+            this.PastWOButton.Size = new System.Drawing.Size(51, 23);
+            this.PastWOButton.TabIndex = 17;
+            this.PastWOButton.Text = "Choose";
+            this.PastWOButton.UseVisualStyleBackColor = true;
+            this.PastWOButton.Click += new System.EventHandler(this.PastWOButton_Click);
+            // 
+            // AssetsButton
+            // 
+            this.AssetsButton.Location = new System.Drawing.Point(200, 185);
+            this.AssetsButton.Name = "AssetsButton";
+            this.AssetsButton.Size = new System.Drawing.Size(51, 23);
+            this.AssetsButton.TabIndex = 16;
+            this.AssetsButton.Text = "Choose";
+            this.AssetsButton.UseVisualStyleBackColor = true;
+            this.AssetsButton.Click += new System.EventHandler(this.AssetsButton_Click);
+            // 
+            // PartsButton
+            // 
+            this.PartsButton.Location = new System.Drawing.Point(200, 145);
+            this.PartsButton.Name = "PartsButton";
+            this.PartsButton.Size = new System.Drawing.Size(51, 23);
+            this.PartsButton.TabIndex = 15;
+            this.PartsButton.Text = "Choose";
+            this.PartsButton.UseVisualStyleBackColor = true;
+            this.PartsButton.Click += new System.EventHandler(this.PartsButton_Click);
+            // 
+            // ArchiveButton
+            // 
+            this.ArchiveButton.Location = new System.Drawing.Point(200, 105);
+            this.ArchiveButton.Name = "ArchiveButton";
+            this.ArchiveButton.Size = new System.Drawing.Size(51, 23);
+            this.ArchiveButton.TabIndex = 14;
+            this.ArchiveButton.Text = "Choose";
+            this.ArchiveButton.UseVisualStyleBackColor = true;
+            this.ArchiveButton.Click += new System.EventHandler(this.ArchiveButton_Click);
+            // 
+            // OutputButton
+            // 
+            this.OutputButton.Location = new System.Drawing.Point(200, 65);
+            this.OutputButton.Name = "OutputButton";
+            this.OutputButton.Size = new System.Drawing.Size(51, 23);
+            this.OutputButton.TabIndex = 13;
+            this.OutputButton.Text = "Choose";
+            this.OutputButton.UseVisualStyleBackColor = true;
+            this.OutputButton.Click += new System.EventHandler(this.OutputButton_Click);
             // 
             // label6
             // 
@@ -213,55 +270,57 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // OutputButton
+            // tabPage3
             // 
-            this.OutputButton.Location = new System.Drawing.Point(200, 65);
-            this.OutputButton.Name = "OutputButton";
-            this.OutputButton.Size = new System.Drawing.Size(51, 23);
-            this.OutputButton.TabIndex = 13;
-            this.OutputButton.Text = "Choose";
-            this.OutputButton.UseVisualStyleBackColor = true;
-            this.OutputButton.Click += new System.EventHandler(this.OutputButton_Click);
+            this.tabPage3.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage3.Controls.Add(this.button1);
+            this.tabPage3.Controls.Add(this.label9);
+            this.tabPage3.Controls.Add(this.label8);
+            this.tabPage3.Controls.Add(this.label7);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(314, 260);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Fields";
             // 
-            // ArchiveButton
+            // label7
             // 
-            this.ArchiveButton.Location = new System.Drawing.Point(200, 105);
-            this.ArchiveButton.Name = "ArchiveButton";
-            this.ArchiveButton.Size = new System.Drawing.Size(51, 23);
-            this.ArchiveButton.TabIndex = 14;
-            this.ArchiveButton.Text = "Choose";
-            this.ArchiveButton.UseVisualStyleBackColor = true;
-            this.ArchiveButton.Click += new System.EventHandler(this.ArchiveButton_Click);
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(57, 36);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(194, 13);
+            this.label7.TabIndex = 0;
+            this.label7.Text = "Modify alternate field names by clicking ";
             // 
-            // PartsButton
+            // label8
             // 
-            this.PartsButton.Location = new System.Drawing.Point(200, 145);
-            this.PartsButton.Name = "PartsButton";
-            this.PartsButton.Size = new System.Drawing.Size(51, 23);
-            this.PartsButton.TabIndex = 15;
-            this.PartsButton.Text = "Choose";
-            this.PartsButton.UseVisualStyleBackColor = true;
-            this.PartsButton.Click += new System.EventHandler(this.PartsButton_Click);
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(57, 49);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(187, 13);
+            this.label8.TabIndex = 1;
+            this.label8.Text = "on the button below to open the Excel";
+            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // AssetsButton
+            // label9
             // 
-            this.AssetsButton.Location = new System.Drawing.Point(200, 185);
-            this.AssetsButton.Name = "AssetsButton";
-            this.AssetsButton.Size = new System.Drawing.Size(51, 23);
-            this.AssetsButton.TabIndex = 16;
-            this.AssetsButton.Text = "Choose";
-            this.AssetsButton.UseVisualStyleBackColor = true;
-            this.AssetsButton.Click += new System.EventHandler(this.AssetsButton_Click);
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(98, 62);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(108, 13);
+            this.label9.TabIndex = 2;
+            this.label9.Text = " file that contain them";
             // 
-            // PastWOButton
+            // button1
             // 
-            this.PastWOButton.Location = new System.Drawing.Point(200, 225);
-            this.PastWOButton.Name = "PastWOButton";
-            this.PastWOButton.Size = new System.Drawing.Size(51, 23);
-            this.PastWOButton.TabIndex = 17;
-            this.PastWOButton.Text = "Choose";
-            this.PastWOButton.UseVisualStyleBackColor = true;
-            this.PastWOButton.Click += new System.EventHandler(this.PastWOButton_Click);
+            this.button1.Location = new System.Drawing.Point(121, 98);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 3;
+            this.button1.Text = "Open File";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click_1);
             // 
             // Settings
             // 
@@ -276,6 +335,8 @@
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
+            this.tabPage3.ResumeLayout(false);
+            this.tabPage3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -305,6 +366,11 @@
         private System.Windows.Forms.Button PartsButton;
         private System.Windows.Forms.Button PastWOButton;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label7;
 
 
     }

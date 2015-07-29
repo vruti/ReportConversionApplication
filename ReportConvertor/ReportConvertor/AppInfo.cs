@@ -25,7 +25,8 @@ namespace ReportConverter
         private Dictionary<string, string> fileLocs;
         private Dictionary<string, List<List<string>>> vendorData;
         private Dictionary<string, List<string>> assets;
-        private Dictionary<string, List<string>> fieldNames;
+        //private Dictionary<string, List<string>> fieldNames;
+        private Dictionary<string, List<string>> woTypeTable;
 
         /* Initialize the object by opening the file with 
          * all the information. The file should probably be
@@ -39,7 +40,7 @@ namespace ReportConverter
             fileLocs = new Dictionary<string, string>();
             vendorData = new Dictionary<string, List<List<string>>>();
             assets = new Dictionary<string, List<string>>();
-            fieldNames = new Dictionary<string, List<string>>();
+            //fieldNames = new Dictionary<string, List<string>>();
 
             /* The AppinfoSheet file should always be located
              * in the specified location. File can be modified 
@@ -59,6 +60,7 @@ namespace ReportConverter
             addFileLoc(ws["FileLocations"]);
             addVendors(ws["Vendor General"]);
             addSites(ws["Site"]);
+            addWOTypeTable(ws["WOType"]);
             addVendorData(ws);
         }
 
@@ -298,6 +300,37 @@ namespace ReportConverter
                 }
             }
             return null;
+        }
+
+        private void addWOTypeTable(ExcelWorksheet wk)
+        {
+            woTypeTable = new Dictionary<string, List<string>>();
+            List<string> values;
+
+            int rows = wk.Dimension.End.Row;
+            int cols = wk.Dimension.End.Column;
+
+            for (int i = 2; i <= rows; i++)
+            {
+                values = new List<string>();
+                for (int j = 2; j <= cols; j++)
+                {
+                    if (wk.Cells[i, j].Value != null)
+                    {
+                        values.Add(wk.Cells[i, j].Value.ToString());
+                    }
+                    else
+                    {
+                        values.Add(" ");
+                    }
+                }
+                woTypeTable.Add(wk.Cells[i, 1].Value.ToString(), values);
+            }
+        }
+
+        public List<string> getTypeInfo(string type)
+        {
+            return woTypeTable[type];
         }
     }
 }

@@ -10,26 +10,23 @@ namespace ReportConverter
     {
         private WorkOrder wo;
         private WorkOrder flaggedWO;
-        private string site;
+        private Site site;
         private AppInfo info;
         private Dictionary<string, int[]> fieldToCell;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
         private List<List<string>> vendorData;
-        private Dictionary<string, int> tableLoc;
-        private Dictionary<string, List<string>> table;
         private PartsTable partsTable;
+        private AssetTable aTable;
 
-        public SenvionConverter(string s, AppInfo i, PartsTable p)
+        public SenvionConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
             info = i;
-            site = s;
+            site = i.getSite(s);
             partsTable = p;
+            aTable = a;
             vendorData = info.getVendorData("Senvion");
-            tableLoc = new Dictionary<string, int>();
-            getTableLoc();
             getFieldNames();
-            getTableData();
         }
 
         public void convertReport(Report report)
@@ -38,24 +35,26 @@ namespace ReportConverter
             organizeFields();
             int[] loc = fieldToCell["ID#"];
             wo = new WorkOrder(records[loc[0]+1][loc[1]]);
-            wo.Site = info.getSite(site);
+            wo.Site = site;
             wo.Vendor = info.getVendor("Senvion");
             calcLaborHours(fieldToCell["Time"]);
             addDates();
             getDownTime();
-            wo.WorkOrderType = report.checkedVals()[2];
-            List<string> taskInfo = table[wo.WorkOrderType];
-            wo.OutageType = taskInfo[0];
-            wo.Priority = taskInfo[1];
-            wo.Planning = taskInfo[2];
-            wo.UnplannedType = taskInfo[3];
-            wo.TaskID = taskInfo[4];
+            string workOrderType = report.checkedVals()[2];
+            List<string> taskInfo = info.getTypeInfo(workOrderType);
+            wo.WorkOrderType = taskInfo[0];
+            wo.TaskID = taskInfo[1];
+            wo.OutageType = taskInfo[2];
+            wo.Planning = taskInfo[3];
+            wo.UnplannedType = taskInfo[4];
+            wo.Priority = taskInfo[5];
             loc = fieldToCell["Description"];
             wo.Description = records[loc[0]+2][loc[1]];
             loc = fieldToCell["Comments"];
             wo.Comments = records[loc[0]][loc[1]+1];
             wo.Status = "Closed";
             addParts();
+            addAsset();
             Validator v = new Validator();
             if (!v.isValid(wo))
             {
@@ -63,26 +62,16 @@ namespace ReportConverter
                 wo = null;
             }
         }
-        
-        private void getTableData()
-        {
-            table = new Dictionary<string, List<string>>();
-            int start = tableLoc["Table"] - 1;
-            int len = Convert.ToInt32(vendorData[start][1]);
-            start+=2;
-            int cols;
 
-            for (int i = start; i < start + len; i++)
+        private void addAsset()
+        {
+            int[] loc = fieldToCell["Asset"];
+            string asset = records[loc[0] + 1][loc[1] + 2];
+            if (asset.Equals(" "))
             {
-                List<string> line = vendorData[i];
-                cols = line.Count;
-                List<string> row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    row.Add(line[j]);
-                }
-                table.Add(line[0], row);
+                asset = records[loc[0] + 1][loc[1]];
             }
+            wo.AssetID = aTable.getAssetID(asset, site.Name);
         }
 
         private void getDownTime()
@@ -174,7 +163,7 @@ namespace ReportConverter
         private void getFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = tableLoc["Fields"]-1;
+            int start = 0;
             int len = Convert.ToInt32(vendorData[start][2]);
             start++;
             int cols;
@@ -192,22 +181,6 @@ namespace ReportConverter
                     }
                 }
                 fieldNames.Add(vendorData[i][0], row);
-            }
-        }
-
-        private void getTableLoc()
-        {
-            
-            int i = 1;
-            int loc;
-            string n;
-
-            while (!vendorData[i][0].Equals(" "))
-            {
-                loc = Convert.ToInt32(vendorData[i][1]);
-                n = vendorData[i][0];
-                tableLoc.Add(n.Trim(), loc);
-                i++;
             }
         }
 
@@ -231,18 +204,6 @@ namespace ReportConverter
             }
         }
 
-        public List<WorkOrder> getFlaggedWO()
-        {
-            if (flaggedWO != null)
-            {
-                List<WorkOrder> flaggedWOs = new List<WorkOrder>();
-                flaggedWO.createMPulseID();
-                flaggedWOs.Add(flaggedWO);
-                return flaggedWOs;
-            }
-            return null;
-        }
-
         public List<WorkOrder> getWorkOrders()
         {
             if (wo != null)
@@ -253,6 +214,13 @@ namespace ReportConverter
                 return wos;
             }
             return null;
+        }
+
+        public List<WorkOrder> getFlaggedWO()
+        {
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            flagged.Add(flaggedWO);
+            return flagged;
         }
     }
 }

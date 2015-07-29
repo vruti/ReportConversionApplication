@@ -8,29 +8,26 @@ namespace ReportConverter
 {
     public class NordexExcelConverter : Converter
     {
-        private string site;
+        private Site site;
         private AppInfo info;
         private WorkOrder wo;
         private WorkOrder flaggedWO;
-        //private Dictionary<string, Part> newParts;
         private List<List<string>> records;
         private Dictionary<string, List<string>> fieldNames;
         private Dictionary<string, int[]> fieldToCell;
         private PartsTable partsTable;
         private List<List<string>> vendorData;
-        private Dictionary<string, int> tableLoc;
-        private Dictionary<string, List<string>> table;
+
+        private AssetTable aTable;
 
 
-        public NordexExcelConverter(string s, AppInfo i, PartsTable p)
+        public NordexExcelConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
-            //newParts = new Dictionary<string, Part>();
-            site = s;
+            site = i.getSite(s);
             info = i;
             partsTable = p;
+            aTable = a;
             vendorData = info.getVendorData("Nordex");
-            addTableLoc();
-            addTableData();
         }
 
         public void convertReport(Report report)
@@ -40,16 +37,22 @@ namespace ReportConverter
             organizeFields();
             string id = getID();
             wo = new WorkOrder(id);
-            wo.WorkOrderType = report.checkedVals()[0];
-            List<string> taskInfo = table[wo.WorkOrderType];
-            wo.OutageType = taskInfo[0];
-            wo.Priority = taskInfo[1];
-            wo.Planning = taskInfo[2];
-            wo.UnplannedType = taskInfo[3];
-            wo.TaskID = taskInfo[4];
-            wo.Site = info.getSite(site);
+            string workOrderType = report.checkedVals()[0];
+            List<string> taskInfo = info.getTypeInfo(workOrderType);
+            wo.WorkOrderType = taskInfo[0];
+            wo.TaskID = taskInfo[1];
+            wo.OutageType = taskInfo[2];
+            wo.Planning = taskInfo[3];
+            wo.UnplannedType = taskInfo[4];
+            wo.Priority = taskInfo[5];
+            wo.Site = site;
             wo.Vendor = info.getVendor("Nordex");
             wo.Status = "Closed";
+
+            //adding the asset to the work order
+            int[] loc = fieldToCell["Asset"];
+            string asset = records[loc[0]][loc[1] + 1];
+            wo.AssetID = aTable.getAssetID(asset, site.Name);
             addDescription();
             addActualHours();
             addDownTime();
@@ -115,7 +118,7 @@ namespace ReportConverter
         private void getFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = tableLoc["Fields"] - 1;
+            int start = 0;
             int len = Convert.ToInt32(vendorData[start][2]);
             start++;
             int cols;
@@ -133,44 +136,6 @@ namespace ReportConverter
                     }
                 }
                 fieldNames.Add(vendorData[i][0], row);
-            }
-        }
-
-        private void addTableLoc()
-        {
-            tableLoc = new Dictionary<string, int>();
-            int i = 1;
-            int loc;
-            string n;
-
-            while (!vendorData[i][0].Equals(" "))
-            {
-                loc = Convert.ToInt32(vendorData[i][1]);
-                n = vendorData[i][0];
-                tableLoc.Add(n.Trim(), loc);
-                i++;
-            }
-        }
-
-        private void addTableData()
-        {
-            table = new Dictionary<string, List<string>>();
-            int start = tableLoc["Table"];
-            start -= 1;
-            int len = Convert.ToInt32(vendorData[start][1]);
-            start += 2;
-            int cols;
-
-            for (int i = start; i < start + len; i++)
-            {
-                List<string> line = vendorData[i];
-                cols = line.Count;
-                List<string> row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    row.Add(line[j]);
-                }
-                table.Add(line[0], row);
             }
         }
 
@@ -298,26 +263,19 @@ namespace ReportConverter
             }
         }
 
-        /*Returns a list of the new parts in the
-         * work order so that they can be put into 
-         * the output file for upload*/
-        /*public List<Part> getNewParts()
-        {
-            List<string> keys = newParts.Keys.ToList();
-            List<Part> parts = new List<Part>();
-            foreach (string key in keys)
-            {
-                parts.Add(newParts[key]);
-            }
-            return parts;
-        }*/
-
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> newWOs = new List<WorkOrder>();
             wo.createMPulseID();
             newWOs.Add(wo);
             return newWOs;
+        }
+
+        public List<WorkOrder> getFlaggedWO()
+        {
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            flagged.Add(flaggedWO);
+            return flagged;
         }
     }
 }

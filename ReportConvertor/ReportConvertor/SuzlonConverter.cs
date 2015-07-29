@@ -9,7 +9,7 @@ namespace ReportConverter
     public class SuzlonConverter : Converter
     {
         private WorkOrder wo;
-        //private WorkOrder flaggedWO;
+        private WorkOrder flaggedWO;
         private AppInfo info;
         private Site site;
         private Dictionary<string, int[]> fieldToCell;
@@ -17,18 +17,16 @@ namespace ReportConverter
         private List<List<string>> records;
         private PartsTable partsTable;
         private List<List<string>> vendorData;
-        private Dictionary<string, int> tableLoc;
-        private Dictionary<string, List<string>> table;
+        private AssetTable aTable;
 
-        public SuzlonConverter(String s, AppInfo i, PartsTable p)
+        public SuzlonConverter(String s, AppInfo i, PartsTable p, AssetTable a)
         {
             info = i;
             site = info.getSite(s);
             partsTable = p;
+            aTable = a;
             vendorData = info.getVendorData("Suzlon");
-            addTableLoc();
             addFieldNames();
-            addTableData();
         }
 
         public void convertReport(Report report)
@@ -60,6 +58,9 @@ namespace ReportConverter
             {
                 wo.DownTime = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
             }
+            loc = fieldToCell["Asset"];
+            string asset = records[loc[0]][loc[1] + 1];
+            wo.AssetID = aTable.getAssetID(asset, site.Name);
             loc = fieldToCell["Description"];
             wo.Description = records[loc[0]][loc[1] + 1];
             wo.Comments = wo.Description;
@@ -82,13 +83,10 @@ namespace ReportConverter
             for (int i = 0; i < records.Count; i++)
             {
                 List<string> row = records[i];
-                //for (int j = 0; j < row.Count; j++)
+                key = isField(row[0]);
+                if (key != null && !fieldToCell.ContainsKey(key))
                 {
-                    key = isField(row[0]);
-                    if (key != null && !fieldToCell.ContainsKey(key))
-                    {
-                        fieldToCell.Add(key, new int[] { i, 0 });
-                    }
+                    fieldToCell.Add(key, new int[] { i, 0 });
                 }
             }
         }
@@ -114,7 +112,7 @@ namespace ReportConverter
         private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = tableLoc["Fields"] - 1;
+            int start = 0;
             int len = Convert.ToInt32(vendorData[start][2]);
             start++;
             int cols;
@@ -132,44 +130,6 @@ namespace ReportConverter
                     }
                 }
                 fieldNames.Add(vendorData[i][0], row);
-            }
-        }
-
-        private void addTableLoc()
-        {
-            tableLoc = new Dictionary<string, int>();
-            int i = 1;
-            int loc;
-            string n;
-
-            while (!vendorData[i][0].Equals(" "))
-            {
-                loc = Convert.ToInt32(vendorData[i][1]);
-                n = vendorData[i][0];
-                tableLoc.Add(n.Trim(), loc);
-                i++;
-            }
-        }
-
-        private void addTableData()
-        {
-            table = new Dictionary<string, List<string>>();
-            int start = tableLoc["Table"];
-            start -= 1;
-            int len = Convert.ToInt32(vendorData[start][1]);
-            start += 2;
-            int cols;
-
-            for (int i = start; i < start + len; i++)
-            {
-                List<string> line = vendorData[i];
-                cols = line.Count;
-                List<string> row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    row.Add(line[j]);
-                }
-                table.Add(line[0], row);
             }
         }
 
@@ -210,6 +170,13 @@ namespace ReportConverter
             wo.createMPulseID();
             newWOs.Add(wo);
             return newWOs;
+        }
+
+        public List<WorkOrder> getFlaggedWO()
+        {
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            flagged.Add(flaggedWO);
+            return flagged;
         }
     }
 }

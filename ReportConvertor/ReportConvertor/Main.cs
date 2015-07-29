@@ -64,7 +64,6 @@ namespace ReportConverter
 
         private void button4_Click(object sender, EventArgs e)
         {
-            eWriter.writeFileLocs();
             Application.Exit();
         }
 

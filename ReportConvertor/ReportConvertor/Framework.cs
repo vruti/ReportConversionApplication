@@ -11,7 +11,7 @@ namespace ReportConverter
         public AppInfo info;
         private string inputDirectory;
         public Dictionary<string, WorkOrder> newWO;
-        public Dictionary<string, List<WorkOrder>> flaggedWO;
+        public List<WorkOrder> flaggedWO;
         private string archiveDirectory;
         private PartsTable partsTable;
         private AssetTable assetTable;
@@ -23,7 +23,7 @@ namespace ReportConverter
             archiveDirectory = info.getFileLoc("Archive");
             partsTable = new PartsTable(info.getAllVendors(), info.getFileLoc("Parts"));
             newWO = new Dictionary<string, WorkOrder>();
-            flaggedWO = new Dictionary<string,List<WorkOrder>>();
+            flaggedWO = new List<WorkOrder>();
             assetTable = new AssetTable(info.getSites(), info.getFileLoc("Assets"));
         }
 
@@ -50,7 +50,7 @@ namespace ReportConverter
                             case "Highland 1":
                                 if (sKey.Equals("xls"))
                                 {
-                                    c = new NordexExcelConverter(key, info, partsTable);
+                                    c = new NordexExcelConverter(key, info, partsTable, assetTable);
                                 }
                                 else
                                 {
@@ -60,7 +60,7 @@ namespace ReportConverter
                             case "Highland North":
                                 if (sKey.Equals("xls"))
                                 {
-                                    c = new NordexExcelConverter(key, info, partsTable);
+                                    c = new NordexExcelConverter(key, info, partsTable, assetTable);
                                 }
                                 else
                                 {
@@ -73,18 +73,25 @@ namespace ReportConverter
                             case "Twin Ridges":
                                 if (sKey.Equals("xlsm"))
                                 {
-                                    c = new EVPConverter(key, info, partsTable);
+                                    c = new EVPConverter(key, info, partsTable, assetTable);
                                 }
                                 else
                                 {
-                                    c = new SenvionConverter(key, info, partsTable);
+                                    c = new SenvionConverter(key, info, partsTable, assetTable);
                                 }
                                 break;
                             case "Big Sky":
-                                c = new SuzlonConverter(key, info, partsTable);
+                                c = new SuzlonConverter(key, info, partsTable, assetTable);
                                 break;
                             case "Howard":
-                                c = new SenvionConverter(key, info, partsTable);
+                                if (sKey.Equals("xlsm"))
+                                {
+                                    c = new EVPConverter(key, info, partsTable, assetTable);
+                                }
+                                else
+                                {
+                                    c = new SenvionConverter(key, info, partsTable, assetTable);
+                                }
                                 break;
                             case "Mustang Hills":
                                 c = new VestasConverter(key, info, partsTable, assetTable);
@@ -94,6 +101,7 @@ namespace ReportConverter
                         {
                             c.convertReport(report);
                             addWorkOrders(c.getWorkOrders());
+                            addFlaggedWO(c.getFlaggedWO());
                         }
                     }
                 }
@@ -134,13 +142,21 @@ namespace ReportConverter
                     List<WorkOrder> wos = new List<WorkOrder>();
                     wos.Add(wo);
                     wos.Add(newWO[id]);
-                    flaggedWO.Add(id, wos);
+                    flaggedWO.Add(wo);
                     newWO.Remove(id);
                 }
                 else
                 {
                     newWO.Add(id, wo);
                 }
+            }
+        }
+
+        private void addFlaggedWO(List<WorkOrder> wos)
+        {
+            foreach (WorkOrder wo in wos)
+            {
+                flaggedWO.Add(wo);
             }
         }
 
