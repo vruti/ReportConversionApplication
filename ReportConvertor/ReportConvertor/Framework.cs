@@ -107,7 +107,7 @@ namespace ReportConverter
                 }
                 ExcelFileWriter writer = new ExcelFileWriter(info);
                 List<Part> newParts = getParts();
-                writer.writeFiles(getListofWO(), newParts, null);
+                writer.writeFiles(getListofWO(), newParts, flaggedWO, assetTable.getUnlinkedAssets());
                 m.showDoneMessage();
             }
             m.activateForm();
@@ -134,29 +134,38 @@ namespace ReportConverter
 
         private void addWorkOrders(List<WorkOrder> workOrders)
         {
-            foreach (WorkOrder wo in workOrders)
+            if (workOrders != null)
             {
-                string id = wo.mPulseID;
-                if (newWO.ContainsKey(id))
+                foreach (WorkOrder wo in workOrders)
                 {
-                    List<WorkOrder> wos = new List<WorkOrder>();
-                    wos.Add(wo);
-                    wos.Add(newWO[id]);
-                    flaggedWO.Add(wo);
-                    newWO.Remove(id);
-                }
-                else
-                {
-                    newWO.Add(id, wo);
+                    string id = wo.mPulseID;
+                    if (newWO.ContainsKey(id))
+                    {
+                        List<WorkOrder> wos = new List<WorkOrder>();
+                        wos.Add(wo);
+                        wos.Add(newWO[id]);
+                        flaggedWO.Add(wo);
+                        newWO.Remove(id);
+                    }
+                    else
+                    {
+                        newWO.Add(id, wo);
+                    }
                 }
             }
         }
 
         private void addFlaggedWO(List<WorkOrder> wos)
         {
-            foreach (WorkOrder wo in wos)
+            if (wos != null)
             {
-                flaggedWO.Add(wo);
+                foreach (WorkOrder wo in wos)
+                {
+                    if (wo != null)
+                    {
+                        flaggedWO.Add(wo);
+                    }
+                }
             }
         }
 
@@ -173,7 +182,6 @@ namespace ReportConverter
                 {
                     case "xlsx":
                         fR = new ExcelFileReader(info);
-                        
                         break;
                     case "xlsm":
                         fR = new ExcelFileReader(info);

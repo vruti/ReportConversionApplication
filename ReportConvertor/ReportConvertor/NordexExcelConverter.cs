@@ -17,7 +17,6 @@ namespace ReportConverter
         private Dictionary<string, int[]> fieldToCell;
         private PartsTable partsTable;
         private List<List<string>> vendorData;
-
         private AssetTable aTable;
 
 
@@ -51,7 +50,7 @@ namespace ReportConverter
 
             //adding the asset to the work order
             int[] loc = fieldToCell["Asset"];
-            string asset = records[loc[0]][loc[1] + 1];
+            string asset = records[loc[0]][loc[1] + 2];
             wo.AssetID = aTable.getAssetID(asset, site.Name);
             addDescription();
             addActualHours();
@@ -59,6 +58,13 @@ namespace ReportConverter
             addMaterials();
             addParts();
             addDates();
+
+            Validator v = new Validator();
+            if (!v.isValid(wo))
+            {
+                flaggedWO = wo;
+                wo = null;
+            }
         }
 
         private string getID()
@@ -118,13 +124,12 @@ namespace ReportConverter
         private void getFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = 0;
-            int len = Convert.ToInt32(vendorData[start][2]);
-            start++;
+            double l = Convert.ToDouble(vendorData[0][2]);
+            int len = Convert.ToInt32(l) + 1;
             int cols;
             List<string> row;
 
-            for (int i = start; i < start + len; i++)
+            for (int i = 0; i < len; i++)
             {
                 row = new List<string>();
                 cols = vendorData[i].Count;
@@ -265,16 +270,23 @@ namespace ReportConverter
 
         public List<WorkOrder> getWorkOrders()
         {
-            List<WorkOrder> newWOs = new List<WorkOrder>();
-            wo.createMPulseID();
-            newWOs.Add(wo);
-            return newWOs;
+            List<WorkOrder> wos = new List<WorkOrder>();
+            if (wo != null)
+            {
+                wo.createMPulseID();
+                wos.Add(wo);
+            }
+            return wos;
         }
 
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
-            flagged.Add(flaggedWO);
+            if (flaggedWO != null)
+            {
+                flaggedWO.createMPulseID();
+                flagged.Add(flaggedWO);
+            }
             return flagged;
         }
     }

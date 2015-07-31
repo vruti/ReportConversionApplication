@@ -298,6 +298,34 @@ namespace ReportConverter
             mPulseID = name;
         }
 
+        private void fillValues()
+        {
+            if (comments == null || comments.Equals("") || comments.Equals(" "))
+            {
+                comments = description;
+            }
+            if (outageType == null || outageType.Equals(" ") || outageType.Equals(" "))
+            {
+                outageType = "Planned";
+            }
+            if (woType == null || woType.Equals(" ") || woType.Equals(" "))
+            {
+                woType = "General Maintenance";
+            }
+            if (planning == null || planning.Equals(" ") || planning.Equals(" "))
+            {
+                planning = "Planned";
+            }
+            if (taskID == null || taskID.Equals(" ") || taskID.Equals(" "))
+            {
+                taskID = "MT-052";
+            }
+            if (priority == null || priority.Equals(" ") || priority.Equals(" "))
+            {
+                priority = "03-Medium";
+            }
+        }
+
         public List<ArrayList> getWORecord()
         {
             List<ArrayList> records = new List<ArrayList>();
@@ -305,10 +333,7 @@ namespace ReportConverter
 
             ArrayList record;
 
-            if (comments == null || comments.Equals("") || comments.Equals(" "))
-            {
-                comments = description;
-            }
+            fillValues();
 
             if (keys.Count == 0 || (keys.Count == 1 && partsList[keys[0]] < 1))
             {

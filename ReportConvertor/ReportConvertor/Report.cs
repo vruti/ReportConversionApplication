@@ -59,7 +59,17 @@ namespace ReportConverter
 
         public void addCheckedVals(List<string> v)
         {
-            checklistVals = v;
+            if (checklistVals != null)
+            {
+                foreach (string c in v)
+                {
+                    checklistVals.Add(c);
+                }
+            }
+            else
+            {
+                checklistVals = v;
+            }
         }
 
         public List<string> getKeys()

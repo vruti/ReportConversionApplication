@@ -16,7 +16,7 @@ namespace ReportConverter
         public Archive(string oFile, string aDir)
         {
             outputFile = oFile;
-            archiveDir = aDir;
+            archiveDir = aDir+"\\Output Archive";
         }
 
         public void startArchive()
@@ -55,8 +55,19 @@ namespace ReportConverter
 
         private void readFile(ExcelWorksheet inWk, ExcelWorksheet aWk)
         {
-            int totalRows = inWk.Dimension.End.Row;
-            int totalCols = inWk.Dimension.End.Column;
+
+            int totalRows = 0;
+            int totalCols = 0;
+
+            try
+            {
+                totalRows = inWk.Dimension.End.Row;
+                totalCols = inWk.Dimension.End.Column;
+            }
+            catch
+            {
+
+            }
 
             for (int i = 1; i <= totalRows; i++)
             {

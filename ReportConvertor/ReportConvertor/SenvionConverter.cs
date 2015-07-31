@@ -40,7 +40,9 @@ namespace ReportConverter
             calcLaborHours(fieldToCell["Time"]);
             addDates();
             getDownTime();
-            string workOrderType = report.checkedVals()[2];
+            List<string> checkedVals = report.checkedVals();
+            int len = checkedVals.Count;
+            string workOrderType = checkedVals[len - 1];
             List<string> taskInfo = info.getTypeInfo(workOrderType);
             wo.WorkOrderType = taskInfo[0];
             wo.TaskID = taskInfo[1];
@@ -95,9 +97,16 @@ namespace ReportConverter
 
         private DateTime convertToDate(string s)
         {
-            string val = s.Trim();
-            DateTime result = Convert.ToDateTime(val);
-            return result;
+            try
+            {
+                string val = s.Trim();
+                DateTime result = Convert.ToDateTime(val);
+                return result;
+            }
+            catch
+            {
+                return wo.StartDate;
+            }
         }
 
         private void calcLaborHours(int[] loc)
@@ -106,21 +115,27 @@ namespace ReportConverter
             int i = loc[0] + 2, j = loc[1];
             while (!records[i][j].Equals(" "))
             {
-                double from = convertToTime(records[i][j]);
-                double until = convertToTime(records[i][j + 1]);
-                double timeTaken = until - from;
+                DateTime from = convertToTime(records[i][j]);
+                DateTime until = convertToTime(records[i][j + 1]);
+                double timeTaken = (until - from).TotalHours;
                 result += timeTaken;
                 i++;
             }
             wo.ActualHours = result;
         }
 
-        private double convertToTime(string s)
+        private DateTime convertToTime(string s)
         {
-            int cLoc = s.IndexOf(":");
-            double hour = Convert.ToDouble(s.Substring(0, cLoc));
-            double min = Convert.ToDouble(s.Substring(cLoc + 1, 2));
-            double result = hour + (min / 60);
+            DateTime result;
+            try
+            {
+                result = Convert.ToDateTime(s);
+            }
+            catch
+            {
+                double d = Convert.ToDouble(s);
+                result = DateTime.FromOADate(d);
+            }
             return result;
         }
 
@@ -163,13 +178,12 @@ namespace ReportConverter
         private void getFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = 0;
-            int len = Convert.ToInt32(vendorData[start][2]);
-            start++;
+            double l = Convert.ToDouble(vendorData[0][2]);
+            int len = Convert.ToInt32(l) + 1;
             int cols;
             List<string> row;
 
-            for (int i = start; i < start + len; i++)
+            for (int i = 1; i < len; i++)
             {
                 cols = vendorData[i].Count;
                 row = new List<string>();
@@ -206,20 +220,23 @@ namespace ReportConverter
 
         public List<WorkOrder> getWorkOrders()
         {
+            List<WorkOrder> wos = new List<WorkOrder>();
             if (wo != null)
             {
-                List<WorkOrder> wos = new List<WorkOrder>();
                 wo.createMPulseID();
                 wos.Add(wo);
-                return wos;
             }
-            return null;
+            return wos;
         }
 
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
-            flagged.Add(flaggedWO);
+            if (flaggedWO != null)
+            {
+                flaggedWO.createMPulseID();
+                flagged.Add(flaggedWO);
+            }
             return flagged;
         }
     }

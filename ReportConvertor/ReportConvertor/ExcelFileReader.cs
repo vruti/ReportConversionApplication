@@ -51,13 +51,24 @@ namespace ReportConverter
         public Tuple<string, Report> readFile(string file)
         {
             FileInfo newFile = new FileInfo(file);
-            ExcelPackage pck = new ExcelPackage(newFile);
+            XLSFileReader fr = new XLSFileReader(info);
+            ExcelPackage pck;
+            try
+            {
+                pck = new ExcelPackage(newFile);
+            }
+            catch (Exception e)
+            {
+                return fr.readFile(file);
+            }
             ExcelWorksheets ws = pck.Workbook.Worksheets;
             Report report = new Report();
             Tuple<string, List<List<string>>> tuple = null;
             string siteName = null;
+            siteName = getNameOfSite(file);
 
-            foreach (ExcelWorksheet wk in ws){
+            foreach (ExcelWorksheet wk in ws)
+            {
                 report.addReportTab(wk.Name);
                 report.changeCurrentTab(wk.Name);
                 getNameOfSite(wk.Name);
@@ -72,7 +83,7 @@ namespace ReportConverter
 
                 //if the vendor is senvion, there are checkboxes
                 if (siteName.Equals("Twin Ridges") || siteName.Equals("Howard"))
-                { 
+                {
                     List<string> vals = getCheckedValues(file, wk.Index);
                     report.addCheckedVals(vals);
                 }
@@ -82,6 +93,7 @@ namespace ReportConverter
 
         public Tuple<string, List<List<string>>> readWorksheet(ExcelWorksheet worksheet)
         {
+            
             int totalRows = worksheet.Dimension.End.Row;
             int totalCols = worksheet.Dimension.End.Column;
             string siteName = null;
@@ -143,8 +155,16 @@ namespace ReportConverter
                     //if the checkbox value is > 0 it is true
                     if (shape.OLEFormat.Object.Value > 0)
                     {
-                        //adding the text value of the checked checke
-                        checkedVals.Add(shape.AlternativeText);
+                        //adding the text value of the checked checked
+                        string text = shape.AlternativeText;
+                        if (text.Equals("") || text.Equals(" "))
+                        {
+                            Range c = shape.TopLeftCell;
+                            int col = c.Column;
+                            int row = c.Row;
+                            text = String.Format("{0}", wk.Cells[row, (col + 1)].Text);
+                        }
+                        checkedVals.Add(text);
                     }
                 }
             }

@@ -11,12 +11,14 @@ namespace ReportConverter
     public class AssetTable
     {
         private Dictionary<string, Dictionary<string, string>> assets;
+        private List<List<string>> unlinkedAssets;
         List<Site> sites;
 
         public AssetTable(List<Site> s, string file)
         {
             sites = s;
             assets = new Dictionary<string, Dictionary<string, string>>();
+            unlinkedAssets = new List<List<string>>();
             foreach (Site site in sites)
             {
                 Dictionary<string, string> assetDict = new Dictionary<string, string>();
@@ -37,13 +39,9 @@ namespace ReportConverter
                 int totalRows = wk.Dimension.End.Row;
                 for (int i = 1; i <= totalRows; i++)
                 {
-                    //string loc = wk.Cells[i, 3].Value.ToString();
-                    //if (loc.Equals(s))
-                    {
-                        string vendorID = wk.Cells[i, 1].Value.ToString();
-                        string mpulseID = wk.Cells[i, 2].Value.ToString();
-                        assets[s.Name].Add(vendorID, mpulseID);
-                    }
+                    string vendorID = wk.Cells[i, 1].Value.ToString();
+                    string mpulseID = wk.Cells[i, 2].Value.ToString();
+                    assets[s.Name].Add(vendorID, mpulseID);
                 }
             }
         }
@@ -59,7 +57,19 @@ namespace ReportConverter
             {
                 return assets[site][vendorID];
             }
-            else return "";
+            else
+            {
+                List<string> unlinked = new List<string>();
+                unlinked.Add(vendorID);
+                unlinked.Add(site);
+                unlinkedAssets.Add(unlinked);
+                return "";
+            }
+        }
+
+        public List<List<string>> getUnlinkedAssets()
+        {
+            return unlinkedAssets;
         }
     }
 }

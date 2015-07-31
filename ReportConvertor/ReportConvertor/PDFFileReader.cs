@@ -98,8 +98,8 @@ namespace ReportConverter
                 }
             }
 
-            //only one page
             report.addRecords(wholeFile);
+            reader.Close();
 
             return Tuple.Create(siteName, report);
         }

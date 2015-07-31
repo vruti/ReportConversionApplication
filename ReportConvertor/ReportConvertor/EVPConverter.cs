@@ -151,13 +151,12 @@ namespace ReportConverter
         private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = 0;// tableLoc["Fields"] - 1;
-            int len = Convert.ToInt32(vendorData[start][2]);
-            start++;
+            double l = Convert.ToDouble(vendorData[0][2]);
+            int len = Convert.ToInt32(l) + 1;
             int cols;
             List<string> row;
 
-            for (int i = start; i < start + len; i++)
+            for (int i = 0; i < len; i++)
             {
                 cols = vendorData[i].Count;
                 row = new List<string>();
@@ -183,15 +182,22 @@ namespace ReportConverter
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> wos = new List<WorkOrder>();
-            wo.createMPulseID();
-            wos.Add(wo);
+            if (wo != null)
+            {
+                wo.createMPulseID();
+                wos.Add(wo);
+            }
             return wos;
         }
 
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
-            flagged.Add(flaggedWO);
+            if (flaggedWO != null)
+            {
+                flaggedWO.createMPulseID();
+                flagged.Add(flaggedWO);
+            }
             return flagged;
         }
     }

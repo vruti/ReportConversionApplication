@@ -145,11 +145,10 @@ namespace ReportConverter
 
         private void getFieldNames(string tab)
         {
-
             fieldNames = new Dictionary<string, List<string>>();
             int start = tableLoc[tab] - 1;
-            double tempV = Convert.ToDouble(data[start][1]);
-            int len = Convert.ToInt32(tempV);
+            double tempL = Convert.ToDouble(data[start][1]);
+            int len = Convert.ToInt32(tempL);
             start++;
             int cols;
             List<string> row;
@@ -434,7 +433,16 @@ namespace ReportConverter
 
         public List<WorkOrder> getFlaggedWO()
         {
-            return flaggedWO;
+            List<WorkOrder> flagged = new List<WorkOrder>();
+            if (flaggedWO != null)
+            {
+                foreach (WorkOrder wo in flaggedWO)
+                {
+                    wo.createMPulseID();
+                    flagged.Add(wo);
+                }
+            }
+            return flagged;
         }
     }
 }

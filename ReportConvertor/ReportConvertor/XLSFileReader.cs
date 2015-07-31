@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.IO;
 using System.Diagnostics;
-using OfficeOpenXml;
-using OfficeOpenXml.Drawing;
 using System.Data;
 using System.Data.OleDb;
 using Microsoft.Office.Interop.Excel;
@@ -78,14 +76,16 @@ namespace ReportConverter
                 List<string> vals = getCheckedValues(wk);
                 report.addCheckedVals(vals);
             }
-            //wb.Close();
-            //Marshal.ReleaseComObject(wk);
             wb.Close();
             return Tuple.Create(siteName, report);
         }
 
         private Tuple<string, List<List<string>>> readWorksheet(Worksheet worksheet)
         {
+            if (worksheet.ProtectContents == true)
+            {
+
+            }
             int totalRows = worksheet.UsedRange.Rows.Count;
             int totalCols = worksheet.UsedRange.Columns.Count;
             string siteName = null;
@@ -100,7 +100,12 @@ namespace ReportConverter
                     var v = worksheet.Cells[i, j].Value;
                     if (worksheet.Cells[i, j].Value != null)
                     {
+                        
                         string val = String.Format("{0}", worksheet.Cells[i, j].Text);
+                        if (val.Contains("#"))
+                        {
+                            val = String.Format("{0}", worksheet.Cells[i, j].Value2);
+                        }
                         if (siteName == null)
                         {
                             siteName = getNameOfSite(val);
@@ -137,7 +142,6 @@ namespace ReportConverter
                     return s.Name;
                 }
             }
-
             return null;
         }
 
@@ -154,15 +158,19 @@ namespace ReportConverter
                     //if the checkbox value is > 0 it is true
                     if (shape.OLEFormat.Object.Value > 0)
                     {
-                        //adding the text value of the checked checke
-                        checkedVals.Add(shape.AlternativeText);
+                        //adding the text value of the checked checked
+                        string text = shape.AlternativeText;
+                        if (text.Equals("") || text.Equals(" "))
+                        {
+                            Range c = shape.TopLeftCell;
+                            int col = c.Column;
+                            int row = c.Row;
+                            text = String.Format("{0}", wk.Cells[row, (col+1)].Text);
+                        }
+                        checkedVals.Add(text);
                     }
                 }
             }
-
-            //Important to close file as not done automatically
-            
-
             return checkedVals;
         }
     }

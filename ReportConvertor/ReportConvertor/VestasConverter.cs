@@ -62,6 +62,19 @@ namespace ReportConverter
                     addDescription(i + 2);
                 }
             }
+
+            wo.WorkOrderType = "General Maintenance";
+            wo.OutageType = "Planned";
+            wo.TaskID = "MT-052";
+            wo.Planning = "Planned";
+            wo.Priority = "03-Medium";
+
+            Validator v = new Validator();
+            if (!v.isValid(wo))
+            {
+                flaggedWO = wo;
+                wo = null;
+            }
         }
 
         private int getID()
@@ -162,15 +175,22 @@ namespace ReportConverter
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> wos = new List<WorkOrder>();
-            wo.createMPulseID();
-            wos.Add(wo);
+            if (wo != null)
+            {
+                wo.createMPulseID();
+                wos.Add(wo);
+            }
             return wos;
         }
 
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
-            flagged.Add(flaggedWO);
+            if (flaggedWO != null)
+            {
+                flaggedWO.createMPulseID();
+                flagged.Add(flaggedWO);
+            }
             return flagged;
         }
     }

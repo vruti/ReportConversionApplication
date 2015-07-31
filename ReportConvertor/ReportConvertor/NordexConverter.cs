@@ -64,6 +64,7 @@ namespace ReportConverter
                 flaggedWO = wo;
                 wo = null;
             }
+            
         }
 
         private DateTime toDate(string d)
@@ -243,20 +244,23 @@ namespace ReportConverter
 
         public List<WorkOrder> getWorkOrders()
         {
+            List<WorkOrder> wos = new List<WorkOrder>();
             if (wo != null)
             {
-                List<WorkOrder> wos = new List<WorkOrder>();
                 wo.createMPulseID();
                 wos.Add(wo);
-                return wos;
             }
-            return null;
+            return wos;
         }
 
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
-            flagged.Add(flaggedWO);
+            if (flaggedWO != null)
+            {
+                flaggedWO.createMPulseID();
+                flagged.Add(flaggedWO);
+            }
             return flagged;
         }
     }

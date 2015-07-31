@@ -18,7 +18,7 @@ namespace ReportConverter
             info = i;
         }
 
-        public void writeFiles(List<WorkOrder> wo, List<Part> p, List<WorkOrder> flaggedWO)
+        public void writeFiles(List<WorkOrder> wo, List<Part> p, List<WorkOrder> flaggedWO, List<List<string>> uAssets)
         {
             string outputFile = info.getFileLoc("Output");
             FileInfo newFile = new FileInfo(outputFile);
@@ -30,6 +30,8 @@ namespace ReportConverter
             {
                 writeParts(p, ws);
             }
+            writeFlagged(flaggedWO, ws);
+            writeUnlinkedAssets(uAssets, ws);
             pck.Save();
         }
 
@@ -58,16 +60,18 @@ namespace ReportConverter
             }
             List<ArrayList> records = getRecords(woList);
             int totalRows = records.Count;
-            int totalCols = records[0].Count;
-
-            for (int i = 0; i < totalRows; i++)
+            if (totalRows > 0)
             {
-                for (int j = 0; j < totalCols; j++)
+                int totalCols = records[0].Count;
+
+                for (int i = 0; i < totalRows; i++)
                 {
-                    wk.Cells[(i+2), (j+1)].Value = records[i][j];
+                    for (int j = 0; j < totalCols; j++)
+                    {
+                        wk.Cells[(i + 2), (j + 1)].Value = records[i][j];
+                    }
                 }
             }
-
         }
 
         private void writeParts(List<Part> parts, ExcelWorksheets ws)
@@ -87,6 +91,46 @@ namespace ReportConverter
                 {
                     wk.Cells[(i + 2), (j + 1)].Value = record[j];
                 }
+            }
+        }
+
+        private void writeFlagged(List<WorkOrder> flagged, ExcelWorksheets ws)
+        {
+            ExcelWorksheet wk = ws["Flagged Work Orders"];
+            if (wk == null)
+            {
+                wk = ws.Add("Flagged Work Orders");
+            }
+            List<ArrayList> records = getRecords(flagged);
+            int totalRows = records.Count;
+
+            if (totalRows > 0)
+            {
+                int totalCols = records[0].Count;
+
+                for (int i = 0; i < totalRows; i++)
+                {
+                    for (int j = 0; j < totalCols; j++)
+                    {
+                        wk.Cells[(i + 2), (j + 1)].Value = records[i][j];
+                    }
+                }
+            }
+        }
+
+        private void writeUnlinkedAssets(List<List<string>> assets, ExcelWorksheets ws)
+        {
+            ExcelWorksheet wk = ws["Unlinked Assets"];
+            if (wk == null)
+            {
+                wk = ws.Add("Unlinked Assets");
+            }
+            int totalRows = assets.Count;
+
+            for (int i = 0; i < totalRows; i++)
+            {
+                wk.Cells[(i + 2), 1].Value = assets[i][0];
+                wk.Cells[(i + 2), 2].Value = assets[i][1];
             }
         }
 

@@ -37,39 +37,38 @@ namespace ReportConverter
             wo.Site = site;
             wo.Vendor = site.Contractor;
             wo.Status = "Closed";
-            int[] loc = fieldToCell["Start Date"];
-            wo.StartDate = Convert.ToDateTime(records[loc[0]][loc[1]+1]);
-            loc = fieldToCell["End Date"];
-            wo.EndDate = Convert.ToDateTime(records[loc[0]][loc[1]+1]);
-            wo.OpenDate = wo.StartDate;
-            loc = fieldToCell["Outage Type"];
-            wo.OutageType = records[loc[0]][loc[1]+1];
-            loc = fieldToCell["Priority"];
-            wo.Priority = records[loc[0]][loc[1]+1];
-            loc = fieldToCell["Actual Hours"];
-            wo.ActualHours = Convert.ToDouble(records[loc[0]][loc[1]+1]);
-            loc = fieldToCell["Down Time"];
-            string downtime = records[loc[0]][loc[1] + 1];
-            if (downtime.Equals(" "))
+            addDateTime();
+            int[] loc = fieldToCell["Outage Type"];
+            string woType = records[loc[0]][loc[1]+1];
+            if (!woType.Equals(" "))
             {
-                wo.DownTime = 0;
+                List<string> taskInfo = info.getTypeInfo(woType);
+                wo.WorkOrderType = taskInfo[0];
+                wo.TaskID = taskInfo[1];
+                wo.OutageType = taskInfo[2];
+                wo.Planning = taskInfo[3];
+                wo.UnplannedType = taskInfo[4];
+                wo.Priority = taskInfo[5];
             }
-            else
-            {
-                wo.DownTime = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
-            }
-            loc = fieldToCell["Asset"];
-            string asset = records[loc[0]][loc[1] + 1];
-            wo.AssetID = aTable.getAssetID(asset, site.Name);
+            addAsset();
             loc = fieldToCell["Description"];
             wo.Description = records[loc[0]][loc[1] + 1];
             wo.Comments = wo.Description;
             addParts();
+            Validator v = new Validator();
+            if (!v.isValid(wo))
+            {
+                flaggedWO = wo;
+                wo = null;
+            }
         }
 
-        private bool isEmpty(string s)
+
+        private void addAsset()
         {
-            return s.Equals(" ");
+            int[] loc = fieldToCell["Asset"];
+            string asset = records[loc[0]][loc[1] + 1];
+            wo.AssetID = aTable.getAssetID(asset, site.Name);
         }
 
         /* This function maps the fields to locations so
@@ -112,13 +111,12 @@ namespace ReportConverter
         private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
-            int start = 0;
-            int len = Convert.ToInt32(vendorData[start][2]);
-            start++;
+            double l = Convert.ToDouble(vendorData[0][2]);
+            int len = Convert.ToInt32(l) + 1;
             int cols;
             List<string> row;
 
-            for (int i = start; i < start + len; i++)
+            for (int i = 0; i < len; i++)
             {
                 cols = vendorData[i].Count;
                 row = new List<string>();
@@ -148,7 +146,6 @@ namespace ReportConverter
                 double dQty = Convert.ToDouble(records[i][qLoc]);
                 int qty = Convert.ToInt32(dQty);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                //string partID = wo.Vendor.getPartID(id, qty);
                 if (partID != null)
                 {
                     wo.addPart(partID, qty);
@@ -157,25 +154,52 @@ namespace ReportConverter
                 {
                     string description = records[i][desLoc];
                     partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                    //partID = wo.Vendor.addNewPart(id, qty, description);
                     wo.addPart(partID, qty);
                 }
                 i++;
             }
         }
 
+        private void addDateTime()
+        {
+            int[] loc = fieldToCell["Start Date"];
+            wo.StartDate = Convert.ToDateTime(records[loc[0]][loc[1] + 1]);
+            loc = fieldToCell["End Date"];
+            wo.EndDate = Convert.ToDateTime(records[loc[0]][loc[1] + 1]);
+            wo.OpenDate = wo.StartDate;
+            loc = fieldToCell["Actual Hours"];
+            wo.ActualHours = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
+            loc = fieldToCell["Down Time"];
+            string downtime = records[loc[0]][loc[1] + 1];
+            if (downtime.Equals(" "))
+            {
+                wo.DownTime = 0;
+            }
+            else
+            {
+                wo.DownTime = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
+            }
+        }
+
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> newWOs = new List<WorkOrder>();
-            wo.createMPulseID();
-            newWOs.Add(wo);
+            if (wo != null)
+            {
+                wo.createMPulseID();
+                newWOs.Add(wo);
+            }
             return newWOs;
         }
 
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
-            flagged.Add(flaggedWO);
+            if (flaggedWO != null)
+            {
+                flaggedWO.createMPulseID();
+                flagged.Add(flaggedWO);
+            }
             return flagged;
         }
     }
