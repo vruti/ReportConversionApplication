@@ -7,7 +7,6 @@ using System.Collections;
 using System.IO;
 using System.Diagnostics;
 using OfficeOpenXml;
-//using OfficeOpenXml.Drawing;
 using System.Data;
 using System.Data.OleDb;
 using Microsoft.Office.Interop.Excel;

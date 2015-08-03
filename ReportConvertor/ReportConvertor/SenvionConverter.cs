@@ -15,9 +15,10 @@ namespace ReportConverter
         private Dictionary<string, int[]> fieldToCell;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
-        private List<List<string>> vendorData;
+        //private List<List<string>> vendorData;
         private PartsTable partsTable;
         private AssetTable aTable;
+        private Vendor ven;
 
         public SenvionConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
@@ -25,8 +26,10 @@ namespace ReportConverter
             site = i.getSite(s);
             partsTable = p;
             aTable = a;
-            vendorData = info.getVendorData("Senvion");
-            getFieldNames();
+            //vendorData = info.getVendorData("Senvion");
+            //getFieldNames();
+            ven = info.getVendor("Senvion");
+            fieldNames = ven.getFieldNames("Main");
         }
 
         public void convertReport(Report report)
@@ -174,7 +177,7 @@ namespace ReportConverter
             }
             return null;
         }
-
+        /*
         private void getFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
@@ -197,7 +200,7 @@ namespace ReportConverter
                 fieldNames.Add(vendorData[i][0], row);
             }
         }
-
+        */
         private void addParts()
         {
             int x = fieldToCell["Parts"][0] + 3;

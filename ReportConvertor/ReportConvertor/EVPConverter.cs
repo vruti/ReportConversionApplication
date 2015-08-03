@@ -15,9 +15,10 @@ namespace ReportConverter
         private AppInfo info;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
-        private List<List<string>> vendorData;
+        //private List<List<string>> vendorData;
         private PartsTable partsTable;
         private AssetTable aTable;
+        private Vendor ven;
  
         public EVPConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
@@ -26,8 +27,10 @@ namespace ReportConverter
             partsTable = p;
             aTable = a;
             fieldToCell = new Dictionary<string, int>();
-            vendorData = info.getVendorData("EverPower");
-            addFieldNames();
+            ven = site.Contractor;
+            //vendorData = info.getVendorData("EverPower");
+            //addFieldNames();
+            fieldNames = ven.getFieldNames("Main");
         }
 
         public void convertReport(Report report)
@@ -37,7 +40,7 @@ namespace ReportConverter
             organizeFields();
 
             wo.Site = site;
-            wo.Vendor = wo.Site.Contractor;
+            wo.Vendor = ven;
             wo.Description = records[fieldToCell["Description"]][1];
             string workOrderType = records[fieldToCell["Type"]][1];
             List<string> taskInfo = info.getTypeInfo(workOrderType);
@@ -147,7 +150,7 @@ namespace ReportConverter
             }
             return null;
         }
-
+        /*
         private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
@@ -170,7 +173,7 @@ namespace ReportConverter
                 fieldNames.Add(vendorData[i][0], row);
             }
         }
-
+        */
         private DateTime toDate(List<List<string>> rec)
         {
             string date = rec[fieldToCell["Date"]][1];

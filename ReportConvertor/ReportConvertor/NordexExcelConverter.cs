@@ -26,14 +26,17 @@ namespace ReportConverter
             info = i;
             partsTable = p;
             aTable = a;
-            vendorData = info.getVendorData("Nordex");
+//            vendorData = info.getVendorData("Nordex");
         }
 
         public void convertReport(Report report)
         {
             records = report.getRecords("Main");
-            getFieldNames();
+            Vendor ven = info.getVendor("Nordex");
+            fieldNames = ven.getFieldNames("Main");
+            //getFieldNames();
             organizeFields();
+
             string id = getID();
             wo = new WorkOrder(id);
             string workOrderType = report.checkedVals()[0];
@@ -45,7 +48,7 @@ namespace ReportConverter
             wo.UnplannedType = taskInfo[4];
             wo.Priority = taskInfo[5];
             wo.Site = site;
-            wo.Vendor = info.getVendor("Nordex");
+            wo.Vendor = ven;
             wo.Status = "Closed";
 
             //adding the asset to the work order
@@ -103,6 +106,10 @@ namespace ReportConverter
             }
         }
 
+        /*
+         * This function checks if a value in the 
+         * report is a field header
+         */
         private string isField(string s)
         {
             List<string> fieldKeys = fieldNames.Keys.ToList();
@@ -120,7 +127,7 @@ namespace ReportConverter
             }
             return null;
         }
-
+        /*
         private void getFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
@@ -143,7 +150,7 @@ namespace ReportConverter
                 fieldNames.Add(vendorData[i][0], row);
             }
         }
-
+        */
         private void addDownTime()
         {
             int i = fieldToCell["Down Time"][0]+2;

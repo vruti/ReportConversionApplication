@@ -25,14 +25,14 @@ namespace ReportConverter
         private Dictionary<string, string> fileLocs;
         private Dictionary<string, List<List<string>>> vendorData;
         private Dictionary<string, List<string>> assets;
-        //private Dictionary<string, List<string>> fieldNames;
         private Dictionary<string, List<string>> woTypeTable;
 
         /* Initialize the object by opening the file with 
          * all the information. The file should probably be
          * located in the project folder, most likely debug
          * while I'm working on it and release for normal
-         * functioning*/
+         * functioning
+         */
         public AppInfo()
         {
             vendors = new List<Vendor>();
@@ -40,7 +40,6 @@ namespace ReportConverter
             fileLocs = new Dictionary<string, string>();
             vendorData = new Dictionary<string, List<List<string>>>();
             assets = new Dictionary<string, List<string>>();
-            //fieldNames = new Dictionary<string, List<string>>();
 
             /* The AppinfoSheet file should always be located
              * in the specified location. File can be modified 
@@ -50,13 +49,13 @@ namespace ReportConverter
             string[] filePathsXlsx = Directory.GetFiles(@curDir, "*.xlsx");
             string path = filePathsXlsx[0];
             fileLocs.Add("AppInfo", path);
+
+            //Open the file with the information
             FileInfo newFile = new FileInfo(path);
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
-
-            Console.WriteLine(ws.Count);
             
-            //read the individual tabs of the file
+            //Read the individual tabs of the file
             addFileLoc(ws["FileLocations"]);
             addVendors(ws["Vendor General"]);
             addSites(ws["Site"]);
@@ -71,20 +70,29 @@ namespace ReportConverter
 
             for (int i = 2; i <= rows; i++)
             {
+                var filepath = worksheet.Cells[i, 2].Value;
                 //The file path fields should never be empty
-                if (worksheet.Cells[i, 2].Value != null)
+                if (filepath != null)
                 {
-                    fileLocs.Add(worksheet.Cells[i, 1].Value.ToString(), worksheet.Cells[i, 2].Value.ToString());
+                    //Adding the location of file to dictionary
+                    fileLocs.Add(worksheet.Cells[i, 1].Value.ToString(), filepath.ToString());
                 }
             }
         }
 
+        /*
+         * Returns the dictionary containing the locations
+         * of all the files needed for the program to run
+         * smoothly
+         */
         public Dictionary<string, string> getFileLocs()
         {
             return fileLocs;
         }
 
-        // Get the location of file/directory specified
+        /*
+         * Get the location of file/directory specified
+         */
         public string getFileLoc(string n)
         {
             if (fileLocs.ContainsKey(n))
@@ -94,12 +102,17 @@ namespace ReportConverter
             return null;
         }
 
+        /*
+         * Change a file location if new file location is
+         * given by the user on the settings page
+         */
         public void changeFileLoc(string f, string tab)
         {
             fileLocs[tab] = f;
         }
 
-        /*Reads all the site information and creates
+        /* 
+         * Reads all the site information and creates
          * a site object to contain it, then puts that
          * object into a list for easy access
          */
@@ -175,7 +188,6 @@ namespace ReportConverter
                 v.WOArchiveTabNo = Convert.ToInt32(wk.Cells[i, 7].Value.ToString());
                 v.PartsFile=(fileLocs["Parts"]);
                 v.WOArchiveFile=(fileLocs["WOHistory"]);
-                //v.generatePartsTable();
                 v.generateWOHistory();
                 //if there is an alternate name that we have to look for
                 if (wk.Cells[i, 2].Value != null)
@@ -186,8 +198,10 @@ namespace ReportConverter
             }
         }
 
-        /* finds the vendor object based on the input
-         * string given */
+        /* 
+         * Finds the vendor object based on the input
+         * string given 
+         */
         public Vendor getVendor(string n)
         {
             foreach (Vendor v in vendors)
@@ -201,107 +215,79 @@ namespace ReportConverter
             return null;
         }
 
+        /*
+         * Return the list of all the vendors
+         */
         public List<Vendor> getAllVendors()
         {
             return vendors;
         }
 
-        /* reading the specific information about
-         * a vendor by the tab */
+        /* 
+         * Reading information about field header names
+         * and adding to each vendor
+         */
         private void addVendorData(ExcelWorksheets ws)
         {
+            int len, start;
             foreach (Vendor v in vendors)
             {
-                for (int i = 1; i <= ws.Count; i++)
+                Dictionary<string, Dictionary<string, List<string>>> fields;
+                ExcelWorksheet wk = ws[v.Name];
+                if (v.Name.Equals("Gamesa"))
                 {
-                    if (ws[i].Name.Equals(v.Name))
+                    fields = new Dictionary<string,Dictionary<string,List<string>>>();
+                    int l = Convert.ToInt32(wk.Cells[1, 3].Value.ToString()) + 2;
+                    for (int i = 2; i < l; i++)
                     {
-                        List<List<string>> wksht = new List<List<string>>();
-                        ExcelWorksheet wk = ws[i];
-
-                        int rows = wk.Dimension.End.Row;
-                        int cols = wk.Dimension.End.Column;
-
-                        List<string> row;
-                        for (int j = 1; j <= rows; j++)
-                        {
-                            row = new List<string>();
-                            for(int k = 1; k <= cols; k++)
-                            {                       
-                                if (wk.Cells[j, k].Value != null)
-                                {
-                                    row.Add(String.Format("{0}", wk.Cells[j, k].Text));
-                                }
-                                else
-                                {
-                                    row.Add(" ");
-                                }
-                            }
-                            wksht.Add(row);
-                        }
-                        vendorData.Add(v.Name, wksht);
+                        start = Convert.ToInt32(wk.Cells[i, 2].Value.ToString());
+                        string tab = wk.Cells[start, 3].Value.ToString();
+                        len = Convert.ToInt32(wk.Cells[start, 2].Value.ToString());
+                        start++;
+                        fields.Add(tab, addFields(wk, start, len));
                     }
+                    v.addFieldNames(fields);
+                }
+                else
+                {
+                    fields = new Dictionary<string, Dictionary<string, List<string>>>();
+                    len = Convert.ToInt32(wk.Cells[1, 3].Value.ToString());
+                    start = 2;
+                    fields.Add("Main", addFields(wk, start, len));
                 }
             }
         }
 
-        /* get vedor tab data by vendor*/
-        public List<List<string>> getVendorData(string n)
+        /*
+         * Reading the field header name and alternate names from the excel worksheet
+         * and adding it to a dictionary by main field header name
+         */
+        private Dictionary<string, List<string>> addFields(ExcelWorksheet wk, int start, int len)
         {
-            if (vendorData.ContainsKey(n))
+            Dictionary<string, List<string>> fieldNames = new Dictionary<string, List<string>>();
+            int totalCols = wk.Dimension.End.Column;
+            List<string> fieldRow;
+
+            for (int i = start; i < start + len; i++)
             {
-                return vendorData[n];
-            }
-            return null;
-        }
-
-        private void addAssets()
-        {
-            if (fileLocs.ContainsKey("Assets"))
-            {
-                string dir = fileLocs["Assets"];
-
-                FileInfo newFile = new FileInfo(dir);
-                ExcelPackage pck = new ExcelPackage(newFile);
-                ExcelWorksheet wk = pck.Workbook.Worksheets[1];
-                List<string> names;
-
-                int rows = wk.Dimension.End.Row;
-                int cols = wk.Dimension.End.Column;
-
-                for (int i = 1; i <= rows; i++)
+                fieldRow = new List<string>();
+                for (int j = 2; j < totalCols; j++)
                 {
-                    names = new List<string>();
-                    for (int j = 2; j <= cols; j++)
+                    var cell = wk.Cells[i, j].Value;
+                    if (cell != null)
                     {
-                        if (wk.Cells[i, j].Value != null)
-                        {
-                            names.Add(wk.Cells[i, j].Value.ToString());
-                        }
-                    }
-                    assets.Add(wk.Cells[i, 1].Value.ToString(), names);
-                }
-
-            }
-        }
-
-        public string getAssetID(string n)
-        {
-            List<string> keys = assets.Keys.ToList();
-            foreach(string key in keys)
-            {
-                List<string> assetNames = assets[key];
-                foreach (string asset in assetNames)
-                {
-                    if (n.ToLower().Contains(asset.ToLower()))
-                    {
-                        return key;
+                        fieldRow.Add(cell.ToString());
                     }
                 }
+                fieldNames.Add(wk.Cells[i, 1].Value.ToString(), fieldRow);
             }
-            return null;
+            return fieldNames;
         }
 
+        /*
+         * Creating the table of information that is linked
+         * to the work order type
+         */
         private void addWOTypeTable(ExcelWorksheet wk)
         {
             woTypeTable = new Dictionary<string, List<string>>();
@@ -328,6 +314,10 @@ namespace ReportConverter
             }
         }
 
+        /* 
+         * Retrieve the information that is linked to
+         * a specific work order type
+         */
         public List<string> getTypeInfo(string type)
         {
             return woTypeTable[type];

@@ -16,8 +16,9 @@ namespace ReportConverter
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
         private PartsTable partsTable;
-        private List<List<string>> vendorData;
+        //private List<List<string>> vendorData;
         private AssetTable aTable;
+        private Vendor ven;
 
         public SuzlonConverter(String s, AppInfo i, PartsTable p, AssetTable a)
         {
@@ -25,8 +26,10 @@ namespace ReportConverter
             site = info.getSite(s);
             partsTable = p;
             aTable = a;
-            vendorData = info.getVendorData("Suzlon");
-            addFieldNames();
+            ven = info.getVendor("Suzlon");
+            //vendorData = info.getVendorData("Suzlon");
+            //addFieldNames();
+            fieldNames = ven.getFieldNames("Main");
         }
 
         public void convertReport(Report report)
@@ -35,7 +38,7 @@ namespace ReportConverter
             organizeFields();
             wo = new WorkOrder("none");
             wo.Site = site;
-            wo.Vendor = site.Contractor;
+            wo.Vendor = ven;
             wo.Status = "Closed";
             addDateTime();
             int[] loc = fieldToCell["Outage Type"];
@@ -63,7 +66,8 @@ namespace ReportConverter
             }
         }
 
-
+        /* Gets the MPulse asset ID based on the contractor asset ID
+         * and adds it to the work order*/
         private void addAsset()
         {
             int[] loc = fieldToCell["Asset"];
@@ -90,6 +94,7 @@ namespace ReportConverter
             }
         }
 
+        /* Checks if the string is a valid field header name*/
         private string isField(string s)
         {
             List<string> fieldKeys = fieldNames.Keys.ToList();
@@ -107,7 +112,7 @@ namespace ReportConverter
             }
             return null;
         }
-
+        /*
         private void addFieldNames()
         {
             fieldNames = new Dictionary<string, List<string>>();
@@ -130,7 +135,7 @@ namespace ReportConverter
                 fieldNames.Add(vendorData[i][0], row);
             }
         }
-
+        */
         private void addParts()
         {
             int[] loc = fieldToCell["Parts"];

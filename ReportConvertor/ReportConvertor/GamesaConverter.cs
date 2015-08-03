@@ -61,10 +61,10 @@ namespace ReportConverter
         private Dictionary<string, WorkOrder> newWOs;
         private List<WorkOrder> flaggedWO;
         private Dictionary<string, List<string>> fieldNames;
-        private List<List<string>> data;
         private Dictionary<string, int> tableLoc;
         private PartsTable partsTable;
         private AssetTable aTable;
+        Vendor ven;
 
         public GamesaConverter(AppInfo i, PartsTable p, AssetTable a)
         {
@@ -72,8 +72,7 @@ namespace ReportConverter
             partsTable = p;
             aTable = a;
             flaggedWO = new List<WorkOrder>();
-            data = info.getVendorData("Gamesa");
-            getTableLoc();
+            ven = info.getVendor("Gamesa");
         }
 
         public void convertReport(Report report)
@@ -90,27 +89,13 @@ namespace ReportConverter
             partsTabReader(keys, report);
         }
 
-        private void getTableLoc()
-        {
-            tableLoc = new Dictionary<string, int>();
-            int i = 1;
-            int loc;
-            string n;
-
-            while (!data[i][0].Equals(" "))
-            {
-                double v = Convert.ToDouble(data[i][1]);
-                loc = Convert.ToInt32(v);
-                n = data[i][0];
-                tableLoc.Add(n, loc);
-                i++;
-            }
-        }
-
+        /* Find the column number of each of the necessary fields
+         * in a tab for further parsing
+         */
         public Dictionary<string, int> organizeFields(List<string> line, string tabName)
         {
             Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
-            getFieldNames(tabName);
+            fieldNames = ven.getFieldNames(tabName);
             List<string> fields = fieldNames.Keys.ToList();
             List<int> used = new List<int>();
 
@@ -143,31 +128,6 @@ namespace ReportConverter
             return null;
         }
 
-        private void getFieldNames(string tab)
-        {
-            fieldNames = new Dictionary<string, List<string>>();
-            int start = tableLoc[tab] - 1;
-            double tempL = Convert.ToDouble(data[start][1]);
-            int len = Convert.ToInt32(tempL);
-            start++;
-            int cols;
-            List<string> row;
-
-            for (int i = start; i < start + len; i++)
-            {
-                cols = data[i].Count;
-                row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    if (!data[i][j].Equals(" "))
-                    {
-                        row.Add(data[i][j]);
-                    }
-                }
-                fieldNames.Add(data[i][0], row);
-            }
-        }
-
         public void generalInfoReader(List<string> keys, Report report)
         {
             string tab = null;
@@ -182,12 +142,12 @@ namespace ReportConverter
 
             //Parsing the general info tab
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows[0], tab);
-            for(int i =1; i<rows.Count;i++)
+            Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Main");
+            for (int i = 1; i < rows.Count; i++)
             {
                 List<string> row = rows[i];
                 /* If the WO Type is ZPM7, it will not be imported*/
-                
+
                 WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
                 string oType = row[fieldToCell["Order Type"]];
                 if (!oType.Contains("ZPM7"))
@@ -201,9 +161,10 @@ namespace ReportConverter
                     wo.UnplannedType = taskInfo[4];
                     wo.Priority = taskInfo[5];
                     wo.Description = row[fieldToCell["Description"]];
+                    
                     //Status will always be closed
                     wo.Status = "Closed";
-                    wo.Vendor = info.getVendor("Gamesa");
+                    wo.Vendor = ven;
                     wo.Site = info.getSite("Patton");
                     string asset = row[fieldToCell["Asset"]];
                     wo.AssetID = aTable.getAssetID(asset, "Patton");
@@ -221,9 +182,14 @@ namespace ReportConverter
             }
         }
 
+        /*
+         * Getting information from the hours/labor tab
+         */ 
         private void hoursTabReader(List<string> keys, Report report)
         {
             string tab = null;
+
+            //Ensuring that the correct tab is picked
             foreach (string key in keys)
             {
                 if (key.ToLower().Contains("hours") || key.ToLower().Contains("labor"))
@@ -232,7 +198,9 @@ namespace ReportConverter
                 }
             }
 
+            //Get the data read from the excel file
             List<List<string>> rows = report.getRecords(tab);
+            //Get the field header names and the corresponding columns
             Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Labor");
 
             foreach (List<string> row in rows)
@@ -258,6 +226,12 @@ namespace ReportConverter
             }
         }
 
+        /*
+         * Fills in specific column information for certain fields in the 
+         * stop time tab. These fields are difficult to identify using the
+         * ogranize field function due to the lack of uniformity with the
+         * naming of the fields.
+         */ 
         private Dictionary<string, int> startStopFields(List<string> row, string tab)
         {
             Dictionary<string, int> fieldToCell = organizeFields(row, "Stop Time");
@@ -274,6 +248,9 @@ namespace ReportConverter
             return fieldToCell;
         }
 
+        /*
+         * Reads information from the stop time tab in the report
+         */ 
         private void stopTimeTabReader(List<string> keys, Report report)
         {
             string tab = null;
@@ -287,6 +264,9 @@ namespace ReportConverter
 
             List<List<string>> records = report.getRecords(tab);
             Dictionary<string, int> fieldToCell = startStopFields(records[0], tab);
+            /* The stopTimes dictionary is used to keep track of all 
+             * the stop and start times listed in the report
+             */
             Dictionary<string,List<DateRange>> stopTimes = new Dictionary<string,List<DateRange>>();
             //Remove the first line containing header values
             records.RemoveRange(0, 1);
@@ -297,34 +277,88 @@ namespace ReportConverter
                 //By this time, the order should already exist in the dictionary of work orders
                 if (newWOs.ContainsKey(id))
                 {
+                    //If the work order isn't present in the stop time dictionary, it is added
                     if (!stopTimes.ContainsKey(id))
                     {
                         List<DateRange> list = new List<DateRange>();
                         stopTimes.Add(id, list);
                     }
-                    if (!row[fieldToCell["Stop Time"]].Equals(" "))
+                    //if the stop time is blank, the work order is invalid
+                    if (row[fieldToCell["Stop Time"]].Equals(" "))
                     {
+                        newWOs.Remove(id);
+                    } 
+                    else
+                    {
+                        /* Get the start and stop time including the date and put it in
+                         * a DateRange, add it to the dictionary
+                         */
                         DateTime start = getDateTime(row[fieldToCell["Start Date"]], row[fieldToCell["Start Time"]]);
                         DateTime stop = getDateTime(row[fieldToCell["Stop Date"]], row[fieldToCell["Stop Time"]]);
                         DateRange range = new DateRange(start, stop);
                         stopTimes[id].Add(range);
-                    } else
-                    {
-                        newWOs.Remove(id);
                     }
+                    /* If there were no comments on the general info tab, and the Remarks
+                     * field exists in this tab, use the value in the Remarks column as
+                     * Comments*/
                     if ((newWOs[id].Comments == null) && fieldToCell.ContainsKey("Remarks"))
                     {
                         newWOs[id].Comments = row[fieldToCell["Remarks"]];
                     }
                 }
             }
-
+            /* Once all the rows in the report have been read and added to
+             * the stopTime dictionary, calculate the down time of each 
+             * work order */
             List<string> stopKeys = stopTimes.Keys.ToList();
             foreach (string key in stopKeys)
             {
                 double time = calculateStopTime(stopTimes[key]);
                 newWOs[key].DownTime = time;
             }
+        }
+
+        private double calculateStopTime(List<DateRange> times)
+        {
+            double downTime=0.0;
+            for (int i = 0; i < times.Count - 1; i++)
+            {
+                DateTime start1 = times[i].Start;
+                DateTime stop1 = times[i].End;
+                DateTime start2 = times[i + 1].Start;
+                DateTime stop2 = times[i + 1].End;
+
+                /* Using formula based on mergeSort to find any overlapping
+                 * downTimes, merge them and replace it in the list of
+                 * stop times*/
+                if (start1 < start2 && stop1 > start2 && stop2 > stop1)
+                {
+                    times[i].End = stop2;
+                    times.RemoveAt(i + 1);
+                    i = 0;
+                }
+                else if (start1 > start2 && stop2 > start1 && stop1 > stop2)
+                {
+                    times[i].Start = start2;
+                    times.RemoveAt(i + 1);
+                    i = 0;
+                }
+            }
+            
+            foreach (DateRange time in times)
+            {
+                downTime = downTime + time.getHours();
+            }
+
+            return downTime;
+        }
+
+        private DateTime getDateTime(string date, string time)
+        {
+            string combined = date.Trim() + "," + time.Trim();
+            DateTime dateTime = Convert.ToDateTime(combined);
+
+            return dateTime;
         }
 
         private void partsTabReader(List<string> keys, Report report)
@@ -371,49 +405,6 @@ namespace ReportConverter
                     newWOs[key] = wo;
                 }
             }
-        }
-
-        private double calculateStopTime(List<DateRange> times)
-        {
-            double downTime=0.0;
-            for (int i = 0; i < times.Count - 1; i++)
-            {
-                DateTime start1 = times[i].Start;
-                DateTime stop1 = times[i].End;
-                DateTime start2 = times[i + 1].Start;
-                DateTime stop2 = times[i + 1].End;
-
-                /* Using formula based on mergeSort to find any overlapping
-                 * downTimes, merge them and replace it in the list of
-                 * stop times*/
-                if (start1 < start2 && stop1 > start2 && stop2 > stop1)
-                {
-                    times[i].End = stop2;
-                    times.RemoveAt(i + 1);
-                    i = 0;
-                }
-                else if (start1 > start2 && stop2 > start1 && stop1 > stop2)
-                {
-                    times[i].Start = start2;
-                    times.RemoveAt(i + 1);
-                    i = 0;
-                }
-            }
-            
-            foreach (DateRange time in times)
-            {
-                downTime = downTime + time.getHours();
-            }
-
-            return downTime;
-        }
-
-        private DateTime getDateTime(string date, string time)
-        {
-            string combined = date.Trim() + "," + time.Trim();
-            DateTime dateTime = Convert.ToDateTime(combined);
-
-            return dateTime;
         }
 
         public List<WorkOrder> getWorkOrders()

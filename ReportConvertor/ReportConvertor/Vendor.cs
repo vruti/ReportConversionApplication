@@ -23,6 +23,7 @@ namespace ReportConverter
         private string woFile;
         private string partsFile;
         private Dictionary<string, Part> newParts;
+        Dictionary<string, Dictionary<string, List<string>>> fieldNames;
 
         public Vendor()
         {
@@ -217,6 +218,16 @@ namespace ReportConverter
 
                 }
             }
+        }
+
+        public void addFieldNames(Dictionary<string, Dictionary<string, List<string>>> fields)
+        {
+            fieldNames = fields;
+        }
+
+        public Dictionary<string, List<string>> getFieldNames(string tab)
+        {
+            return fieldNames[tab];
         }
     }
 }
