@@ -22,6 +22,7 @@ namespace ReportConverter
             info = aInfo;
         }
 
+        /* Reads all the files given */
         public Dictionary<string, List<Report>> readFiles(string[] files)
         {
             //Creating a dictionary to store all the records found in the files
@@ -33,6 +34,7 @@ namespace ReportConverter
             foreach (string file in files)
             {
                 tuple = readFile(file);
+                //Adding a report by the site name
                 if (reportsBySite.ContainsKey(tuple.Item1))
                 {
                     reportsBySite[tuple.Item1].Add(tuple.Item2);
@@ -47,16 +49,18 @@ namespace ReportConverter
             return reportsBySite;
         }
 
+        /* Reading a given excel file*/
         public Tuple<string, Report> readFile(string file)
         {
             FileInfo newFile = new FileInfo(file);
             XLSFileReader fr = new XLSFileReader(info);
             ExcelPackage pck;
+            //If the file cannot be opened, try the .xls file reader
             try
             {
                 pck = new ExcelPackage(newFile);
             }
-            catch (Exception e)
+            catch
             {
                 return fr.readFile(file);
             }
@@ -65,7 +69,7 @@ namespace ReportConverter
             Tuple<string, List<List<string>>> tuple = null;
             string siteName = null;
             siteName = getNameOfSite(file);
-
+            //Each worksheet is read
             foreach (ExcelWorksheet wk in ws)
             {
                 report.addReportTab(wk.Name);
@@ -92,13 +96,13 @@ namespace ReportConverter
 
         public Tuple<string, List<List<string>>> readWorksheet(ExcelWorksheet worksheet)
         {
-            
             int totalRows = worksheet.Dimension.End.Row;
             int totalCols = worksheet.Dimension.End.Column;
             string siteName = null;
             List<List<string>> wk = new List<List<string>>();
             List<string> rows;
 
+            //Read all the values in the worksheet
             for (int i = 1; i <= totalRows; i++)
             {
                 rows = new List<string>();

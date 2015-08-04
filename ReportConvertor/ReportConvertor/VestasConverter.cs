@@ -26,6 +26,7 @@ namespace ReportConverter
             partsTable = p;
         }
 
+        /* Start report conversion */
         public void convertReport(Report report)
         {
             records = report.getRecords("Main");
@@ -62,13 +63,10 @@ namespace ReportConverter
                     addDescription(i + 2);
                 }
             }
+            //Fill in any missing information
+            wo.fillValues();
 
-            wo.WorkOrderType = "General Maintenance";
-            wo.OutageType = "Planned";
-            wo.TaskID = "MT-052";
-            wo.Planning = "Planned";
-            wo.Priority = "03-Medium";
-
+            //check if WO is valid, if not set as flagged WO
             Validator v = new Validator();
             if (!v.isValid(wo))
             {
@@ -77,6 +75,7 @@ namespace ReportConverter
             }
         }
 
+        /* Get the Report ID number */
         private int getID()
         {
             int len = records.Count;
@@ -97,6 +96,7 @@ namespace ReportConverter
             return i + 1;
         }
 
+        /* Calculate and add downtime information */
         private void addDownTime(int i)
         {
             List<string> headers = records[i];
@@ -110,6 +110,7 @@ namespace ReportConverter
             wo.DownTime = downTime;
         }
 
+        /* Add the start, end and open dates */
         private void addDates(int i)
         {
             List<string> values = records[i + 1];
@@ -126,6 +127,7 @@ namespace ReportConverter
             }
         }
 
+        /* Find and adds all parts to the work order */
         private void addParts(int i)
         {
             while (!records[i][0].Contains("_"))
@@ -144,6 +146,9 @@ namespace ReportConverter
             }
         }
 
+        /* Adds the description of the work order. The first sentence is 
+         * put in the description field and the entire description is put
+         * in the comments field */
         private void addDescription(int i)
         {
             string d = "";
@@ -172,6 +177,10 @@ namespace ReportConverter
             wo.Comments = d;
         }
 
+        /* Return a list of the work orders
+         * in this case, only one in the list
+         * since the conveter only handles one at
+         * a time */
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> wos = new List<WorkOrder>();
@@ -183,11 +192,17 @@ namespace ReportConverter
             return wos;
         }
 
+        /* Return a list of the flagged work orders
+         * A null list if there isn't a flagged work 
+         * order */
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
             if (flaggedWO != null)
             {
+                /*ID is created so that changes can be made and
+                 * the work order information can still be uploaded
+                 * into MPulse */
                 flaggedWO.createMPulseID();
                 flagged.Add(flaggedWO);
             }

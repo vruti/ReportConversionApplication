@@ -18,6 +18,7 @@ namespace ReportConverter
             info = i;
         }
 
+        /* Starts the output write process */
         public void writeFiles(List<WorkOrder> wo, List<Part> p, List<WorkOrder> flaggedWO, List<List<string>> uAssets)
         {
             string outputFile = info.getFileLoc("Output");
@@ -25,7 +26,9 @@ namespace ReportConverter
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
        
+            //Each type (WO, parts, flagged WO, unlinked assets) gets its own tab
             writeWO(wo, ws);
+            //If there are parts to be written
             if (p != null)
             {
                 writeParts(p, ws);
@@ -35,6 +38,7 @@ namespace ReportConverter
             pck.Save();
         }
 
+        /* Get the record version of all the work orders */
         private List<ArrayList> getRecords(List<WorkOrder> woList)
         {
             List<ArrayList> records= new List<ArrayList>();
@@ -51,6 +55,7 @@ namespace ReportConverter
             return records;
         }
 
+        /* Write the work orders into the output file */
         private void writeWO(List<WorkOrder> woList, ExcelWorksheets ws)
         {
             ExcelWorksheet wk = ws["Work Orders"];
@@ -74,6 +79,7 @@ namespace ReportConverter
             }
         }
 
+        /* Write the parts into the output file*/
         private void writeParts(List<Part> parts, ExcelWorksheets ws)
         {
             ExcelWorksheet wk = ws["Parts"];
@@ -94,6 +100,7 @@ namespace ReportConverter
             }
         }
 
+        /* Write the flagged WO into the output file*/
         private void writeFlagged(List<WorkOrder> flagged, ExcelWorksheets ws)
         {
             ExcelWorksheet wk = ws["Flagged Work Orders"];
@@ -118,6 +125,7 @@ namespace ReportConverter
             }
         }
 
+        /* Write the unlinked assets into the output file*/
         private void writeUnlinkedAssets(List<List<string>> assets, ExcelWorksheets ws)
         {
             ExcelWorksheet wk = ws["Unlinked Assets"];
@@ -134,6 +142,8 @@ namespace ReportConverter
             }
         }
 
+        /* Write the file locations into the appInfo file if any
+         * were changed by the users in the settings menu*/
         public void writeFileLocs()
         {
             Dictionary<string, string> fileLocs = info.getFileLocs();

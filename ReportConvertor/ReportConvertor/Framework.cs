@@ -200,7 +200,7 @@ namespace ReportConverter
                         break;
                 }
                 ServiceReports.Add(key, fR.readFiles(files));
-                //dR.moveFiles(files);
+                dR.moveFiles(files);
             }
             return ServiceReports;
         }

@@ -23,7 +23,7 @@ namespace ReportConverter
         private string woFile;
         private string partsFile;
         private Dictionary<string, Part> newParts;
-        Dictionary<string, Dictionary<string, List<string>>> fieldNames;
+        private Dictionary<string, Dictionary<string, List<string>>> fieldNames;
 
         public Vendor()
         {
@@ -31,6 +31,8 @@ namespace ReportConverter
             altNames = new List<string>();
             newParts = new Dictionary<string, Part>();
         }
+
+        //Getters and Setter for all the attributes
 
         public string ID
         {
@@ -104,6 +106,7 @@ namespace ReportConverter
             }
         }
 
+        //Adding alternate names for the contractor
         public void addAltNames(string n)
         {
             altNames.Add(n);
@@ -185,6 +188,9 @@ namespace ReportConverter
             return result;
         }
 
+        /* Generating a dictionary with all the past
+         * work order IDs as the key, linking to the
+         * serial number */
         public void generateWOHistory()
         {
             oldWO = new Dictionary<string,int>();
@@ -220,6 +226,7 @@ namespace ReportConverter
             }
         }
 
+        /* Field header names specific to each tab in the report*/
         public void addFieldNames(Dictionary<string, Dictionary<string, List<string>>> fields)
         {
             fieldNames = fields;

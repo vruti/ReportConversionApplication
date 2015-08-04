@@ -15,7 +15,6 @@ namespace ReportConverter
         private Dictionary<string, int[]> fieldToCell;
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
-        //private List<List<string>> vendorData;
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
@@ -26,33 +25,25 @@ namespace ReportConverter
             site = i.getSite(s);
             partsTable = p;
             aTable = a;
-            //vendorData = info.getVendorData("Senvion");
-            //getFieldNames();
             ven = info.getVendor("Senvion");
             fieldNames = ven.getFieldNames("Main");
         }
 
+        /* Start report conversion */
         public void convertReport(Report report)
         {
             records = report.getRecords("Main");
             organizeFields();
             int[] loc = fieldToCell["ID#"];
+            //start a new work order
             wo = new WorkOrder(records[loc[0]+1][loc[1]]);
             wo.Site = site;
-            wo.Vendor = info.getVendor("Senvion");
+            wo.Vendor = ven;
             calcLaborHours(fieldToCell["Time"]);
             addDates();
             getDownTime();
             List<string> checkedVals = report.checkedVals();
-            int len = checkedVals.Count;
-            string workOrderType = checkedVals[len - 1];
-            List<string> taskInfo = info.getTypeInfo(workOrderType);
-            wo.WorkOrderType = taskInfo[0];
-            wo.TaskID = taskInfo[1];
-            wo.OutageType = taskInfo[2];
-            wo.Planning = taskInfo[3];
-            wo.UnplannedType = taskInfo[4];
-            wo.Priority = taskInfo[5];
+            addWorkOrderInfo(checkedVals);
             loc = fieldToCell["Description"];
             wo.Description = records[loc[0]+2][loc[1]];
             loc = fieldToCell["Comments"];
@@ -60,6 +51,7 @@ namespace ReportConverter
             wo.Status = "Closed";
             addParts();
             addAsset();
+            //check if WO is valid, if not set as flagged WO
             Validator v = new Validator();
             if (!v.isValid(wo))
             {
@@ -68,10 +60,30 @@ namespace ReportConverter
             }
         }
 
+        /* Adds information based on work order type from
+         * the table present in the AppInfo file*/
+        private void addWorkOrderInfo(List<string> checkedVals)
+        {
+            //The work order type is the last checked value in the report
+            int len = checkedVals.Count;
+            string workOrderType = checkedVals[len - 1];
+            //get the information linked to the workorder type
+            List<string> taskInfo = info.getTypeInfo(workOrderType);
+            wo.WorkOrderType = taskInfo[0];
+            wo.TaskID = taskInfo[1];
+            wo.OutageType = taskInfo[2];
+            wo.Planning = taskInfo[3];
+            wo.UnplannedType = taskInfo[4];
+            wo.Priority = taskInfo[5];
+        }
+
+        /*Add asset to the work order*/
         private void addAsset()
         {
             int[] loc = fieldToCell["Asset"];
             string asset = records[loc[0] + 1][loc[1] + 2];
+            /* If asset number isn't in a cell of its own, asset ID
+             * and location must be in one cell*/
             if (asset.Equals(" "))
             {
                 asset = records[loc[0] + 1][loc[1]];
@@ -79,12 +91,14 @@ namespace ReportConverter
             wo.AssetID = aTable.getAssetID(asset, site.Name);
         }
 
+        /* Calculate downtime*/
         private void getDownTime()
         {
             TimeSpan t = wo.EndDate - wo.StartDate;
             wo.DownTime = t.TotalHours;
         }
 
+        /* Add the start, end and open dates to the work order */
         private void addDates()
         {
             int x = fieldToCell["Offline"][0];
@@ -97,21 +111,28 @@ namespace ReportConverter
             y = fieldToCell["Date"][1]+2;
             wo.OpenDate = convertToDate(records[x][y]);
         }
-
+        
+        /* Converts a string to a DateTime value*/
         private DateTime convertToDate(string s)
         {
             try
             {
+                /* If the string is in date format it will be 
+                 * converted into a DateTime value*/
                 string val = s.Trim();
                 DateTime result = Convert.ToDateTime(val);
                 return result;
             }
             catch
             {
+                /* If the string is not in a date format, the start
+                 * date is returned*/
                 return wo.StartDate;
             }
         }
-
+        
+        /* Calculate the total labor hours (actual hours) of 
+         * a work order */
         private void calcLaborHours(int[] loc)
         {
             double result = 0;
@@ -127,21 +148,27 @@ namespace ReportConverter
             wo.ActualHours = result;
         }
 
+        /*Convert a string to DateTime*/
         private DateTime convertToTime(string s)
         {
             DateTime result;
             try
             {
+                /*If the string is in a date format this will work*/
                 result = Convert.ToDateTime(s);
             }
             catch
             {
+                /*If the string is in a decimal format, use the
+                 * fromOADate function instead*/
                 double d = Convert.ToDouble(s);
                 result = DateTime.FromOADate(d);
             }
             return result;
         }
 
+        /* Fill in the fieldToCell dictionary with the 
+         * exact cell location of each of the field headers */
         private void organizeFields()
         {
             fieldToCell = new Dictionary<string, int[]>();
@@ -161,6 +188,7 @@ namespace ReportConverter
             }
         }
 
+        /* Checks if a string is a field header name*/
         private string isField(string s)
         {
             List<string> fieldKeys = fieldNames.Keys.ToList();
@@ -169,7 +197,7 @@ namespace ReportConverter
             {
                 foreach (string field in fieldNames[key])
                 {
-                    if (name.Contains(field.ToLower()))
+                    if (name.Contains(field.ToLower()) && !fieldToCell.ContainsKey(key))
                     {
                         return key;
                     }
@@ -177,42 +205,22 @@ namespace ReportConverter
             }
             return null;
         }
-        /*
-        private void getFieldNames()
-        {
-            fieldNames = new Dictionary<string, List<string>>();
-            double l = Convert.ToDouble(vendorData[0][2]);
-            int len = Convert.ToInt32(l) + 1;
-            int cols;
-            List<string> row;
 
-            for (int i = 1; i < len; i++)
-            {
-                cols = vendorData[i].Count;
-                row = new List<string>();
-                for (int j = 1; j < cols; j++)
-                {
-                    if (!vendorData[i][j].Equals(" "))
-                    {
-                        row.Add(vendorData[i][j]);
-                    }
-                }
-                fieldNames.Add(vendorData[i][0], row);
-            }
-        }
-        */
+        /*Adding parts to the work order*/
         private void addParts()
         {
             int x = fieldToCell["Parts"][0] + 3;
             int y = fieldToCell["Parts"][1] + 1;
 
-            while (!records[x][y].Equals(""))
+            /*While there are parts in that section of the report*/
+            while (!records[x][y].Equals("") && !records[x][y].Equals(" "))
             {
                 string id = records[x][y + 5];
                 int qty = Convert.ToInt32(records[x][y + 6]);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
                 if (partID == null)
                 {
+                    /* If the part isn't in the parts list, create a new part*/
                     string description = records[x][y];
                     partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
                 }
@@ -221,6 +229,10 @@ namespace ReportConverter
             }
         }
 
+        /* Return a list of the work orders
+         * in this case, only one in the list
+         * since the conveter only handles one at
+         * a time */
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> wos = new List<WorkOrder>();
@@ -232,11 +244,17 @@ namespace ReportConverter
             return wos;
         }
 
+        /* Return a list of the flagged work orders
+         * A null list if there isn't a flagged work 
+         * order */
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
             if (flaggedWO != null)
             {
+                /*ID is created so that changes can be made and
+                 * the work order information can still be uploaded
+                 * into MPulse */
                 flaggedWO.createMPulseID();
                 flagged.Add(flaggedWO);
             }

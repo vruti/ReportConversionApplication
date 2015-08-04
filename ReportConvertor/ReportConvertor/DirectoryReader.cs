@@ -25,7 +25,7 @@ namespace ReportConverter
         {
             Dictionary <string, string[]> dict = new Dictionary<string, string[]>();
 
-            //excel files. All the report files are .xlsx
+            //Adding all the report files that are .xlsx
             string[] filePathsXlsx = Directory.GetFiles(@inputDir, "*.xlsx");
             List<string> filePaths = filePathsXlsx.ToList();
             if (filePathsXlsx.Length > 0)
@@ -33,6 +33,7 @@ namespace ReportConverter
                 dict.Add("xlsx", filePathsXlsx);
             }
             
+            //Adding excel files that are only .xls format
             List<string> filePathsXls = Directory.GetFiles(@inputDir, "*.xls").ToList();
             List<string> finalFilePathXls = new List<string>();
             for (int i = 0; i < filePathsXls.Count; i++)
@@ -72,12 +73,26 @@ namespace ReportConverter
             return dict;
         }
 
+        /* Moving read files into archive folder*/
         public void moveFiles(string[] files)
         {
+            //Creates a folder based on the date
+            DateTime today = DateTime.Today;
+            string date = "";
+            date += today.Month.ToString() + "-";
+            date += today.Day.ToString() + "-";
+            date += today.Year.ToString();
+            string dir = archiveDir + "\\\\Archived-" + date;
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            //Moves all the files to the archive folder
             foreach (string filePath in files)
             {
                 string file = Path.GetFileName(filePath);
-                string archiveFile = Path.Combine(archiveDir, file);
+                string archiveFile = Path.Combine(dir, file);
                 File.Move(filePath, archiveFile);
             }
         }

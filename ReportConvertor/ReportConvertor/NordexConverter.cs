@@ -15,6 +15,7 @@ namespace ReportConverter
         private List<List<string>> records;
         private PartsTable partsTable;
         private AssetTable aTable;
+        private Vendor ven;
 
         public NordexConverter(string s, AppInfo i, PartsTable p, AssetTable a)
         {
@@ -22,16 +23,20 @@ namespace ReportConverter
             info = i;
             partsTable = p;
             aTable = a;
+            ven = info.getVendor("Nordex");
         }
 
+        /* Start report conversion */
         public void convertReport(Report report)
         { 
             records = report.getRecords("Main");
-            string id = getOrderNo();
+            //Get report Id and start a new WorkOrder
+            string id = getReportID();
             wo = new WorkOrder(id);
             wo.Site = info.getSite(site);
-            wo.Vendor = info.getVendor("Nordex");
+            wo.Vendor = ven;
             wo.Status = "Closed";
+            //counters for date and parts
             int countS = 1;
             int countC = 1;
 
@@ -44,7 +49,7 @@ namespace ReportConverter
                 } 
                 else if (row[0].Contains("Start Date") && countS == 1)
                 {
-                    i = timeUsed((i + 1), id);
+                    i = addDatesInfo((i + 1), id);
                     countS++;
                 }
                 else if (row[0].Contains("Oper.") && countC == 1)
@@ -58,6 +63,9 @@ namespace ReportConverter
                     wo.AssetID = aTable.getAssetID(asset, site);
                 }
             }
+
+            //Fill in any values that weren't present in report
+            wo.fillValues();
             Validator v = new Validator();
             if (!v.isValid(wo))
             {
@@ -67,25 +75,8 @@ namespace ReportConverter
             
         }
 
-        private DateTime toDate(string d)
-        {
-            int day = Convert.ToInt32(d.Substring(0, 2));
-            int month = Convert.ToInt32(d.Substring(3, 2));
-            int year = Convert.ToInt32(d.Substring(6, 4));
-            DateTime date;
-            if (month > 12)
-            {
-                date = new DateTime(year, day, month);
-            }
-            else
-            {
-                date = new DateTime(year, month, day);
-            }
-
-            return date;
-        }
-
-        private string getOrderNo()
+        /* Get the Report ID number */
+        private string getReportID()
         {
             foreach (List<string> row in records)
             {
@@ -97,6 +88,30 @@ namespace ReportConverter
             return null;
         }
 
+        /* Since the date format is in ddmmyyy we need to
+         * convert it manually instead of using the 
+         * ToDate function in Convert*/
+        private DateTime toDate(string d)
+        {
+            int day = Convert.ToInt32(d.Substring(0, 2));
+            int month = Convert.ToInt32(d.Substring(3, 2));
+            int year = Convert.ToInt32(d.Substring(6, 4));
+            DateTime date;
+            //In case the date is in mmddyyy format
+            if (month > 12)
+            {
+                date = new DateTime(year, day, month);
+            }
+            else
+            {
+                date = new DateTime(year, month, day);
+            }
+            return date;
+        }
+
+        /* Fill in a dictionary with the exact cell location 
+         * of each of the field headers.
+         * NOTE: Not global due to only being used to calculate time*/
         private Dictionary<string, int> organizeFields(List<string> record)
         {
             Dictionary<string, int> result = new Dictionary<string, int>();
@@ -116,14 +131,15 @@ namespace ReportConverter
             return result;
         }
         
-        private int timeUsed(int i, string id)
+        /* Calculate and add all date and time related information */
+        private int addDatesInfo(int i, string id)
         {
             Dictionary<string, int> fieldToCell = organizeFields(records[i-1]);
             DateTime def = new DateTime();
             while (!records[i][0].Contains("Oper. Ref."))
             {
                 List<string> row = records[i];
-
+                //Add start date
                 if(wo.StartDate == def)
                 {
                     DateTime s = toDate(row[fieldToCell["Start Date"]]);
@@ -131,6 +147,7 @@ namespace ReportConverter
                 } 
                 else 
                 {
+                    //Ensures that the earliest date is set as start date
                     DateTime d = toDate(row[fieldToCell["Start Date"]]);
                     if (d < wo.StartDate)
                     {
@@ -138,59 +155,68 @@ namespace ReportConverter
                     }
                 }
 
+                //Add End date
                 if (wo.EndDate == def)
                 {
                     wo.EndDate = toDate(row[fieldToCell["End Date"]]);
                 }
                 else
                 {
+                    //Ensures that the latest date is set as end date
                     DateTime d = toDate(row[fieldToCell["End Date"]]);
                     if (d > wo.EndDate)
                     {
-                        wo.StartDate = d;
+                        wo.EndDate = d;
                     }
                 }
+                //Adding Description
                 if (wo.Description == null)
                 {
                     wo.Description = row[fieldToCell["Description of"]];
                 }
                 else
                 {
+                    //Ensures that the longest description is used
                     string d = row[fieldToCell["Description of"]];
                     if (d.Length > wo.Description.Length)
                     {
                         wo.Description = d;
                     }
                 }
+                //Adding comments
                 if (wo.Comments == null)
                 {
                     wo.Comments = row[fieldToCell["Longtext of"]];
                 }
                 else
                 {
+                    //Ensures that the longest comment is used
                     string c = row[fieldToCell["Longtext of"]];
                     if (c.Length > wo.Comments.Length)
                     {
                         wo.Comments = c;
                     }
                 }
+
+                //Calculate down time and labor/actual hours
                 string startTime = row[fieldToCell["Start Time"]];
                 string endTime = row[fieldToCell["End Time"]];
                 if (row[fieldToCell["Description of"]].Contains("Start/Stop"))
                 {
-                    wo.DownTime += getHours(startTime, endTime);
-                    wo.ActualHours += getHours(startTime, endTime);
+                    wo.DownTime += calculateHours(startTime, endTime);
+                    wo.ActualHours += calculateHours(startTime, endTime);
                 }
                 else
                 {
-                    wo.ActualHours += getHours(startTime, endTime);
+                    wo.ActualHours += calculateHours(startTime, endTime);
                 }
                 i++;
             }
             return (i-1);
         }
 
-        private double getHours(string start, string end)
+        /* Calculates the time span in hours between a start and stop time*/
+        private double calculateHours(string start, string end)
         {
             DateTime s = Convert.ToDateTime(start);
             DateTime e = Convert.ToDateTime(end);
@@ -199,6 +225,7 @@ namespace ReportConverter
             return hours;
         }
 
+        /* Find and adds all components(parts) to the work order */
         private int componentsUsed(int i)
         {
             Dictionary<string, int> fieldToCell = organizeFields(records[i-1]);
@@ -206,42 +233,25 @@ namespace ReportConverter
             {
                 List<string> record = records[i];
                 string id = record[fieldToCell["Product Ref."]];
+                //Quantity is in decimal format, but we want it as an int
                 double dQty = Convert.ToDouble(record[fieldToCell["Quantity"]]);
                 int qty = Convert.ToInt32(dQty);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                if (partID != null)
-                {
-                    wo.addPart(partID, qty);
-                }
-                else
+                if (partID == null)
                 {
                     string description = record[fieldToCell["Description"]];
                     partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                    wo.addPart(partID, qty);
                 }
+                wo.addPart(partID, qty);
                 i++;
             }
             return (i - 1);
         }
 
-        private int counterReadings(int i)
-        {
-            
-            while (records[i].Count > 1)
-            {
-                i++;
-            }
-            return (i-1);
-        }
-
-        private void comments(int i)
-        {
-            for (int j = i; j < records.Count; j++)
-            {
-                
-            }
-        }
-
+        /* Return a list of the work orders
+         * in this case, only one in the list
+         * since the conveter only handles one at
+         * a time */
         public List<WorkOrder> getWorkOrders()
         {
             List<WorkOrder> wos = new List<WorkOrder>();
@@ -253,11 +263,17 @@ namespace ReportConverter
             return wos;
         }
 
+        /* Return a list of the flagged work orders
+         * A null list if there isn't a flagged work 
+         * order */
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
             if (flaggedWO != null)
             {
+                /*ID is created so that changes can be made and
+                 * the work order information can still be uploaded
+                 * into MPulse */
                 flaggedWO.createMPulseID();
                 flagged.Add(flaggedWO);
             }

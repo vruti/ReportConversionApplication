@@ -18,7 +18,9 @@ namespace ReportConverter
          * Since most of the information parsed from the 
          * reports are validated in the converter, the 
          * function only checks if the asset and task IDs
-         * are valid
+         * are valid.
+         * 
+         * NOTE: Add more validation checks if necessary
          **/
         public bool isValid(WorkOrder wo)
         {

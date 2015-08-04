@@ -61,7 +61,6 @@ namespace ReportConverter
         private Dictionary<string, WorkOrder> newWOs;
         private List<WorkOrder> flaggedWO;
         private Dictionary<string, List<string>> fieldNames;
-        private Dictionary<string, int> tableLoc;
         private PartsTable partsTable;
         private AssetTable aTable;
         Vendor ven;
@@ -89,9 +88,8 @@ namespace ReportConverter
             partsTabReader(keys, report);
         }
 
-        /* Find the column number of each of the necessary fields
-         * in a tab for further parsing
-         */
+        /* Fill in the fieldToCell dictionary with the 
+         * exact cell location of each of the field headers */
         public Dictionary<string, int> organizeFields(List<string> line, string tabName)
         {
             Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
@@ -110,6 +108,7 @@ namespace ReportConverter
             return fieldToCell;
         }
 
+        /* Checks if a string is a field header name*/
         private string isField(string s)
         {
             List<string> fieldKeys = fieldNames.Keys.ToList();
@@ -128,6 +127,7 @@ namespace ReportConverter
             return null;
         }
 
+        /* Adds information from the general info tab in the report*/
         public void generalInfoReader(List<string> keys, Report report)
         {
             string tab = null;
@@ -182,9 +182,7 @@ namespace ReportConverter
             }
         }
 
-        /*
-         * Getting information from the hours/labor tab
-         */ 
+        /* Add information from the hours/labor tab*/ 
         private void hoursTabReader(List<string> keys, Report report)
         {
             string tab = null;
@@ -248,9 +246,7 @@ namespace ReportConverter
             return fieldToCell;
         }
 
-        /*
-         * Reads information from the stop time tab in the report
-         */ 
+        /* Add information from the stop time tab in the report */ 
         private void stopTimeTabReader(List<string> keys, Report report)
         {
             string tab = null;
@@ -265,8 +261,7 @@ namespace ReportConverter
             List<List<string>> records = report.getRecords(tab);
             Dictionary<string, int> fieldToCell = startStopFields(records[0], tab);
             /* The stopTimes dictionary is used to keep track of all 
-             * the stop and start times listed in the report
-             */
+             * the stop and start times listed in the report */
             Dictionary<string,List<DateRange>> stopTimes = new Dictionary<string,List<DateRange>>();
             //Remove the first line containing header values
             records.RemoveRange(0, 1);
@@ -313,12 +308,13 @@ namespace ReportConverter
             List<string> stopKeys = stopTimes.Keys.ToList();
             foreach (string key in stopKeys)
             {
-                double time = calculateStopTime(stopTimes[key]);
+                double time = calculateDownTime(stopTimes[key]);
                 newWOs[key].DownTime = time;
             }
         }
 
-        private double calculateStopTime(List<DateRange> times)
+        /* Calculates the downtime of the turbine in the report*/
+        private double calculateDownTime(List<DateRange> times)
         {
             double downTime=0.0;
             for (int i = 0; i < times.Count - 1; i++)
@@ -353,6 +349,7 @@ namespace ReportConverter
             return downTime;
         }
 
+        /* Return a DateTime value obtained from given date and time strings */
         private DateTime getDateTime(string date, string time)
         {
             string combined = date.Trim() + "," + time.Trim();
@@ -361,6 +358,7 @@ namespace ReportConverter
             return dateTime;
         }
 
+        /* Add information from the Parts tab in the report*/
         private void partsTabReader(List<string> keys, Report report)
         {
             string tab = null;
@@ -392,21 +390,20 @@ namespace ReportConverter
                     string id = row[fieldToCell["Material"]];
                     string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
 
-                    if (partID != null)
-                    {
-                        wo.addPart(partID, qty);
-                    }
-                    else
+                    if (partID == null)
                     {
                         string description = row[fieldToCell["Description"]];
                         partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                        wo.addPart(partID, qty);
                     }
+                    wo.addPart(partID, qty);
                     newWOs[key] = wo;
                 }
             }
         }
 
+        /* Return a list of the work orders in the report
+         * A null list if there isn't aren't any work 
+         * orders */
         public List<WorkOrder> getWorkOrders()
         {
             List<string> keys = newWOs.Keys.ToList();
@@ -422,6 +419,9 @@ namespace ReportConverter
             return newWOList;
         }
 
+        /* Return a list of the flagged work orders
+         * A null list if there aren't any flagged work 
+         * orders */
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
@@ -429,6 +429,9 @@ namespace ReportConverter
             {
                 foreach (WorkOrder wo in flaggedWO)
                 {
+                    /* ID is created so that changes can be made and
+                     * the work order information can still be uploaded
+                     * into MPulse */
                     wo.createMPulseID();
                     flagged.Add(wo);
                 }

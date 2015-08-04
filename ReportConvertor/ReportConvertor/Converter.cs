@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ReportConverter
 {
+    /* Interface for all the Converters*/
     public interface Converter
     {
         void convertReport(Report report);

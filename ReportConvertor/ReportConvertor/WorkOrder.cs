@@ -30,7 +30,7 @@ namespace ReportConverter
         private string originalID;
         private string comments;
 
-
+        /* Initialize a work order with the report ID*/
         public WorkOrder(string id)
         {
             originalID = id;
@@ -271,6 +271,8 @@ namespace ReportConverter
             return partsList;
         }
 
+        /* Creates an MPulse ID for the work order
+         * with all the necessary information */
         public void createMPulseID()
         {
             string name = "";
@@ -298,7 +300,9 @@ namespace ReportConverter
             mPulseID = name;
         }
 
-        private void fillValues()
+        /* If there are certain values missing in a WO,
+         * fill them in with default values */
+        public void fillValues()
         {
             if (comments == null || comments.Equals("") || comments.Equals(" "))
             {
@@ -326,6 +330,9 @@ namespace ReportConverter
             }
         }
 
+        /* Puts all the work order information into a list
+         * of ArrayLists so that it can be writte into 
+         * the output file*/
         public List<ArrayList> getWORecord()
         {
             List<ArrayList> records = new List<ArrayList>();
@@ -333,8 +340,7 @@ namespace ReportConverter
 
             ArrayList record;
 
-            fillValues();
-
+            /* If there are no parts*/
             if (keys.Count == 0 || (keys.Count == 1 && partsList[keys[0]] < 1))
             {
                 record = addValues();
@@ -347,6 +353,7 @@ namespace ReportConverter
                 return records;
             }
 
+            /* Each part is its own ArrayList*/
             foreach(string key in keys)
             {
                 if (partsList[key] > 0)
@@ -363,6 +370,7 @@ namespace ReportConverter
             return records;
         }
 
+        /* Adding all the necessary values to the ArrayList*/
         private ArrayList addValues()
         {
             ArrayList record = new ArrayList();

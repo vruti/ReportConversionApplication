@@ -254,6 +254,7 @@ namespace ReportConverter
                     len = Convert.ToInt32(wk.Cells[1, 3].Value.ToString());
                     start = 2;
                     fields.Add("Main", addFields(wk, start, len));
+                    v.addFieldNames(fields);
                 }
             }
         }
@@ -271,7 +272,7 @@ namespace ReportConverter
             for (int i = start; i < start + len; i++)
             {
                 fieldRow = new List<string>();
-                for (int j = 2; j < totalCols; j++)
+                for (int j = 2; j <= totalCols; j++)
                 {
                     var cell = wk.Cells[i, j].Value;
                     if (cell != null)

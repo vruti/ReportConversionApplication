@@ -16,7 +16,6 @@ namespace ReportConverter
         private Dictionary<string, List<string>> fieldNames;
         private List<List<string>> records;
         private PartsTable partsTable;
-        //private List<List<string>> vendorData;
         private AssetTable aTable;
         private Vendor ven;
 
@@ -27,22 +26,47 @@ namespace ReportConverter
             partsTable = p;
             aTable = a;
             ven = info.getVendor("Suzlon");
-            //vendorData = info.getVendorData("Suzlon");
-            //addFieldNames();
             fieldNames = ven.getFieldNames("Main");
         }
 
+        /* Start report conversion */
         public void convertReport(Report report)
         {
             records = report.getRecords("Main");
             organizeFields();
-            wo = new WorkOrder("none");
+
+            //No report ID is given so filler value is used
+            wo = new WorkOrder("None");
             wo.Site = site;
             wo.Vendor = ven;
             wo.Status = "Closed";
             addDateTime();
+            addWorkOrderInfo();
+            addAsset();
+
+            //Add Description and Comments to WO
+            int[] loc = fieldToCell["Description"];
+            wo.Description = records[loc[0]][loc[1] + 1];
+            wo.Comments = wo.Description;
+
+            addParts();
+            //Fill in any empty values
+            wo.fillValues();
+            //Check if the WO is valid
+            Validator v = new Validator();
+            if (!v.isValid(wo))
+            {
+                flaggedWO = wo;
+                wo = null;
+            }
+        }
+
+        /* Adds information based on work order type from
+         * the table present in the AppInfo file */
+        private void addWorkOrderInfo()
+        {
             int[] loc = fieldToCell["Outage Type"];
-            string woType = records[loc[0]][loc[1]+1];
+            string woType = records[loc[0]][loc[1] + 1];
             if (!woType.Equals(" "))
             {
                 List<string> taskInfo = info.getTypeInfo(woType);
@@ -53,19 +77,7 @@ namespace ReportConverter
                 wo.UnplannedType = taskInfo[4];
                 wo.Priority = taskInfo[5];
             }
-            addAsset();
-            loc = fieldToCell["Description"];
-            wo.Description = records[loc[0]][loc[1] + 1];
-            wo.Comments = wo.Description;
-            addParts();
-            Validator v = new Validator();
-            if (!v.isValid(wo))
-            {
-                flaggedWO = wo;
-                wo = null;
-            }
         }
-
         /* Gets the MPulse asset ID based on the contractor asset ID
          * and adds it to the work order*/
         private void addAsset()
@@ -112,30 +124,8 @@ namespace ReportConverter
             }
             return null;
         }
-        /*
-        private void addFieldNames()
-        {
-            fieldNames = new Dictionary<string, List<string>>();
-            double l = Convert.ToDouble(vendorData[0][2]);
-            int len = Convert.ToInt32(l) + 1;
-            int cols;
-            List<string> row;
 
-            for (int i = 0; i < len; i++)
-            {
-                cols = vendorData[i].Count;
-                row = new List<string>();
-                for (int j = 0; j < cols; j++)
-                {
-                    if (!vendorData[i][j].Equals(" "))
-                    {
-                        row.Add(vendorData[i][j]);
-                    }
-                }
-                fieldNames.Add(vendorData[i][0], row);
-            }
-        }
-        */
+        /* Find and add all the parts that are used in the work order*/
         private void addParts()
         {
             int[] loc = fieldToCell["Parts"];
@@ -151,20 +141,20 @@ namespace ReportConverter
                 double dQty = Convert.ToDouble(records[i][qLoc]);
                 int qty = Convert.ToInt32(dQty);
                 string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                if (partID != null)
+                if (partID == null)
                 {
-                    wo.addPart(partID, qty);
-                }
-                else
-                {
+                    /* If the part isn't in the parts list, create a new part*/
                     string description = records[i][desLoc];
                     partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                    wo.addPart(partID, qty);
+                    
                 }
+                wo.addPart(partID, qty);
                 i++;
             }
         }
 
+        /* Adds start, end, open dates and downtime of 
+         * the report to the work order */
         private void addDateTime()
         {
             int[] loc = fieldToCell["Start Date"];
@@ -176,32 +166,62 @@ namespace ReportConverter
             wo.ActualHours = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
             loc = fieldToCell["Down Time"];
             string downtime = records[loc[0]][loc[1] + 1];
+            //If downtime isn't specified, it should be 0
             if (downtime.Equals(" "))
             {
                 wo.DownTime = 0;
             }
             else
             {
-                wo.DownTime = Convert.ToDouble(records[loc[0]][loc[1] + 1]);
+                wo.DownTime = convertToDouble(records[loc[0]][loc[1] + 1]);
             }
         }
 
+        /* Converts a string time to double */
+        private double convertToDouble(string time)
+        {
+            double result=0;
+            try
+            {
+                result = Convert.ToDouble(time);
+            }
+            catch
+            {
+                //Get the hours and minutes in double format
+                int count = time.IndexOf(":");
+                double hour = Convert.ToDouble(time.Substring(0, count));
+                double min = Convert.ToDouble(time.Substring(count + 1, 2));
+                result = hour + (min / 60);
+            }
+            return result;
+        }
+
+        /* Return a list of the work orders
+         * in this case, only one in the list
+         * since the conveter only handles one at
+         * a time */
         public List<WorkOrder> getWorkOrders()
         {
-            List<WorkOrder> newWOs = new List<WorkOrder>();
+            List<WorkOrder> wos = new List<WorkOrder>();
             if (wo != null)
             {
                 wo.createMPulseID();
-                newWOs.Add(wo);
+                wos.Add(wo);
             }
-            return newWOs;
+            return wos;
         }
 
+        /* Return a list of the flagged work orders
+         * A null list if there isn't a flagged work 
+         * order */
         public List<WorkOrder> getFlaggedWO()
         {
             List<WorkOrder> flagged = new List<WorkOrder>();
             if (flaggedWO != null)
             {
+                /*ID is created so that changes can be made and
+                 * the work order information can still be uploaded
+                 * into MPulse */
                 flaggedWO.createMPulseID();
                 flagged.Add(flaggedWO);
             }
