@@ -60,35 +60,29 @@ namespace ReportConverter
             string siteName = null;
             siteName = getNameOfSite(file);
 
-            //foreach (Worksheet wk in wb.Worksheets)
+            report.addReportTab(wk.Name);
+            report.changeCurrentTab(wk.Name);
+            tuple = readWorksheet(wk, siteName);
+            report.addRecords(tuple.Item2);
+
+            if (siteName == null)
             {
-                report.addReportTab(wk.Name);
-                report.changeCurrentTab(wk.Name);
-                tuple = readWorksheet(wk);
-                report.addRecords(tuple.Item2);
-
-                if (siteName == null)
-                {
-                    siteName = tuple.Item1;
-                }
-
-                //if the vendor is senvion, there are checkboxes
-                List<string> vals = getCheckedValues(wk);
-                report.addCheckedVals(vals);
+                siteName = tuple.Item1;
             }
+
+            //if the vendor is senvion, there are checkboxes
+            List<string> vals = getCheckedValues(wk);
+            report.addCheckedVals(vals);
+
             wb.Close();
             return Tuple.Create(siteName, report);
         }
 
-        private Tuple<string, List<List<string>>> readWorksheet(Worksheet worksheet)
+        private Tuple<string, List<List<string>>> readWorksheet(Worksheet worksheet, string sName)
         {
-            if (worksheet.ProtectContents == true)
-            {
-
-            }
             int totalRows = worksheet.UsedRange.Rows.Count;
             int totalCols = worksheet.UsedRange.Columns.Count;
-            string siteName = null;
+            string siteName = sName;
             List<List<string>> wk = new List<List<string>>();
             List<string> rows;
 
@@ -119,15 +113,6 @@ namespace ReportConverter
                 }
                 wk.Add(rows);
             }
-            if (siteName == null)
-            {
-                //RAISE AN ERROR!!!!!!!!!!!
-                //tell user
-                //open file
-                //ask for user input
-                //siteName = "Twin Ridges";
-            }
-
             return Tuple.Create(siteName, wk);
         }
 

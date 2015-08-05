@@ -21,7 +21,11 @@ namespace ReportConverter
             //Location of the output file
             outputFile = oFile;
             //Location of archive directory and creates an output archive if not present
-            archiveDir = aDir+"\\Output Archive";
+            archiveDir = aDir + "\\Output Archive";
+            if (!Directory.Exists(archiveDir))
+            {
+                Directory.CreateDirectory(archiveDir);
+            }
         }
 
         /* Starts the process of archiving*/

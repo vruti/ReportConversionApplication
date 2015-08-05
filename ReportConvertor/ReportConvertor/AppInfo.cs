@@ -45,6 +45,7 @@ namespace ReportConverter
              * in the specified location. File can be modified 
              * but never moved
              */
+            //string tpath = ReportConverter.Properties.Resources.AppInfo;
             string curDir = Environment.CurrentDirectory;
             string[] filePathsXlsx = Directory.GetFiles(@curDir, "*.xlsx");
             string path = filePathsXlsx[0];
@@ -188,7 +189,6 @@ namespace ReportConverter
                 v.WOArchiveTabNo = Convert.ToInt32(wk.Cells[i, 7].Value.ToString());
                 v.PartsFile=(fileLocs["Parts"]);
                 v.WOArchiveFile=(fileLocs["WOHistory"]);
-                v.generateWOHistory();
                 //if there is an alternate name that we have to look for
                 if (wk.Cells[i, 2].Value != null)
                 {

@@ -18,8 +18,9 @@ namespace ReportConverter
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
+        private WOTable woTable;
 
-        public NordexExcelConverter(string s, AppInfo i, PartsTable p, AssetTable a)
+        public NordexExcelConverter(string s, AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             site = i.getSite(s);
             info = i;
@@ -27,6 +28,7 @@ namespace ReportConverter
             aTable = a;
             ven = info.getVendor("Nordex");
             fieldNames = ven.getFieldNames("Main");
+            woTable = woT;
         }
 
         /* Start report conversion */
@@ -37,7 +39,7 @@ namespace ReportConverter
 
             //Get the ID from the report to start a new WorkOrder
             string id = getID();
-            wo = new WorkOrder(id);
+            wo = new WorkOrder(id, woTable);
             addWorkOrderInfo(report.checkedVals()[0]);
             
 

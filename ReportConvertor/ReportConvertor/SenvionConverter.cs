@@ -18,8 +18,9 @@ namespace ReportConverter
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
+        private WOTable woTable;
 
-        public SenvionConverter(string s, AppInfo i, PartsTable p, AssetTable a)
+        public SenvionConverter(string s, AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             info = i;
             site = i.getSite(s);
@@ -27,6 +28,7 @@ namespace ReportConverter
             aTable = a;
             ven = info.getVendor("Senvion");
             fieldNames = ven.getFieldNames("Main");
+            woTable = woT;
         }
 
         /* Start report conversion */
@@ -36,7 +38,7 @@ namespace ReportConverter
             organizeFields();
             int[] loc = fieldToCell["ID#"];
             //start a new work order
-            wo = new WorkOrder(records[loc[0]+1][loc[1]]);
+            wo = new WorkOrder(records[loc[0]+1][loc[1]], woTable);
             wo.Site = site;
             wo.Vendor = ven;
             calcLaborHours(fieldToCell["Time"]);

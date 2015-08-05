@@ -90,6 +90,10 @@ namespace ReportConverter
                     List<string> vals = getCheckedValues(file, wk.Index);
                     report.addCheckedVals(vals);
                 }
+                if (!siteName.Equals("Gamesa") && siteName != null)
+                {
+                    break;
+                }
             }
             return Tuple.Create(siteName, report);
         }

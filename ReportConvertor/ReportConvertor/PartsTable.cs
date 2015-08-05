@@ -35,18 +35,20 @@ namespace ReportConverter
             ExcelPackage pck = new ExcelPackage(newFile);
             ExcelWorksheets ws = pck.Workbook.Worksheets;
             ExcelWorksheet wk = ws[1];
+            int oLoc = getLocation("Owned", wk);
+            int sLoc = getLocation("Supplier_Part", wk);
 
             int totalRows = wk.Dimension.End.Row;
 
-            for (int i = 1; i <= totalRows; i++)
+            for (int i = 2; i <= totalRows; i++)
             {
                 string id = wk.Cells[i, 1].Value.ToString();
-                string ownedBy = wk.Cells[i, 11].Text;
+                string ownedBy = wk.Cells[i, oLoc].Text;
                 foreach (Vendor v in vendors)
                 {
                     if (isVendor(id, ownedBy, v))
                     {
-                        var partID = wk.Cells[i, 8].Value;
+                        var partID = wk.Cells[i, sLoc].Value;
                         string ven = v.Name;
                         if (partID != null && !parts[ven].ContainsKey(partID.ToString()))
                         {
@@ -55,6 +57,21 @@ namespace ReportConverter
                     }
                 }
             }
+        }
+
+        private int getLocation(string s, ExcelWorksheet wk)
+        {
+            int cols = wk.Dimension.End.Column;
+
+            for (int i = 1; i <= cols; i++)
+            {
+                string val = wk.Cells[1, i].Value.ToString();
+                if (val.Contains(s))
+                {
+                    return i;
+                }
+            }
+            return 0;
         }
 
         private bool isVendor(string id, string s, Vendor v)

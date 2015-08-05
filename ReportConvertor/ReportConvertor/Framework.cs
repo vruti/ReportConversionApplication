@@ -15,6 +15,7 @@ namespace ReportConverter
         private string archiveDirectory;
         private PartsTable partsTable;
         private AssetTable assetTable;
+        private WOTable woTable;
 
         public Framework(AppInfo i)
         {
@@ -25,6 +26,7 @@ namespace ReportConverter
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new List<WorkOrder>();
             assetTable = new AssetTable(info.getSites(), info.getFileLoc("Assets"));
+            woTable = new WOTable(info.getFileLoc("WOHistory"));
         }
 
         public void start(Main m)
@@ -50,51 +52,51 @@ namespace ReportConverter
                             case "Highland 1":
                                 if (sKey.Equals("xls"))
                                 {
-                                    c = new NordexExcelConverter(key, info, partsTable, assetTable);
+                                    c = new NordexExcelConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 else
                                 {
-                                    c = new NordexConverter(key, info, partsTable, assetTable);
+                                    c = new NordexConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 break;
                             case "Highland North":
                                 if (sKey.Equals("xls"))
                                 {
-                                    c = new NordexExcelConverter(key, info, partsTable, assetTable);
+                                    c = new NordexExcelConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 else
                                 {
-                                    c = new NordexConverter(key, info, partsTable, assetTable);
+                                    c = new NordexConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 break;
                             case "Patton":
-                                c = new GamesaConverter(info, partsTable, assetTable);
+                                c = new GamesaConverter(info, partsTable, assetTable, woTable);
                                 break;
                             case "Twin Ridges":
                                 if (sKey.Equals("xlsm"))
                                 {
-                                    c = new EVPConverter(key, info, partsTable, assetTable);
+                                    c = new EVPConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 else
                                 {
-                                    c = new SenvionConverter(key, info, partsTable, assetTable);
+                                    c = new SenvionConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 break;
                             case "Big Sky":
-                                c = new SuzlonConverter(key, info, partsTable, assetTable);
+                                c = new SuzlonConverter(key, info, partsTable, assetTable, woTable);
                                 break;
                             case "Howard":
                                 if (sKey.Equals("xlsm"))
                                 {
-                                    c = new EVPConverter(key, info, partsTable, assetTable);
+                                    c = new EVPConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 else
                                 {
-                                    c = new SenvionConverter(key, info, partsTable, assetTable);
+                                    c = new SenvionConverter(key, info, partsTable, assetTable, woTable);
                                 }
                                 break;
                             case "Mustang Hills":
-                                c = new VestasConverter(key, info, partsTable, assetTable);
+                                c = new VestasConverter(key, info, partsTable, assetTable, woTable);
                                 break;
                         }
                         foreach (Report report in ServiceReports[sKey][key])
@@ -200,7 +202,7 @@ namespace ReportConverter
                         break;
                 }
                 ServiceReports.Add(key, fR.readFiles(files));
-                dR.moveFiles(files);
+                //dR.moveFiles(files);
             }
             return ServiceReports;
         }

@@ -16,14 +16,16 @@ namespace ReportConverter
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
+        private WOTable woTable;
 
-        public NordexConverter(string s, AppInfo i, PartsTable p, AssetTable a)
+        public NordexConverter(string s, AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             site = s;
             info = i;
             partsTable = p;
             aTable = a;
             ven = info.getVendor("Nordex");
+            woTable = woT;
         }
 
         /* Start report conversion */
@@ -32,7 +34,7 @@ namespace ReportConverter
             records = report.getRecords("Main");
             //Get report Id and start a new WorkOrder
             string id = getReportID();
-            wo = new WorkOrder(id);
+            wo = new WorkOrder(id, woTable);
             wo.Site = info.getSite(site);
             wo.Vendor = ven;
             wo.Status = "Closed";

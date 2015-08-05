@@ -16,14 +16,16 @@ namespace ReportConverter
         private List<List<string>> records;
         private PartsTable partsTable;
         private AssetTable aTable;
+        private WOTable woTable;
 
-        public VestasConverter(string s, AppInfo i, PartsTable p, AssetTable a)
+        public VestasConverter(string s, AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             info = i;
             site = i.getSite(s);
             aTable = a;
             vendor = i.getVendor("Vestas");
             partsTable = p;
+            woTable = woT;
         }
 
         /* Start report conversion */
@@ -32,7 +34,7 @@ namespace ReportConverter
             records = report.getRecords("Main");
             int idLoc = getID();
             string id = records[idLoc][1];
-            wo = new WorkOrder(id);
+            wo = new WorkOrder(id, woTable);
             string asset = records[idLoc][0];
             wo.AssetID = aTable.getAssetID(asset, site.Name);
             wo.Status = "Closed";

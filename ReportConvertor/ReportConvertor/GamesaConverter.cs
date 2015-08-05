@@ -63,15 +63,17 @@ namespace ReportConverter
         private Dictionary<string, List<string>> fieldNames;
         private PartsTable partsTable;
         private AssetTable aTable;
-        Vendor ven;
+        private Vendor ven;
+        private WOTable woTable;
 
-        public GamesaConverter(AppInfo i, PartsTable p, AssetTable a)
+        public GamesaConverter(AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             info = i;
             partsTable = p;
             aTable = a;
             flaggedWO = new List<WorkOrder>();
             ven = info.getVendor("Gamesa");
+            woTable = woT;
         }
 
         public void convertReport(Report report)
@@ -148,7 +150,7 @@ namespace ReportConverter
                 List<string> row = rows[i];
                 /* If the WO Type is ZPM7, it will not be imported*/
 
-                WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]]);
+                WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]], woTable);
                 string oType = row[fieldToCell["Order Type"]];
                 if (!oType.Contains("ZPM7"))
                 {

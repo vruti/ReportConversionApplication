@@ -18,8 +18,9 @@ namespace ReportConverter
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
+        private WOTable woTable;
  
-        public EVPConverter(string s, AppInfo i, PartsTable p, AssetTable a)
+        public EVPConverter(string s, AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             info = i;
             site = i.getSite(s);
@@ -31,12 +32,13 @@ namespace ReportConverter
              * EverPower Vendor object */
             Vendor tVen = info.getVendor("EverPower");
             fieldNames = tVen.getFieldNames("Main");
+            woTable = woT;
         }
 
         public void convertReport(Report report)
         {
             //No report ID is given so filler value is used
-            wo = new WorkOrder("None");
+            wo = new WorkOrder("None", woTable);
             records = report.getRecords("Main");
             organizeFields();
 

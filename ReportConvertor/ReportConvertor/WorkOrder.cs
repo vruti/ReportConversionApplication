@@ -29,11 +29,13 @@ namespace ReportConverter
         private Dictionary<string, int> partsList;
         private string originalID;
         private string comments;
+        private WOTable woTable;
 
         /* Initialize a work order with the report ID*/
-        public WorkOrder(string id)
+        public WorkOrder(string id, WOTable woT)
         {
             originalID = id;
+            woTable = woT;
             partsList = new Dictionary<string, int>();
             actualHours = 0;
             downTime = 0;
@@ -291,9 +293,7 @@ namespace ReportConverter
             //add day
             name += startDate.Day.ToString("D2");
             //get serial number
-            int srNo = vendor.getWOIDNumber(name);
-            //add WOID to vendor's WO list
-            vendor.addWO(name, srNo);
+            int srNo = woTable.getWOIDNumber(name);
             //add serial number
             name = name + "-" + srNo.ToString("D2");
 

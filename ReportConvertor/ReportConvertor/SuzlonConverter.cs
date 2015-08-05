@@ -18,8 +18,9 @@ namespace ReportConverter
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
+        private WOTable woTable;
 
-        public SuzlonConverter(String s, AppInfo i, PartsTable p, AssetTable a)
+        public SuzlonConverter(String s, AppInfo i, PartsTable p, AssetTable a, WOTable woT)
         {
             info = i;
             site = info.getSite(s);
@@ -27,6 +28,7 @@ namespace ReportConverter
             aTable = a;
             ven = info.getVendor("Suzlon");
             fieldNames = ven.getFieldNames("Main");
+            woTable = woT;
         }
 
         /* Start report conversion */
@@ -36,7 +38,7 @@ namespace ReportConverter
             organizeFields();
 
             //No report ID is given so filler value is used
-            wo = new WorkOrder("None");
+            wo = new WorkOrder("None", woTable);
             wo.Site = site;
             wo.Vendor = ven;
             wo.Status = "Closed";
