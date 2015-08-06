@@ -8,6 +8,7 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.parser;
 using System.Collections;
+using System.Windows.Forms;
 
 
 namespace ReportConverter
@@ -15,9 +16,12 @@ namespace ReportConverter
     public class PDFFileReader : FileReader
     {
         private AppInfo info;
-        public PDFFileReader(AppInfo i)
+        private ProgressBar pBar;
+
+        public PDFFileReader(AppInfo aInfo, ProgressBar pB)
         {
-            info = i;
+            info = aInfo;
+            pBar = pB;
         }
 
         public Dictionary<string, List<Report>> readFiles(string[] files)
@@ -38,6 +42,7 @@ namespace ReportConverter
                     reportsList.Add(tuple.Item2);
                     reportsBySite.Add(tuple.Item1, reportsList);
                 }
+                pBar.PerformStep();
             }
             return reportsBySite;
         }
@@ -101,6 +106,7 @@ namespace ReportConverter
             report.addRecords(wholeFile);
             reader.Close();
 
+            report.Filepath = file;
             return Tuple.Create(siteName, report);
         }
 

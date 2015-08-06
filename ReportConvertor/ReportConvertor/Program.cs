@@ -14,11 +14,12 @@ namespace ReportConverter
         [STAThread]
         static void Main()
         {
-            AppInfo appInfo = new AppInfo();
-            Framework framework = new Framework(appInfo);
+
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Main(framework, appInfo));
+            Starter s = new Starter();
+            Application.Run(s);
         }
     }
 }

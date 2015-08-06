@@ -29,13 +29,14 @@ namespace ReportConverter
         }
 
         /* Starts the process of archiving*/
-        public void startArchive()
+        public string startArchive()
         {
             //Open the output file
             List<List<string>> data = new List<List<string>>();
             FileInfo inNewFile = new FileInfo(outputFile);
             ExcelPackage inPck = new ExcelPackage(inNewFile);
             ExcelWorksheets inWks = inPck.Workbook.Worksheets;
+            string message;
 
             //Adding the date and a serial number to the archive file path
             DateTime today = DateTime.Today;
@@ -57,12 +58,17 @@ namespace ReportConverter
             ExcelWorksheet aWk = null;
 
             int valid = 0;
+            Boolean copy = true;
             //Copying all the tabs in the output file
             foreach (ExcelWorksheet inWk in inWks)
             {
                 string name = inWk.Name;
                 aWk = aPck.Workbook.Worksheets.Add(name);
-                valid += readFile(inWk, aWk);
+                valid += readFile(inWk, aWk, copy);
+                if (valid == -1)
+                {
+                    copy = false;
+                }
             }
             //Saving the two files
             if (valid > -4)
@@ -70,28 +76,27 @@ namespace ReportConverter
                 /* Only create and save the archive file if 
                  * data was copied */
                 aPck.Save();
+                inPck.Save();
+                message = "Archiving Complete!";
             }
-            inPck.Save();
+            else
+            {
+                message = "Output file Empty. Nothing to archive";
+            }
+            return message;
         }
 
         /* Copies information from output file to archive file and 
          * clears the output file */
-        private int readFile(ExcelWorksheet inWk, ExcelWorksheet aWk)
+        private int readFile(ExcelWorksheet inWk, ExcelWorksheet aWk, Boolean copy)
         {
             int totalRows = 0;
             int totalCols = 0;
+            totalRows = inWk.Dimension.End.Row;
+            totalCols = inWk.Dimension.End.Column;
 
-            try
+            if (totalRows == 1)
             {
-                
-                totalRows = inWk.Dimension.End.Row;
-                totalCols = inWk.Dimension.End.Column;
-            }
-            catch
-            {
-                /* If the output file is empty, totalRows and 
-                 * totalCols will remain zero and the rest of 
-                 * the function won't run */
                 return -1;
             }
 
@@ -100,7 +105,10 @@ namespace ReportConverter
                 for (int j = 1; j <= totalCols; j++)
                 {
                     //Copying all the values
-                    aWk.Cells[i, j].Value = inWk.Cells[i, j].Value;
+                    if (copy)
+                    {
+                        aWk.Cells[i, j].Value = inWk.Cells[i, j].Value;
+                    }
                     if (i > 1)
                     {
                         //Removing WO data

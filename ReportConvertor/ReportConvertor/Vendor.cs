@@ -16,8 +16,6 @@ namespace ReportConverter
         private string v3Code;
         private string v5Code;
         private List<string> altNames;
-        private Dictionary<string, int> newWO;
-        private Dictionary<string, int> oldWO;
         private int partsTab;
         private int woTab;
         private string woFile;
@@ -27,7 +25,6 @@ namespace ReportConverter
 
         public Vendor()
         {
-            newWO = new Dictionary<string, int>();
             altNames = new List<string>();
             newParts = new Dictionary<string, Part>();
         }

@@ -11,16 +11,19 @@ using System.Web.Services;
 using System.Web.Script.Services;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Windows.Forms;
 
 namespace ReportConverter
 {
     public class HTMLFileReader : FileReader
     {
         private AppInfo info;
+        private ProgressBar pBar;
 
-        public HTMLFileReader(AppInfo i)
+        public HTMLFileReader(AppInfo aInfo, ProgressBar pB)
         {
-            info = i;
+            info = aInfo;
+            pBar = pB;
         }
 
         public Dictionary<string, List<Report>> readFiles(string[] files)
@@ -41,6 +44,7 @@ namespace ReportConverter
                     reportsList.Add(tuple.Item2);
                     reportsBySite.Add(tuple.Item1, reportsList);
                 }
+                pBar.PerformStep();
             }
             return reportsBySite;
         }
@@ -51,7 +55,7 @@ namespace ReportConverter
             string siteName = null;
 
             //PDF READER IMPLEMENTATION
-            HtmlDocument doc = new HtmlDocument();
+            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             string data = File.ReadAllText(file);
             doc.LoadHtml(data);
             string x;
@@ -81,6 +85,7 @@ namespace ReportConverter
             report.changeCurrentTab("main");
             report.addRecords(wholeFile);
 
+            report.Filepath = file;
             return Tuple.Create(siteName, report);
         }
 

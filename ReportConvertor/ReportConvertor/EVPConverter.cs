@@ -38,7 +38,7 @@ namespace ReportConverter
         public void convertReport(Report report)
         {
             //No report ID is given so filler value is used
-            wo = new WorkOrder("None", woTable);
+            wo = new WorkOrder("None", woTable, report.Filepath);
             records = report.getRecords("Main");
             organizeFields();
 
@@ -63,7 +63,9 @@ namespace ReportConverter
 
             //Add the asset attached to the work order
             string asset = records[fieldToCell["Asset"]][1];
-            wo.AssetID = aTable.getAssetID(asset, site.Name);
+            List<string> a = aTable.getAssetID(asset, site.Name);
+            wo.AssetID = a[0];
+            wo.AssetDescription = a[1];
             //Add parts
             addParts();
             addNewParts();
@@ -85,10 +87,11 @@ namespace ReportConverter
             List<string> taskInfo = info.getTypeInfo(workOrderType);
             wo.WorkOrderType = taskInfo[0];
             wo.TaskID = taskInfo[1];
-            wo.OutageType = taskInfo[2];
-            wo.Planning = taskInfo[3];
-            wo.UnplannedType = taskInfo[4];
-            wo.Priority = taskInfo[5];
+            wo.TaskDescription = taskInfo[2];
+            wo.OutageType = taskInfo[3];
+            wo.Planning = taskInfo[4];
+            wo.UnplannedType = taskInfo[5];
+            wo.Priority = taskInfo[6];
         }
 
         /* Converts a string time to double */
@@ -114,14 +117,14 @@ namespace ReportConverter
             {
                 string id = records[i][0];
                 int qty = Convert.ToInt32(records[i][3]);
-                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                Part part = partsTable.getPart(id, wo.Vendor.Name, qty);
                 //If the part is not found in the parts table, create a new part
-                if (partID == null)
+                if (part == null)
                 {
                     string des = records[i][1];
-                    partID = partsTable.addNewPart(id, qty, des, wo.Vendor);
+                    part = partsTable.addNewPart(id, qty, des, wo.Vendor);
                 }
-                wo.addPart(partID, qty);
+                wo.addPart(part, qty);
                 i++;
             }
         }
@@ -135,8 +138,8 @@ namespace ReportConverter
                 string id = records[i][5];
                 string des= records[i][6];
                 int qty = Convert.ToInt32(records[i][7]);
-                string pID = partsTable.addNewPart(id, qty, des, wo.Vendor);
-                wo.addPart(pID, qty);
+                Part p = partsTable.addNewPart(id, qty, des, wo.Vendor);
+                wo.addPart(p, qty);
             }
         }
 

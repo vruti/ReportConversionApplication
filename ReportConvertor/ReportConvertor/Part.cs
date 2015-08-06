@@ -14,11 +14,13 @@ namespace ReportConverter
         private string description;
         private int qty;
         private Vendor vendor;
+        private string stockArea;
 
         public Part(string partID, Vendor v)
         {
             supplierID=partID;
             vendor = v;
+            stockArea = v.Name;
         }
 
         public void generateID(string newestID)
@@ -41,6 +43,10 @@ namespace ReportConverter
 
         public string ID
         {
+            set
+            {
+                id = value;
+            }
             get
             {
                 return id;
@@ -87,6 +93,7 @@ namespace ReportConverter
             parts.Add(description);
             parts.Add(qty);
             parts.Add(Vendor.Name);
+            parts.Add(stockArea);
             parts.Add(supplierID);
 
             return parts;

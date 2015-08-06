@@ -26,6 +26,7 @@ namespace ReportConverter
         private Dictionary<string, List<List<string>>> vendorData;
         private Dictionary<string, List<string>> assets;
         private Dictionary<string, List<string>> woTypeTable;
+        private Dictionary<string, List<string>> outputHeaders;
 
         /* Initialize the object by opening the file with 
          * all the information. The file should probably be
@@ -33,7 +34,7 @@ namespace ReportConverter
          * while I'm working on it and release for normal
          * functioning
          */
-        public AppInfo()
+        public AppInfo(string path)
         {
             vendors = new List<Vendor>();
             sites = new Dictionary<string, Site>();
@@ -46,9 +47,9 @@ namespace ReportConverter
              * but never moved
              */
             //string tpath = ReportConverter.Properties.Resources.AppInfo;
-            string curDir = Environment.CurrentDirectory;
-            string[] filePathsXlsx = Directory.GetFiles(@curDir, "*.xlsx");
-            string path = filePathsXlsx[0];
+            //string curDir = Environment.CurrentDirectory;
+            //string[] filePathsXlsx = Directory.GetFiles(@curDir, "*.xlsx");
+            //string path = filePathsXlsx[0];
             fileLocs.Add("AppInfo", path);
 
             //Open the file with the information
@@ -61,6 +62,7 @@ namespace ReportConverter
             addVendors(ws["Vendor General"]);
             addSites(ws["Site"]);
             addWOTypeTable(ws["WOType"]);
+            addOutputHeaders(ws["Output"]);
             addVendorData(ws);
         }
 
@@ -322,6 +324,33 @@ namespace ReportConverter
         public List<string> getTypeInfo(string type)
         {
             return woTypeTable[type];
+        }
+
+        private void addOutputHeaders(ExcelWorksheet wk)
+        {
+            outputHeaders = new Dictionary<string, List<string>>();
+            List<string> values;
+
+            int rows = wk.Dimension.End.Row;
+            int cols = wk.Dimension.End.Column;
+
+            for (int i = 1; i <= cols; i++)
+            {
+                values = new List<string>();
+                for (int j = 2; j <= rows; j++)
+                {
+                    if (wk.Cells[j, i].Value != null)
+                    {
+                        values.Add(wk.Cells[j, i].Value.ToString());
+                    }
+                }
+                outputHeaders.Add(wk.Cells[1, i].Value.ToString(), values);
+            }
+        }
+
+        public List<string> getHeaders(string n)
+        {
+            return outputHeaders[n];
         }
     }
 }

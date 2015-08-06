@@ -150,7 +150,7 @@ namespace ReportConverter
                 List<string> row = rows[i];
                 /* If the WO Type is ZPM7, it will not be imported*/
 
-                WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]], woTable);
+                WorkOrder wo = new WorkOrder(row[fieldToCell["Order ID"]], woTable, report.Filepath);
                 string oType = row[fieldToCell["Order Type"]];
                 if (!oType.Contains("ZPM7"))
                 {
@@ -158,10 +158,11 @@ namespace ReportConverter
                     List<string> taskInfo = info.getTypeInfo(oType);
                     wo.WorkOrderType = taskInfo[0];
                     wo.TaskID = taskInfo[1];
-                    wo.OutageType = taskInfo[2];
-                    wo.Planning = taskInfo[3];
-                    wo.UnplannedType = taskInfo[4];
-                    wo.Priority = taskInfo[5];
+                    wo.TaskDescription = taskInfo[2];
+                    wo.OutageType = taskInfo[3];
+                    wo.Planning = taskInfo[4];
+                    wo.UnplannedType = taskInfo[5];
+                    wo.Priority = taskInfo[6];
                     wo.Description = row[fieldToCell["Description"]];
                     
                     //Status will always be closed
@@ -169,7 +170,9 @@ namespace ReportConverter
                     wo.Vendor = ven;
                     wo.Site = info.getSite("Patton");
                     string asset = row[fieldToCell["Asset"]];
-                    wo.AssetID = aTable.getAssetID(asset, "Patton");
+                    List<string> a = aTable.getAssetID(asset, "Patton");
+                    wo.AssetID = a[0];
+                    wo.AssetDescription = a[1];
 
                     //if the dates are available in the general tab
                     if (fieldToCell.ContainsKey("Start Date") && fieldToCell.ContainsKey("End Date"))
@@ -390,14 +393,14 @@ namespace ReportConverter
                         qty = qty * (-1);
                     }
                     string id = row[fieldToCell["Material"]];
-                    string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
+                    Part p = partsTable.getPart(id, wo.Vendor.Name, qty);
 
-                    if (partID == null)
+                    if (part == null)
                     {
                         string description = row[fieldToCell["Description"]];
-                        partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                        p = partsTable.addNewPart(id, qty, description, wo.Vendor);
                     }
-                    wo.addPart(partID, qty);
+                    wo.addPart(p, qty);
                     newWOs[key] = wo;
                 }
             }

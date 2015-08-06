@@ -33,6 +33,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.Archive = new System.Windows.Forms.Button();
             this.Quit = new System.Windows.Forms.Button();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // Start
@@ -86,18 +87,26 @@
             this.Quit.UseVisualStyleBackColor = true;
             this.Quit.Click += new System.EventHandler(this.button4_Click);
             // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(143, 193);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(100, 23);
+            this.progressBar.TabIndex = 5;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(384, 362);
+            this.Controls.Add(this.progressBar);
             this.Controls.Add(this.Quit);
             this.Controls.Add(this.Archive);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.Settings);
             this.Controls.Add(this.Start);
             this.Name = "Main";
-            this.Text = "Form1";
+            this.Text = "Report Converter";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Main_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -111,6 +120,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button Archive;
         private System.Windows.Forms.Button Quit;
+        private System.Windows.Forms.ProgressBar progressBar;
     }
 }
 

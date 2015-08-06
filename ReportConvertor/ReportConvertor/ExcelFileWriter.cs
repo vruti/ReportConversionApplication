@@ -12,7 +12,7 @@ namespace ReportConverter
     public class ExcelFileWriter
     {
         private AppInfo info;
-
+       
         public ExcelFileWriter(AppInfo i)
         {
             info = i;
@@ -35,7 +35,19 @@ namespace ReportConverter
             }
             writeFlagged(flaggedWO, ws);
             writeUnlinkedAssets(uAssets, ws);
+            List<string> filesToMove = getFilesToMove(wo);
+            moveFiles(filesToMove);
             pck.Save();
+        }
+
+        private void addHeaders(ExcelWorksheet wk, string name)
+        {
+            List<string> headers = info.getHeaders(name);
+
+            for (int i = 0; i < headers.Count; i++)
+            {
+                wk.Cells[1, (i + 1)].Value = headers[i];
+            }
         }
 
         /* Get the record version of all the work orders */
@@ -62,6 +74,7 @@ namespace ReportConverter
             if (wk == null)
             {
                 wk = ws.Add("Work Orders");
+                addHeaders(wk, "Work Orders");
             }
             List<ArrayList> records = getRecords(woList);
             int totalRows = records.Count;
@@ -86,6 +99,7 @@ namespace ReportConverter
             if (wk == null)
             {
                 wk = ws.Add("Parts");
+                addHeaders(wk, "Parts");
             }
             int totalRows = parts.Count;
 
@@ -107,6 +121,7 @@ namespace ReportConverter
             if (wk == null)
             {
                 wk = ws.Add("Flagged Work Orders");
+                addHeaders(wk, "Work Orders");
             }
             List<ArrayList> records = getRecords(flagged);
             int totalRows = records.Count;
@@ -132,6 +147,7 @@ namespace ReportConverter
             if (wk == null)
             {
                 wk = ws.Add("Unlinked Assets");
+                addHeaders(wk, "Unlinked Assets");
             }
             int totalRows = assets.Count;
 
@@ -161,6 +177,47 @@ namespace ReportConverter
                 wk.Cells[(i + 2), 2].Value = fileLocs[keys[i]];
             }
             pck.Save();
+        }
+
+        private List<string> getFilesToMove(List<WorkOrder> wos)
+        {
+            List<string> files = new List<string>();
+
+            foreach (WorkOrder wo in wos)
+            {
+                string path = wo.Filepath;
+                if (!files.Contains(path))
+                {
+                    files.Add(path);
+                }
+            }
+
+            return files;
+        }
+
+        /* Moving read files into archive folder*/
+        public void moveFiles(List<string> files)
+        {
+            string archiveDir = info.getFileLoc("Archive");
+            //Creates a folder based on the date
+            DateTime today = DateTime.Today;
+            string date = "";
+            date += today.Month.ToString() + "-";
+            date += today.Day.ToString() + "-";
+            date += today.Year.ToString();
+            string dir = archiveDir + "\\\\Archived-" + date;
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            //Moves all the files to the archive folder
+            foreach (string filePath in files)
+            {
+                string file = Path.GetFileName(filePath);
+                string archiveFile = Path.Combine(dir, file);
+                File.Move(filePath, archiveFile);
+            }
         }
     }
 }

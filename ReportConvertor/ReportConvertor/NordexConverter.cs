@@ -34,7 +34,7 @@ namespace ReportConverter
             records = report.getRecords("Main");
             //Get report Id and start a new WorkOrder
             string id = getReportID();
-            wo = new WorkOrder(id, woTable);
+            wo = new WorkOrder(id, woTable, report.Filepath);
             wo.Site = info.getSite(site);
             wo.Vendor = ven;
             wo.Status = "Closed";
@@ -47,7 +47,7 @@ namespace ReportConverter
                 List<string> row = records[i];
                 if (row[0].Equals("Date"))
                 {
-                    wo.OpenDate = Convert.ToDateTime(row[1].Trim());
+                    wo.OpenDate = toDate(row[1].Trim());
                 } 
                 else if (row[0].Contains("Start Date") && countS == 1)
                 {
@@ -62,7 +62,9 @@ namespace ReportConverter
                 else if (row[0].Contains("Equipment Ref"))
                 {
                     string asset = row[1].Trim();
-                    wo.AssetID = aTable.getAssetID(asset, site);
+                    List<string> a = aTable.getAssetID(asset, site);
+                    wo.AssetID = a[0];
+                    wo.AssetDescription = a[1];
                 }
             }
 
@@ -238,13 +240,13 @@ namespace ReportConverter
                 //Quantity is in decimal format, but we want it as an int
                 double dQty = Convert.ToDouble(record[fieldToCell["Quantity"]]);
                 int qty = Convert.ToInt32(dQty);
-                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                if (partID == null)
+                Part part = partsTable.getPart(id, wo.Vendor.Name, qty);
+                if (part == null)
                 {
                     string description = record[fieldToCell["Description"]];
-                    partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                    part = partsTable.addNewPart(id, qty, description, wo.Vendor);
                 }
-                wo.addPart(partID, qty);
+                wo.addPart(part, qty);
                 i++;
             }
             return (i - 1);

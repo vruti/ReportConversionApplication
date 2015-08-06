@@ -23,20 +23,24 @@ namespace ReportConverter
         private string planning;
         private string unplannedType = " ";
         private string taskID;
+        private string taskDescription;
         private string assetID;
+        private string assetDescription;
         private Vendor vendor;
         private double actualHours;
-        private Dictionary<string, int> partsList;
+        private Dictionary<Part, int> partsList;
         private string originalID;
         private string comments;
         private WOTable woTable;
+        private string filepath;
 
         /* Initialize a work order with the report ID*/
-        public WorkOrder(string id, WOTable woT)
+        public WorkOrder(string id, WOTable woT, string f)
         {
             originalID = id;
             woTable = woT;
-            partsList = new Dictionary<string, int>();
+            filepath = f;
+            partsList = new Dictionary<Part, int>();
             actualHours = 0;
             downTime = 0;
             openDate = new DateTime();
@@ -212,6 +216,18 @@ namespace ReportConverter
             }
         }
 
+        public string TaskDescription
+        {
+            get
+            {
+                return taskDescription;
+            }
+            set
+            {
+                taskDescription = value;
+            }
+        }
+
         public string AssetID
         {
             get
@@ -221,6 +237,18 @@ namespace ReportConverter
             set
             {
                 assetID = value;
+            }
+        }
+
+        public string AssetDescription
+        {
+            get
+            {
+                return assetDescription;
+            }
+            set
+            {
+                assetDescription = value;
             }
         }
 
@@ -256,19 +284,27 @@ namespace ReportConverter
             }
         }
 
-        public void addPart(string id, int qty)
+        public string Filepath
         {
-            if (partsList.ContainsKey(id))
+            get
             {
-                partsList[id]+=qty;
-            }
-            else
-            {
-                partsList.Add(id, qty);
+                return filepath;
             }
         }
 
-        public Dictionary<string, int> getPartsList()
+        public void addPart(Part p, int qty)
+        {
+            if (partsList.ContainsKey(p))
+            {
+                partsList[p]+=qty;
+            }
+            else
+            {
+                partsList.Add(p, qty);
+            }
+        }
+
+        public Dictionary<Part, int> getPartsList()
         {
             return partsList;
         }
@@ -323,6 +359,7 @@ namespace ReportConverter
             if (taskID == null || taskID.Equals(" ") || taskID.Equals(" "))
             {
                 taskID = "MT-052";
+                taskDescription = "General Maintenance";
             }
             if (priority == null || priority.Equals(" ") || priority.Equals(" "))
             {
@@ -336,9 +373,13 @@ namespace ReportConverter
         public List<ArrayList> getWORecord()
         {
             List<ArrayList> records = new List<ArrayList>();
-            List<string> keys = partsList.Keys.ToList();
+            List<Part> keys = partsList.Keys.ToList();
 
             ArrayList record;
+            if (comments == null || comments.Equals("") || comments.Equals(" "))
+            {
+                comments = description;
+            }
 
             /* If there are no parts*/
             if (keys.Count == 0 || (keys.Count == 1 && partsList[keys[0]] < 1))
@@ -354,12 +395,13 @@ namespace ReportConverter
             }
 
             /* Each part is its own ArrayList*/
-            foreach(string key in keys)
+            foreach(Part key in keys)
             {
                 if (partsList[key] > 0)
                 {
                     record = addValues();
-                    record.Add(key);
+                    record.Add(key.ID);
+                    record.Add(key.Description);
                     record.Add(partsList[key]);
                     record.Add(comments);
                     record.Add(originalID);
@@ -388,8 +430,11 @@ namespace ReportConverter
             record.Add(planning);
             record.Add(unplannedType);
             record.Add(taskID);
+            record.Add(taskDescription);
             record.Add(assetID);
+            record.Add(assetDescription);
             record.Add(vendor.ID);
+            record.Add(vendor.Name);
             record.Add(actualHours);
 
             return record;

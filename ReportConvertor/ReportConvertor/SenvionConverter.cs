@@ -38,7 +38,7 @@ namespace ReportConverter
             organizeFields();
             int[] loc = fieldToCell["ID#"];
             //start a new work order
-            wo = new WorkOrder(records[loc[0]+1][loc[1]], woTable);
+            wo = new WorkOrder(records[loc[0]+1][loc[1]], woTable, report.Filepath);
             wo.Site = site;
             wo.Vendor = ven;
             calcLaborHours(fieldToCell["Time"]);
@@ -73,10 +73,11 @@ namespace ReportConverter
             List<string> taskInfo = info.getTypeInfo(workOrderType);
             wo.WorkOrderType = taskInfo[0];
             wo.TaskID = taskInfo[1];
-            wo.OutageType = taskInfo[2];
-            wo.Planning = taskInfo[3];
-            wo.UnplannedType = taskInfo[4];
-            wo.Priority = taskInfo[5];
+            wo.TaskDescription = taskInfo[2];
+            wo.OutageType = taskInfo[3];
+            wo.Planning = taskInfo[4];
+            wo.UnplannedType = taskInfo[5];
+            wo.Priority = taskInfo[6];
         }
 
         /*Add asset to the work order*/
@@ -90,7 +91,9 @@ namespace ReportConverter
             {
                 asset = records[loc[0] + 1][loc[1]];
             }
-            wo.AssetID = aTable.getAssetID(asset, site.Name);
+            List<string> a = aTable.getAssetID(asset, site.Name);
+            wo.AssetID = a[0];
+            wo.AssetDescription = a[1];
         }
 
         /* Calculate downtime*/
@@ -219,14 +222,14 @@ namespace ReportConverter
             {
                 string id = records[x][y + 5];
                 int qty = Convert.ToInt32(records[x][y + 6]);
-                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                if (partID == null)
+                Part part = partsTable.getPart(id, wo.Vendor.Name, qty);
+                if (part == null)
                 {
                     /* If the part isn't in the parts list, create a new part*/
                     string description = records[x][y];
-                    partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                    part = partsTable.addNewPart(id, qty, description, wo.Vendor);
                 }
-                wo.addPart(partID, qty);
+                wo.addPart(part, qty);
                 x++;
             }
         }

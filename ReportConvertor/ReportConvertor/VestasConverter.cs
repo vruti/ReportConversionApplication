@@ -34,9 +34,14 @@ namespace ReportConverter
             records = report.getRecords("Main");
             int idLoc = getID();
             string id = records[idLoc][1];
-            wo = new WorkOrder(id, woTable);
+            wo = new WorkOrder(id, woTable, report.Filepath);
+
+            //Adding asset information
             string asset = records[idLoc][0];
-            wo.AssetID = aTable.getAssetID(asset, site.Name);
+            List<string> a = aTable.getAssetID(asset, site.Name);
+            wo.AssetID = a[0];
+            wo.AssetDescription = a[1];
+
             wo.Status = "Closed";
             wo.Site = site;
             wo.Vendor = vendor;
@@ -137,13 +142,13 @@ namespace ReportConverter
                 string id = records[i][0];
                 int len = records[i].Count;
                 int qty = Convert.ToInt32(Convert.ToDouble(records[i][len-2]));
-                string pID = partsTable.getPartID(id, vendor.Name, qty);
-                if (pID == null)
+                Part part = partsTable.getPart(id, vendor.Name, qty);
+                if (part == null)
                 {
                     string description = records[i][1];
-                    pID = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                    part = partsTable.addNewPart(id, qty, description, wo.Vendor);
                 }
-                wo.addPart(pID, qty);
+                wo.addPart(part, qty);
                 i++;
             }
         }

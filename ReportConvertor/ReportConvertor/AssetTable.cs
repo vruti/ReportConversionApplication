@@ -16,7 +16,7 @@ namespace ReportConverter
      */
     public class AssetTable
     {
-        private Dictionary<string, Dictionary<string, string>> assets;
+        private Dictionary<string, Dictionary<string, List<string>>> assets;
         private List<List<string>> unlinkedAssets;
         List<Site> sites;
 
@@ -28,14 +28,14 @@ namespace ReportConverter
         public AssetTable(List<Site> s, string file)
         {
             sites = s;
-            assets = new Dictionary<string, Dictionary<string, string>>();
+            assets = new Dictionary<string, Dictionary<string, List<string>>>();
             unlinkedAssets = new List<List<string>>();
             /* Initialize a dictionary of contractor asset id 
              * to Mpulse asset id for each site
              */
             foreach (Site site in sites)
             {
-                Dictionary<string, string> assetDict = new Dictionary<string, string>();
+                Dictionary<string, List<string>> assetDict = new Dictionary<string, List<string>>();
                 assets.Add(site.Name, assetDict);
             }
             generateTable(file);
@@ -63,23 +63,28 @@ namespace ReportConverter
                     string vendorID = wk.Cells[i, 1].Value.ToString();
                     //Value in the second column is MPulse asset ID
                     string mpulseID = wk.Cells[i, 2].Value.ToString();
-                    assets[s.Name].Add(vendorID, mpulseID);
+                    string description = wk.Cells[i, 3].Value.ToString();
+                    List<string> vals = new List<string>();
+                    vals.Add(mpulseID);
+                    vals.Add(description);
+                    assets[s.Name].Add(vendorID, vals);
                 }
             }
         }
 
         /* Return the asset dictionary for a specific site
          */
+        /*
         public Dictionary<string, string> getAssets(string site)
         {
             return assets[site];
-        }
+        }*/
 
         /* 
          * Return the MPulse Asset ID from a given site with the
          * given input contractor asset ID
          */
-        public string getAssetID(string aID, string site)
+        public List<string> getAssetID(string aID, string site)
         {
             if (assets[site].ContainsKey(aID))
             {
@@ -96,7 +101,11 @@ namespace ReportConverter
                 unlinked.Add(aID);
                 unlinked.Add(site);
                 unlinkedAssets.Add(unlinked);
-                return "";
+
+                List<string> retVal = new List<string>();
+                retVal.Add("");
+                retVal.Add("");
+                return retVal;
             }
         }
 

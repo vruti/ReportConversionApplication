@@ -25,14 +25,18 @@ namespace ReportConverter
             a = appInfo;
             active = true;
             eWriter = new ExcelFileWriter(a);
+            progressBar.Visible = false;
+            progressBar.Minimum = 0;
+            progressBar.Step = 1;
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             if (active)
             {
-                active = false;
-                f.start(this);
+                Start.Enabled = false;
+                f.start(this, progressBar);
+                Start.Enabled = true;
             }
         }
 
@@ -52,9 +56,9 @@ namespace ReportConverter
             active = true;
         }
 
-        public void showDoneMessage()
+        public void showMessage(string m)
         {
-            MessageBox.Show("Conversion Complete!");
+            MessageBox.Show(m);
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -72,7 +76,8 @@ namespace ReportConverter
             if (active)
             {
                 active = false;
-                f.archiveOutput(this);
+                string message = f.archiveOutput(this);
+                showMessage(message);
             }
         }
 

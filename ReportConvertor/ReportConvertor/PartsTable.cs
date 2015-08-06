@@ -10,18 +10,18 @@ namespace ReportConverter
 {
     public class PartsTable
     {
-        private Dictionary<string, Dictionary<string, string>> parts;
+        private Dictionary<string, Dictionary<string, Part>> parts;
         private Dictionary<string, Dictionary<string, Part>> newParts;
         private List<Vendor> vendors;
 
         public PartsTable(List<Vendor> v, string file)
         {
             vendors = v;
-            parts = new Dictionary<string, Dictionary<string, string>>();
+            parts = new Dictionary<string, Dictionary<string, Part>>();
             newParts = new Dictionary<string, Dictionary<string, Part>>();
             foreach (Vendor ven in vendors)
             {
-                Dictionary<string, string> partTable = new Dictionary<string, string>();
+                Dictionary<string, Part> partTable = new Dictionary<string, Part>();
                 parts.Add(ven.Name, partTable);
                 Dictionary<string, Part> newPartTable = new Dictionary<string, Part>();
                 newParts.Add(ven.Name, newPartTable);
@@ -37,6 +37,8 @@ namespace ReportConverter
             ExcelWorksheet wk = ws[1];
             int oLoc = getLocation("Owned", wk);
             int sLoc = getLocation("Supplier_Part", wk);
+            int dLoc = getLocation("Description", wk);
+            Part p;
 
             int totalRows = wk.Dimension.End.Row;
 
@@ -52,7 +54,10 @@ namespace ReportConverter
                         string ven = v.Name;
                         if (partID != null && !parts[ven].ContainsKey(partID.ToString()))
                         {
-                            parts[ven].Add(partID.ToString(), id);
+                            p = new Part(partID.ToString(), v);
+                            p.ID = id;
+                            p.Description = wk.Cells[i, dLoc].Value.ToString();
+                            parts[ven].Add(partID.ToString(), p);
                         }
                     }
                 }
@@ -90,7 +95,7 @@ namespace ReportConverter
             return false;
         }
 
-        public string getPartID(string partID, string vendor, int qty)
+        public Part getPart(string partID, string vendor, int qty)
         {
             //return the mpulse part number if it exists
             if (parts[vendor].ContainsKey(partID))
@@ -100,7 +105,7 @@ namespace ReportConverter
             else if (newParts[vendor].ContainsKey(partID))
             {
                 newParts[vendor][partID].Qty += qty;
-                return newParts[vendor][partID].ID;
+                return newParts[vendor][partID];
             }
             /*return null if it doesn't convertor should 
              * create a new part to be uploaded*/
@@ -118,17 +123,17 @@ namespace ReportConverter
             }
             List<string> keys = parts[vendor].Keys.ToList();
             len = keys.Count;
-            return parts[vendor][keys[len - 1]];
+            return parts[vendor][keys[len - 1]].ID;
         }
 
-        public string addNewPart(string id, int qty, string des, Vendor vendor)
+        public Part addNewPart(string id, int qty, string des, Vendor vendor)
         {
             Part newPart = new Part(id, vendor);
             newPart.generateID(newestPartID(vendor.Name));
             newPart.Qty += qty;
             newPart.Description = des;
             newParts[vendor.Name].Add(id, newPart);
-            return newPart.ID;
+            return newPart;
         }
 
         public List<Part> getNewParts()

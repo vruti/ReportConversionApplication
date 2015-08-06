@@ -12,6 +12,7 @@ namespace ReportConverter
         private Dictionary<string, List<List<string>>> allRecords;
         private List<string> checklistVals;
         private string currentTab;
+        private string filepath;
 
         public Report()
         {
@@ -84,6 +85,18 @@ namespace ReportConverter
                 checklistVals.Remove("");
             }
             return checklistVals;
+        }
+
+        public string Filepath
+        {
+            set
+            {
+                filepath = value;
+            }
+            get
+            {
+                return filepath;
+            }
         }
     }
 }

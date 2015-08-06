@@ -10,16 +10,19 @@ using OfficeOpenXml;
 using System.Data;
 using System.Data.OleDb;
 using Microsoft.Office.Interop.Excel;
-
+using System.Windows.Forms;
 
 namespace ReportConverter
 {
     public class ExcelFileReader : FileReader
     {
         private AppInfo info;
-        public ExcelFileReader(AppInfo aInfo)
+        private ProgressBar pBar;
+
+        public ExcelFileReader(AppInfo aInfo, ProgressBar pB)
         {
             info = aInfo;
+            pBar = pB;
         }
 
         /* Reads all the files given */
@@ -45,6 +48,7 @@ namespace ReportConverter
                     reportsList.Add(tuple.Item2);
                     reportsBySite.Add(tuple.Item1, reportsList);
                 }
+                pBar.PerformStep();
             }
             return reportsBySite;
         }
@@ -53,7 +57,7 @@ namespace ReportConverter
         public Tuple<string, Report> readFile(string file)
         {
             FileInfo newFile = new FileInfo(file);
-            XLSFileReader fr = new XLSFileReader(info);
+            XLSFileReader fr = new XLSFileReader(info, pBar);
             ExcelPackage pck;
             //If the file cannot be opened, try the .xls file reader
             try
@@ -95,6 +99,7 @@ namespace ReportConverter
                     break;
                 }
             }
+            report.Filepath = file;
             return Tuple.Create(siteName, report);
         }
 
@@ -148,7 +153,7 @@ namespace ReportConverter
         public List<string> getCheckedValues(string file, int n)
         {
             List<string> checkedVals = new List<string>();
-            Application app = new Application();
+            Microsoft.Office.Interop.Excel.Application app = new Microsoft.Office.Interop.Excel.Application();
             Workbooks wbs = app.Workbooks;
             Workbook wb = wbs.Open(file);
             Worksheet wk = wb.Worksheets[n];

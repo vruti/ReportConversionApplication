@@ -9,16 +9,19 @@ using System.Diagnostics;
 using System.Data;
 using System.Data.OleDb;
 using Microsoft.Office.Interop.Excel;
+using System.Windows.Forms;
 
 namespace ReportConverter
 {
     public class XLSFileReader : FileReader
     {
         private AppInfo info;
+        private ProgressBar pBar;
 
-        public XLSFileReader(AppInfo aInfo)
+        public XLSFileReader(AppInfo aInfo, ProgressBar pB)
         {
             info = aInfo;
+            pBar = pB;
         }
 
         public Dictionary<string, List<Report>> readFiles(string[] files)
@@ -42,13 +45,14 @@ namespace ReportConverter
                     reportsList.Add(tuple.Item2);
                     reportsBySite.Add(tuple.Item1, reportsList);
                 }
+                pBar.PerformStep();
             }
             return reportsBySite;
         }
 
         public Tuple<string, Report> readFile(string file)
         {
-            Application app = new Application();
+            Microsoft.Office.Interop.Excel.Application app = new Microsoft.Office.Interop.Excel.Application();
             app.DisplayAlerts = false;
             app.AutomationSecurity = Microsoft.Office.Core.MsoAutomationSecurity.msoAutomationSecurityForceDisable;
             Workbooks wbs = app.Workbooks;
@@ -75,6 +79,7 @@ namespace ReportConverter
             report.addCheckedVals(vals);
 
             wb.Close();
+            report.Filepath = file;
             return Tuple.Create(siteName, report);
         }
 

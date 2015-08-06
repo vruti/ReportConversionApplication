@@ -12,7 +12,8 @@ namespace ReportConverter
         private string inputDir;
         private string archiveDir;
 
-        public DirectoryReader(string dir, string aDir){
+        public DirectoryReader(string dir, string aDir)
+        {
             inputDir = dir;
             archiveDir = aDir;
         }

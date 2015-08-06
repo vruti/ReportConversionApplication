@@ -38,7 +38,7 @@ namespace ReportConverter
             organizeFields();
 
             //No report ID is given so filler value is used
-            wo = new WorkOrder("None", woTable);
+            wo = new WorkOrder("None", woTable, report.Filepath);
             wo.Site = site;
             wo.Vendor = ven;
             wo.Status = "Closed";
@@ -74,10 +74,11 @@ namespace ReportConverter
                 List<string> taskInfo = info.getTypeInfo(woType);
                 wo.WorkOrderType = taskInfo[0];
                 wo.TaskID = taskInfo[1];
-                wo.OutageType = taskInfo[2];
-                wo.Planning = taskInfo[3];
-                wo.UnplannedType = taskInfo[4];
-                wo.Priority = taskInfo[5];
+                wo.TaskDescription = taskInfo[2];
+                wo.OutageType = taskInfo[3];
+                wo.Planning = taskInfo[4];
+                wo.UnplannedType = taskInfo[5];
+                wo.Priority = taskInfo[6];
             }
         }
         /* Gets the MPulse asset ID based on the contractor asset ID
@@ -86,7 +87,9 @@ namespace ReportConverter
         {
             int[] loc = fieldToCell["Asset"];
             string asset = records[loc[0]][loc[1] + 1];
-            wo.AssetID = aTable.getAssetID(asset, site.Name);
+            List<string> a = aTable.getAssetID(asset, site.Name);
+            wo.AssetID = a[0];
+            wo.AssetDescription = a[1];
         }
 
         /* This function maps the fields to locations so
@@ -142,15 +145,14 @@ namespace ReportConverter
                 string id = records[i][idLoc];
                 double dQty = Convert.ToDouble(records[i][qLoc]);
                 int qty = Convert.ToInt32(dQty);
-                string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                if (partID == null)
+                Part part = partsTable.getPart(id, wo.Vendor.Name, qty);
+                if (part == null)
                 {
                     /* If the part isn't in the parts list, create a new part*/
                     string description = records[i][desLoc];
-                    partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                    
+                    part = partsTable.addNewPart(id, qty, description, wo.Vendor);                    
                 }
-                wo.addPart(partID, qty);
+                wo.addPart(part, qty);
                 i++;
             }
         }

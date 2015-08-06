@@ -39,20 +39,29 @@ namespace ReportConverter
 
             //Get the ID from the report to start a new WorkOrder
             string id = getID();
-            wo = new WorkOrder(id, woTable);
-            addWorkOrderInfo(report.checkedVals()[0]);
-            
+            wo = new WorkOrder(id, woTable, report.Filepath);
+            wo.Site = site;
+            wo.Vendor = ven;
+            wo.Status = "Closed";
 
             //adding the asset to the work order
-            int[] loc = fieldToCell["Asset"];
-            string asset = records[loc[0]][loc[1] + 2];
-            wo.AssetID = aTable.getAssetID(asset, site.Name);
+            addAssetID();
+            
             addDescription();
             addActualHours();
             addDownTime();
             addMaterials();
             addParts();
             addDates();
+
+            try
+            {
+                addWorkOrderInfo(report.checkedVals()[0]);
+            }
+            catch
+            {
+                wo.fillValues();
+            }
 
             Validator v = new Validator();
             if (!v.isValid(wo))
@@ -80,6 +89,15 @@ namespace ReportConverter
             return id;
         }
 
+        private void addAssetID()
+        {
+            int[] loc = fieldToCell["Asset"];
+            string asset = records[loc[0]][loc[1] + 2];
+            List<string> a = aTable.getAssetID(asset, site.Name);
+            wo.AssetID = a[0];
+            wo.AssetDescription = a[1];
+        }
+
         /* Adds information based on work order type from
          * the table present in the AppInfo file */
         private void addWorkOrderInfo(string workOrderType)
@@ -87,13 +105,11 @@ namespace ReportConverter
             List<string> taskInfo = info.getTypeInfo(workOrderType);
             wo.WorkOrderType = taskInfo[0];
             wo.TaskID = taskInfo[1];
-            wo.OutageType = taskInfo[2];
-            wo.Planning = taskInfo[3];
-            wo.UnplannedType = taskInfo[4];
-            wo.Priority = taskInfo[5];
-            wo.Site = site;
-            wo.Vendor = ven;
-            wo.Status = "Closed";
+            wo.TaskDescription = taskInfo[2];
+            wo.OutageType = taskInfo[3];
+            wo.Planning = taskInfo[4];
+            wo.UnplannedType = taskInfo[5];
+            wo.Priority = taskInfo[6];
         }
 
         /* Fill in the fieldToCell dictionary with the 
@@ -165,10 +181,24 @@ namespace ReportConverter
         {
             int[] loc = fieldToCell["Open Date"];
             wo.OpenDate = Convert.ToDateTime(records[loc[0]][loc[1] + 1]);
-            loc = fieldToCell["Start Date"];
-            wo.StartDate = Convert.ToDateTime(records[loc[0]+1][loc[1]]);
-            loc = fieldToCell["End Date"];
-            wo.EndDate = Convert.ToDateTime(records[loc[0] + 1][loc[1]]);
+            try
+            {
+                loc = fieldToCell["Start Date"];
+                wo.StartDate = Convert.ToDateTime(records[loc[0] + 1][loc[1]]);
+            }
+            catch
+            {
+                wo.StartDate = wo.OpenDate;
+            }
+            try
+            {
+                loc = fieldToCell["End Date"];
+                wo.EndDate = Convert.ToDateTime(records[loc[0] + 1][loc[1]]);
+            }
+            catch
+            {
+                wo.EndDate = wo.StartDate;
+            }
         }
 
         /* Adds the description of the work order. The first sentence is 
@@ -220,10 +250,18 @@ namespace ReportConverter
         private double convertToHours(string time)
         {
             //Get the hours and minutes in double format
-            int count = time.IndexOf(":");
-            double hour = Convert.ToDouble(time.Substring(0, count));
-            double min = Convert.ToDouble(time.Substring(count + 1, 2));
-            double total = hour + (min / 60);
+            double total;
+            try
+            {
+                int count = time.IndexOf(":");
+                double hour = Convert.ToDouble(time.Substring(0, count));
+                double min = Convert.ToDouble(time.Substring(count + 1, 2));
+                total = hour + (min / 60);
+            }
+            catch
+            {
+                total = 0;
+            }
             return total;
         }
 
@@ -240,15 +278,15 @@ namespace ReportConverter
                 if (!id.Equals(" "))
                 {
                     int qty = Convert.ToInt32(records[i][y + 1]);
-                    string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                    if (partID == null)
+                    Part part = partsTable.getPart(id, wo.Vendor.Name, qty);
+                    if (part == null)
                     {
                         /* If the part isn't in the parts list, create a new part*/
                         string description = records[i][y + 3];
-                        partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                        wo.addPart(partID, qty);
+                        part = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                        wo.addPart(part, qty);
                     }
-                    wo.addPart(partID, qty);
+                    wo.addPart(part, qty);
                 }
             }
         }
@@ -267,15 +305,15 @@ namespace ReportConverter
                 if (!id.Equals(" "))
                 {
                     int qty = Convert.ToInt32(records[i][y + 1]);
-                    string partID = partsTable.getPartID(id, wo.Vendor.Name, qty);
-                    if (partID == null)
+                    Part part = partsTable.getPart(id, wo.Vendor.Name, qty);
+                    if (part == null)
                     {
                         /* If the part isn't in the parts list, create a new part*/
                         string description = records[i][y + 3];
-                        partID = partsTable.addNewPart(id, qty, description, wo.Vendor);
-                        wo.addPart(partID, qty);
+                        part = partsTable.addNewPart(id, qty, description, wo.Vendor);
+                        wo.addPart(part, qty);
                     }
-                    wo.addPart(partID, qty);
+                    wo.addPart(part, qty);
                 }
             }
         }
