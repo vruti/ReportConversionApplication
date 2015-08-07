@@ -94,7 +94,7 @@ namespace ReportConverter
                     List<string> vals = getCheckedValues(file, wk.Index);
                     report.addCheckedVals(vals);
                 }
-                if (!siteName.Equals("Gamesa") && siteName != null)
+                if (!siteName.Equals("Patton") && siteName != null)
                 {
                     break;
                 }

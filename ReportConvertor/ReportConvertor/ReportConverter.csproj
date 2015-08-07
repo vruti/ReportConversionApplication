@@ -106,6 +106,7 @@
     <Compile Include="NordexExcelConverter.cs" />
     <Compile Include="Part.cs" />
     <Compile Include="PartsTable.cs" />
+    <Compile Include="PastWO.cs" />
     <Compile Include="PDFFileReader.cs" />
     <Compile Include="SenvionConverter.cs" />
     <Compile Include="Site.cs" />

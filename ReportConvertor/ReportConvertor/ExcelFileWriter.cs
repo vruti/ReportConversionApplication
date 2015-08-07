@@ -198,7 +198,12 @@ namespace ReportConverter
         /* Moving read files into archive folder*/
         public void moveFiles(List<string> files)
         {
+            //Getting the Archive folder, if it doesn't exist create one
             string archiveDir = info.getFileLoc("Archive");
+            if (!Directory.Exists(archiveDir))
+            {
+                Directory.CreateDirectory(archiveDir);
+            }
             //Creates a folder based on the date
             DateTime today = DateTime.Today;
             string date = "";

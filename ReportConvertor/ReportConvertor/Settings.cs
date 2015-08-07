@@ -80,6 +80,7 @@ namespace ReportConverter
             {
                 string fileName = openFileDialog1.FileName;
                 a.changeFileLoc(fileName, "Parts");
+                f.partsTable.startTable(fileName);
                 dirLoc.Text = f.info.getFileLoc("Parts");
             }
         }
@@ -91,6 +92,7 @@ namespace ReportConverter
             {
                 string fileName = openFileDialog1.FileName;
                 a.changeFileLoc(fileName, "Assets");
+                f.assetTable.startTable(fileName);
                 dirLoc.Text = f.info.getFileLoc("Assets");
             }
         }
@@ -102,6 +104,7 @@ namespace ReportConverter
             {
                 string fileName = openFileDialog1.FileName;
                 a.changeFileLoc(fileName, "WOHistory");
+                f.woTable.startTable(fileName);
                 dirLoc.Text = f.info.getFileLoc("WOHistory");
             }
         }

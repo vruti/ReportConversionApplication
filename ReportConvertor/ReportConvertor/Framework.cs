@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
 using System.Windows.Forms;
 
 namespace ReportConverter
@@ -14,10 +16,11 @@ namespace ReportConverter
         public Dictionary<string, WorkOrder> newWO;
         public Dictionary<string, List<WorkOrder>> flaggedWO;
         private string archiveDirectory;
-        private PartsTable partsTable;
-        private AssetTable assetTable;
-        private WOTable woTable;
+        public PartsTable partsTable;
+        public AssetTable assetTable;
+        public WOTable woTable;
         private ProgressBar pBar;
+        private Stopwatch stopwatch;
 
         public Framework(AppInfo i)
         {
@@ -27,13 +30,21 @@ namespace ReportConverter
             partsTable = new PartsTable(info.getAllVendors(), info.getFileLoc("Parts"));
             assetTable = new AssetTable(info.getSites(), info.getFileLoc("Assets"));
             woTable = new WOTable(info.getFileLoc("WOHistory"));
+            stopwatch = new Stopwatch();
         }
 
         public void start(Main m, ProgressBar pB)
         {
+            stopwatch.Reset();
+            stopwatch.Start();
+            //Initializing new dictionaries so there are no repeats
             newWO = new Dictionary<string, WorkOrder>();
             flaggedWO = new Dictionary<string, List<WorkOrder>>();
+            assetTable.startNewAssets();
+
+            //Archiving any current values in the outputfile
             archiveOutput(m);
+            //setting progress bar
             pBar = pB;
             //Getting names of all the files in the input directory
             DirectoryReader dR = new DirectoryReader(inputDirectory, archiveDirectory);
@@ -119,13 +130,14 @@ namespace ReportConverter
                 writer.writeFiles(getListofWO(), newParts, getFlaggedWOs(), assetTable.getUnlinkedAssets());
                 pBar.PerformStep();
                 pBar.Visible = false;
-                m.showMessage("Conversion Complete!");
+                stopwatch.Stop();
+                m.showMessage("Conversion Complete! Time taken = "+stopwatch.Elapsed);
             }
             else
             {
+                stopwatch.Stop();
                 m.showMessage("No Files in Input folder");
             }
-            //m.activateForm();
             System.Diagnostics.Process.Start(info.getFileLoc("Output"));
         }
 
@@ -167,22 +179,29 @@ namespace ReportConverter
             {
                 foreach (WorkOrder wo in workOrders)
                 {
-                    string id = wo.OriginalID;
-                    if (newWO.ContainsKey(id))
+                    string id = wo.ID;
+                    string valid = isInvalid(wo);
+                    if (valid != null)
                     {
-                        if (flaggedWO.ContainsKey(id))
+                        WorkOrder dupWO = newWO[valid];
+                        string oID = wo.OriginalID;
+                        /* If the flaggedWO dictionary already has the
+                         * Report ID, add the work orders to the list*/
+                        if (flaggedWO.ContainsKey(oID))
                         {
-                            flaggedWO[id].Add(wo);
-                            flaggedWO[id].Add(newWO[id]);
+                            flaggedWO[oID].Add(wo);
+                            flaggedWO[oID].Add(dupWO);
                         }
                         else
                         {
+                            /*If not, create a new list and add it under
+                             * that report ID*/
                             List<WorkOrder> wos = new List<WorkOrder>();
                             wos.Add(wo);
-                            wos.Add(newWO[id]);
-                            flaggedWO.Add(id, wos);
+                            wos.Add(dupWO);
+                            flaggedWO.Add(oID, wos);
                         }
-                        newWO.Remove(id);
+                        newWO.Remove(valid);
                     }
                     else if (flaggedWO.ContainsKey(id))
                     {
@@ -194,6 +213,23 @@ namespace ReportConverter
                     }
                 }
             }
+        }
+
+        private string isInvalid(WorkOrder wo)
+        {
+            List<string> keys = newWO.Keys.ToList();
+            foreach (string key in keys)
+            {
+                WorkOrder dupWO = newWO[key];
+                if (dupWO.OriginalID.Equals(wo.OriginalID))
+                {
+                    if (wo.StartDate == dupWO.StartDate && wo.EndDate == dupWO.EndDate)
+                    {
+                        return key;
+                    }
+                }
+            }
+            return null;
         }
 
         private void addFlaggedWO(List<WorkOrder> wos)

@@ -9,7 +9,7 @@ namespace ReportConverter
 {
     public class WorkOrder
     {
-        public string mPulseID;
+        private string mPulseID;
         private string description;
         private string status;
         private string woType;
@@ -46,6 +46,14 @@ namespace ReportConverter
             openDate = new DateTime();
             startDate = new DateTime();
             dateDone = new DateTime();
+        }
+
+        public string ID
+        {
+            get
+            {
+                return mPulseID;
+            }
         }
 
         public string Description {
@@ -385,6 +393,7 @@ namespace ReportConverter
             if (keys.Count == 0 || (keys.Count == 1 && partsList[keys[0]] < 1))
             {
                 record = addValues();
+                record.Add(" ");
                 record.Add(" ");
                 record.Add(" ");
                 record.Add(comments);

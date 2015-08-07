@@ -28,8 +28,13 @@ namespace ReportConverter
         public AssetTable(List<Site> s, string file)
         {
             sites = s;
-            assets = new Dictionary<string, Dictionary<string, List<string>>>();
             unlinkedAssets = new List<List<string>>();
+            startTable(file);
+        }
+
+        public void startTable(string file)
+        {
+            assets = new Dictionary<string, Dictionary<string, List<string>>>();
             /* Initialize a dictionary of contractor asset id 
              * to Mpulse asset id for each site
              */
@@ -39,6 +44,11 @@ namespace ReportConverter
                 assets.Add(site.Name, assetDict);
             }
             generateTable(file);
+        }
+
+        public void startNewAssets()
+        {
+            unlinkedAssets = new List<List<string>>();
         }
 
         /*

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ReportConverter
@@ -12,11 +13,17 @@ namespace ReportConverter
     {
         private Dictionary<string, int> pastWOs;
         private Dictionary<string, int> newWOs;
+        private Dictionary<string, int> fieldToCell;
 
         public WOTable(string path)
         {
-            pastWOs = new Dictionary<string, int>();
             newWOs = new Dictionary<string, int>();
+            startTable(path);
+        }
+
+        public void startTable(string path)
+        {
+            pastWOs = new Dictionary<string, int>();
             generateTable(path);
         }
 
@@ -40,17 +47,38 @@ namespace ReportConverter
             for (int i = 2; i <= totalRows; i++)
             {
                 string woID = wk.Cells[i, 1].Value.ToString();
-                int end = woID.Length - 2;
-                string id = woID.Substring(0, end);
+                int end = lastInstance(woID);
+                string id = woID.Substring(0, end - 1);
+                int len = woID.Length - end;
+                string num = woID.Substring((end), len);
+                num = Regex.Replace(num, "[^0-9.]", "");
+                int n = Convert.ToInt32(num);
                 if (pastWOs.ContainsKey(id))
                 {
-                    pastWOs[id]++;
+                    pastWOs[id] = n;
                 }
                 else
                 {
                     pastWOs.Add(id, 1);
                 }
             }
+        }
+
+        private int lastInstance(string id)
+        {
+            int loc = 0;
+            int i = 0;
+            string temp = id.ToLower();
+            int len = temp.Length;
+            while (temp.IndexOf("-") > 0)
+            {
+                i = temp.IndexOf("-") + 1;
+                loc += i;
+                len = len-i;
+                temp = temp.Substring(i, len);
+            }
+
+            return loc;
         }
 
                 

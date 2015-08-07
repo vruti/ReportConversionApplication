@@ -17,14 +17,22 @@ namespace ReportConverter
         public PartsTable(List<Vendor> v, string file)
         {
             vendors = v;
-            parts = new Dictionary<string, Dictionary<string, Part>>();
             newParts = new Dictionary<string, Dictionary<string, Part>>();
+            foreach (Vendor ven in vendors)
+            {
+                Dictionary<string, Part> newPartTable = new Dictionary<string, Part>();
+                newParts.Add(ven.Name, newPartTable);
+            }
+            startTable(file);
+        }
+
+        public void startTable(string file)
+        {
+            parts = new Dictionary<string, Dictionary<string, Part>>();
             foreach (Vendor ven in vendors)
             {
                 Dictionary<string, Part> partTable = new Dictionary<string, Part>();
                 parts.Add(ven.Name, partTable);
-                Dictionary<string, Part> newPartTable = new Dictionary<string, Part>();
-                newParts.Add(ven.Name, newPartTable);
             }
             generateTable(file);
         }

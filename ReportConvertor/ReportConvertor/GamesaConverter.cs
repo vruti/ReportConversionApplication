@@ -61,6 +61,7 @@ namespace ReportConverter
         private Dictionary<string, WorkOrder> newWOs;
         private List<WorkOrder> flaggedWO;
         private Dictionary<string, List<string>> fieldNames;
+        private Dictionary<string, int> fieldToCell;
         private PartsTable partsTable;
         private AssetTable aTable;
         private Vendor ven;
@@ -92,9 +93,9 @@ namespace ReportConverter
 
         /* Fill in the fieldToCell dictionary with the 
          * exact cell location of each of the field headers */
-        public Dictionary<string, int> organizeFields(List<string> line, string tabName)
+        public void organizeFields(List<string> line, string tabName)
         {
-            Dictionary<string, int> fieldToCell = new Dictionary<string, int>();
+            fieldToCell = new Dictionary<string, int>();
             fieldNames = ven.getFieldNames(tabName);
             List<string> fields = fieldNames.Keys.ToList();
             List<int> used = new List<int>();
@@ -106,8 +107,7 @@ namespace ReportConverter
                 {
                     fieldToCell.Add(key, i);
                 }
-            }     
-            return fieldToCell;
+            }
         }
 
         /* Checks if a string is a field header name*/
@@ -119,9 +119,8 @@ namespace ReportConverter
             {
                 foreach (string field in fieldNames[key])
                 {
-                    if (name.Contains(field.ToLower()))
+                    if (name.Contains(field.ToLower()) && !fieldToCell.ContainsKey(key))
                     {
-                        fieldNames.Remove(key);
                         return key;
                     }
                 }
@@ -144,7 +143,7 @@ namespace ReportConverter
 
             //Parsing the general info tab
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Main");
+            organizeFields(rows[0], "Main");
             for (int i = 1; i < rows.Count; i++)
             {
                 List<string> row = rows[i];
@@ -204,7 +203,7 @@ namespace ReportConverter
             //Get the data read from the excel file
             List<List<string>> rows = report.getRecords(tab);
             //Get the field header names and the corresponding columns
-            Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Labor");
+            organizeFields(rows[0], "Labor");
 
             foreach (List<string> row in rows)
             {
@@ -237,7 +236,7 @@ namespace ReportConverter
          */ 
         private Dictionary<string, int> startStopFields(List<string> row, string tab)
         {
-            Dictionary<string, int> fieldToCell = organizeFields(row, "Stop Time");
+            organizeFields(row, "Stop Time");
             int s = fieldToCell["Start Date"];
             int e = fieldToCell["Stop Date"];
             if (s > e)
@@ -264,7 +263,7 @@ namespace ReportConverter
             }
 
             List<List<string>> records = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = startStopFields(records[0], tab);
+            fieldToCell = startStopFields(records[0], tab);
             /* The stopTimes dictionary is used to keep track of all 
              * the stop and start times listed in the report */
             Dictionary<string,List<DateRange>> stopTimes = new Dictionary<string,List<DateRange>>();
@@ -376,7 +375,7 @@ namespace ReportConverter
             }
 
             List<List<string>> rows = report.getRecords(tab);
-            Dictionary<string, int> fieldToCell = organizeFields(rows[0], "Consumption");
+            organizeFields(rows[0], "Consumption");
 
             foreach (List<string> row in rows)
             {
@@ -394,8 +393,7 @@ namespace ReportConverter
                     }
                     string id = row[fieldToCell["Material"]];
                     Part p = partsTable.getPart(id, wo.Vendor.Name, qty);
-
-                    if (part == null)
+                    if (p == null)
                     {
                         string description = row[fieldToCell["Description"]];
                         p = partsTable.addNewPart(id, qty, description, wo.Vendor);
