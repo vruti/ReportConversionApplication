@@ -76,7 +76,7 @@ namespace ReportConverter
             if (active)
             {
                 active = false;
-                string message = f.archiveOutput(this);
+                string message = f.archiveOutput();
                 showMessage(message);
             }
         }

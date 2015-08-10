@@ -13,7 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>\\epo.local\users\cache\pgh\vsivakumaran\data\documents\Service Report Application\</PublishUrl>
+    <PublishUrl>\\epo.local\users\cache\pgh\vsivakumaran\data\desktop\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Unc</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -25,7 +25,7 @@
     <MapFileExtensions>true</MapFileExtensions>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
-    <ApplicationRevision>1</ApplicationRevision>
+    <ApplicationRevision>2</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -100,13 +100,13 @@
     <Compile Include="ExcelFileReader.cs" />
     <Compile Include="ExcelFileWriter.cs" />
     <Compile Include="GamesaConverter.cs" />
+    <Compile Include="GenericConverter.cs" />
     <Compile Include="HTMLFileReader.cs" />
     <Compile Include="AppInfo.cs" />
     <Compile Include="NordexConverter.cs" />
     <Compile Include="NordexExcelConverter.cs" />
     <Compile Include="Part.cs" />
     <Compile Include="PartsTable.cs" />
-    <Compile Include="PastWO.cs" />
     <Compile Include="PDFFileReader.cs" />
     <Compile Include="SenvionConverter.cs" />
     <Compile Include="Site.cs" />

@@ -18,11 +18,13 @@ namespace ReportConverter
     {
         private AppInfo info;
         private ProgressBar pBar;
+        private Main m;
 
-        public ExcelFileReader(AppInfo aInfo, ProgressBar pB)
+        public ExcelFileReader(AppInfo aInfo, ProgressBar pB, Main main)
         {
             info = aInfo;
             pBar = pB;
+            m = main;
         }
 
         /* Reads all the files given */
@@ -57,8 +59,9 @@ namespace ReportConverter
         public Tuple<string, Report> readFile(string file)
         {
             FileInfo newFile = new FileInfo(file);
-            XLSFileReader fr = new XLSFileReader(info, pBar);
+            XLSFileReader fr = new XLSFileReader(info, pBar, m);
             ExcelPackage pck;
+            
             //If the file cannot be opened, try the .xls file reader
             try
             {

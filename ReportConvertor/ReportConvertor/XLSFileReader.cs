@@ -17,11 +17,13 @@ namespace ReportConverter
     {
         private AppInfo info;
         private ProgressBar pBar;
+        private Main m;
 
-        public XLSFileReader(AppInfo aInfo, ProgressBar pB)
+        public XLSFileReader(AppInfo aInfo, ProgressBar pB, Main main)
         {
             info = aInfo;
             pBar = pB;
+            m = main;
         }
 
         public Dictionary<string, List<Report>> readFiles(string[] files)
@@ -52,35 +54,44 @@ namespace ReportConverter
 
         public Tuple<string, Report> readFile(string file)
         {
-            Microsoft.Office.Interop.Excel.Application app = new Microsoft.Office.Interop.Excel.Application();
-            app.DisplayAlerts = false;
-            app.AutomationSecurity = Microsoft.Office.Core.MsoAutomationSecurity.msoAutomationSecurityForceDisable;
-            Workbooks wbs = app.Workbooks;
-            Workbook wb = wbs.Open(file, ReadOnly: true);
-            wb.DoNotPromptForConvert = true;
-            Worksheet wk = wb.Worksheets[1];
-            Report report = new Report();
-            Tuple<string, List<List<string>>> tuple = null;
-            string siteName = null;
-            siteName = getNameOfSite(file);
-
-            report.addReportTab(wk.Name);
-            report.changeCurrentTab(wk.Name);
-            tuple = readWorksheet(wk, siteName);
-            report.addRecords(tuple.Item2);
-
-            if (siteName == null)
+            try
             {
-                siteName = tuple.Item1;
+                Microsoft.Office.Interop.Excel.Application app = new Microsoft.Office.Interop.Excel.Application();
+                app.DisplayAlerts = false;
+                app.AutomationSecurity = Microsoft.Office.Core.MsoAutomationSecurity.msoAutomationSecurityForceDisable;
+                Workbooks wbs = app.Workbooks;
+                Workbook wb = wbs.Open(file, ReadOnly: true);
+                wb.DoNotPromptForConvert = true;
+                Worksheet wk = wb.Worksheets[1];
+                Report report = new Report();
+                Tuple<string, List<List<string>>> tuple = null;
+                string siteName = null;
+                siteName = getNameOfSite(file);
+
+                report.addReportTab(wk.Name);
+                report.changeCurrentTab(wk.Name);
+                tuple = readWorksheet(wk, siteName);
+                report.addRecords(tuple.Item2);
+
+                if (siteName == null)
+                {
+                    siteName = tuple.Item1;
+                }
+
+                //if the vendor is senvion, there are checkboxes
+                List<string> vals = getCheckedValues(wk);
+                report.addCheckedVals(vals);
+
+                wb.Close();
+                report.Filepath = file;
+                return Tuple.Create(siteName, report);
             }
-
-            //if the vendor is senvion, there are checkboxes
-            List<string> vals = getCheckedValues(wk);
-            report.addCheckedVals(vals);
-
-            wb.Close();
-            report.Filepath = file;
-            return Tuple.Create(siteName, report);
+            catch (Exception e)
+            {
+                m.showMessage("Exception found = " + e.ToString());
+            }
+            //Should never get to this point
+            return null;
         }
 
         private Tuple<string, List<List<string>>> readWorksheet(Worksheet worksheet, string sName)

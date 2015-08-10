@@ -118,5 +118,10 @@ namespace ReportConverter
                 System.Diagnostics.Process.Start(file);
             }
         }
+
+        public void showMessage(string m)
+        {
+            MessageBox.Show(m);
+        }
     }
 }

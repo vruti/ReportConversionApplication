@@ -84,7 +84,7 @@ namespace ReportConverter
                     return i;
                 }
             }
-            return 0;
+            return -1;
         }
 
         private bool isVendor(string id, string s, Vendor v)

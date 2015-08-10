@@ -33,6 +33,7 @@ namespace ReportConverter
         private string comments;
         private WOTable woTable;
         private string filepath;
+        private string flagReason;
 
         /* Initialize a work order with the report ID*/
         public WorkOrder(string id, WOTable woT, string f)
@@ -46,6 +47,7 @@ namespace ReportConverter
             openDate = new DateTime();
             startDate = new DateTime();
             dateDone = new DateTime();
+            flagReason = "";
         }
 
         public string ID
@@ -300,6 +302,14 @@ namespace ReportConverter
             }
         }
 
+        public string FlagReason
+        {
+            set
+            {
+                flagReason = value;
+            }
+        }
+
         public void addPart(Part p, int qty)
         {
             if (partsList.ContainsKey(p))
@@ -398,6 +408,7 @@ namespace ReportConverter
                 record.Add(" ");
                 record.Add(comments);
                 record.Add(originalID);
+                record.Add(flagReason);
 
                 records.Add(record);
                 return records;
@@ -414,6 +425,7 @@ namespace ReportConverter
                     record.Add(partsList[key]);
                     record.Add(comments);
                     record.Add(originalID);
+                    record.Add(flagReason);
 
                     records.Add(record);
                 }

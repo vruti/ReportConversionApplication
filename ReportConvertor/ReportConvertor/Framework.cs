@@ -21,6 +21,7 @@ namespace ReportConverter
         public WOTable woTable;
         private ProgressBar pBar;
         private Stopwatch stopwatch;
+        private Main m;
 
         public Framework(AppInfo i)
         {
@@ -33,8 +34,9 @@ namespace ReportConverter
             stopwatch = new Stopwatch();
         }
 
-        public void start(Main m, ProgressBar pB)
+        public void start(Main main, ProgressBar pB)
         {
+            m = main;
             stopwatch.Reset();
             stopwatch.Start();
             //Initializing new dictionaries so there are no repeats
@@ -43,7 +45,7 @@ namespace ReportConverter
             assetTable.startNewAssets();
 
             //Archiving any current values in the outputfile
-            archiveOutput(m);
+            archiveOutput();
             //setting progress bar
             pBar = pB;
             //Getting names of all the files in the input directory
@@ -189,6 +191,8 @@ namespace ReportConverter
                          * Report ID, add the work orders to the list*/
                         if (flaggedWO.ContainsKey(oID))
                         {
+                            wo.FlagReason = "Same dates and asset ID as another WO";
+                            dupWO.FlagReason = "Same dates and asset ID as another WO";
                             flaggedWO[oID].Add(wo);
                             flaggedWO[oID].Add(dupWO);
                         }
@@ -202,6 +206,20 @@ namespace ReportConverter
                             flaggedWO.Add(oID, wos);
                         }
                         newWO.Remove(valid);
+                    }
+                    else if (!woTable.isValidWO(wo))
+                    {
+                        wo.FlagReason = "Same Asset ID and date as a past WO";
+                        if (flaggedWO.ContainsKey(id))
+                        {
+                            flaggedWO[id].Add(wo);
+                        }
+                        else
+                        {
+                            List<WorkOrder> wos = new List<WorkOrder>();
+                            wos.Add(wo);
+                            flaggedWO.Add(id, wos);
+                        }
                     }
                     else if (flaggedWO.ContainsKey(id))
                     {
@@ -223,7 +241,7 @@ namespace ReportConverter
                 WorkOrder dupWO = newWO[key];
                 if (dupWO.OriginalID.Equals(wo.OriginalID))
                 {
-                    if (wo.StartDate == dupWO.StartDate && wo.EndDate == dupWO.EndDate)
+                    if (wo.StartDate == dupWO.StartDate && wo.EndDate == dupWO.EndDate && wo.AssetID == dupWO.AssetID)
                     {
                         return key;
                     }
@@ -279,13 +297,13 @@ namespace ReportConverter
                 switch (key)
                 {
                     case "xlsx":
-                        fR = new ExcelFileReader(info, pBar);
+                        fR = new ExcelFileReader(info, pBar, m);
                         break;
                     case "xlsm":
-                        fR = new ExcelFileReader(info, pBar);
+                        fR = new XLSFileReader(info, pBar, m);
                         break;
                     case "xls":
-                        fR = new XLSFileReader(info, pBar);
+                        fR = new XLSFileReader(info, pBar, m);
                         break;
                     case "pdf":
                         fR = new PDFFileReader(info, pBar);
@@ -298,7 +316,6 @@ namespace ReportConverter
                         break;
                 }
                 ServiceReports.Add(key, fR.readFiles(files));
-                //pBar.PerformStep();
             }
             return ServiceReports;
         }
@@ -308,7 +325,7 @@ namespace ReportConverter
             inputDirectory = dir;
         }
 
-        public string archiveOutput(Main m)
+        public string archiveOutput()
         {
             string oDir = info.getFileLoc("Output");
             string aDir = info.getFileLoc("Archive");

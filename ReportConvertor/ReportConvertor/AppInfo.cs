@@ -323,7 +323,15 @@ namespace ReportConverter
          */
         public List<string> getTypeInfo(string type)
         {
-            return woTypeTable[type];
+            type = type.Replace(":", "");
+            try
+            {
+                return woTypeTable[type];
+            }
+            catch
+            {
+                return woTypeTable["Default"];
+            }
         }
 
         private void addOutputHeaders(ExcelWorksheet wk)

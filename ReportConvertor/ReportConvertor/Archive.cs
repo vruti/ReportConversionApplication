@@ -15,6 +15,7 @@ namespace ReportConverter
     {
         private string outputFile;
         private string archiveDir;
+        string message;
 
         public Archive(string oFile, string aDir)
         {
@@ -37,57 +38,65 @@ namespace ReportConverter
         {
             //Open the output file
             List<List<string>> data = new List<List<string>>();
-            FileInfo inNewFile = new FileInfo(outputFile);
-            ExcelPackage inPck = new ExcelPackage(inNewFile);
-            ExcelWorksheets inWks = inPck.Workbook.Worksheets;
-            string message;
-
-            //Adding the date and a serial number to the archive file path
-            DateTime today = DateTime.Today;
-            string date = "";
-            date += today.Month.ToString()+"-";
-            date += today.Day.ToString()+"-";
-            date += today.Year.ToString();
-            int end = 1;
-            string archiveFile = archiveDir + "\\\\Archived-" + date + "-" + end.ToString("D2") + ".xlsx";
-            while (File.Exists(archiveFile))
+            if (File.Exists(outputFile))
             {
-                end++;
-                archiveFile = archiveDir + "\\\\Archived-" + date + "-" + end.ToString("D2") + ".xlsx";
-            }
+                FileInfo inNewFile = new FileInfo(outputFile);
+                ExcelPackage inPck = new ExcelPackage(inNewFile);
+                ExcelWorksheets inWks = inPck.Workbook.Worksheets;
 
-            //Open a new file to archive the output
-            FileInfo aNewFile = new FileInfo(archiveFile);
-            ExcelPackage aPck = new ExcelPackage(aNewFile);
-            ExcelWorksheet aWk = null;
 
-            int valid = 0;
-            Boolean copy = true;
-            //Copying all the tabs in the output file
-            foreach (ExcelWorksheet inWk in inWks)
-            {
-                string name = inWk.Name;
-                aWk = aPck.Workbook.Worksheets.Add(name);
-                valid += readFile(inWk, aWk, copy);
-                if (valid == -1)
+                //Adding the date and a serial number to the archive file path
+                DateTime today = DateTime.Today;
+                string date = "";
+                date += today.Month.ToString() + "-";
+                date += today.Day.ToString() + "-";
+                date += today.Year.ToString();
+                int end = 1;
+                string archiveFile = archiveDir + "\\\\Archived-" + date + "-" + end.ToString("D2") + ".xlsx";
+                while (File.Exists(archiveFile))
                 {
-                    copy = false;
+                    end++;
+                    archiveFile = archiveDir + "\\\\Archived-" + date + "-" + end.ToString("D2") + ".xlsx";
                 }
-            }
-            //Saving the two files
-            if (valid > -4)
-            {
-                /* Only create and save the archive file if 
-                 * data was copied */
-                aPck.Save();
-                inPck.Save();
-                message = "Archiving Complete!";
+
+                //Open a new file to archive the output
+                FileInfo aNewFile = new FileInfo(archiveFile);
+                ExcelPackage aPck = new ExcelPackage(aNewFile);
+                ExcelWorksheet aWk = null;
+
+                int valid = 0;
+                Boolean copy = true;
+                //Copying all the tabs in the output file
+                foreach (ExcelWorksheet inWk in inWks)
+                {
+                    string name = inWk.Name;
+                    aWk = aPck.Workbook.Worksheets.Add(name);
+                    valid += readFile(inWk, aWk, copy);
+                    if (valid == -1)
+                    {
+                        copy = false;
+                    }
+                }
+                //Saving the two files
+                if (valid > -4)
+                {
+                    /* Only create and save the archive file if 
+                     * data was copied */
+                    aPck.Save();
+                    inPck.Save();
+                    message = "Archiving Complete!";
+                }
+                else
+                {
+                    message = "Output file Empty. Nothing to archive";
+                }
+                return message;
             }
             else
             {
                 message = "Output file Empty. Nothing to archive";
+                return message;
             }
-            return message;
         }
 
         /* Copies information from output file to archive file and 

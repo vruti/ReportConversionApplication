@@ -68,9 +68,10 @@ namespace ReportConverter
         {
             //The work order type is the last checked value in the report
             int len = checkedVals.Count;
+            List<string> taskInfo;
             string workOrderType = checkedVals[len - 1];
             //get the information linked to the workorder type
-            List<string> taskInfo = info.getTypeInfo(workOrderType);
+            taskInfo = info.getTypeInfo(workOrderType);
             wo.WorkOrderType = taskInfo[0];
             wo.TaskID = taskInfo[1];
             wo.TaskDescription = taskInfo[2];

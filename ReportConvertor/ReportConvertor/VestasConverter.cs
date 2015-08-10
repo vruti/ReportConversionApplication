@@ -109,21 +109,57 @@ namespace ReportConverter
             List<string> headers = records[i];
             List<string> values = records[i + 1];
 
-            string offline = values[0] + "," + values[1];
-            string online = values[2] + "," + values[3];
+            string offline = getDate(values[0]);
+            offline = offline + "," + values[1];
+            string online = getDate(values[2]);
+            online = online + "," + values[3];
             DateTime offlineD = Convert.ToDateTime(offline);
             DateTime onlineD = Convert.ToDateTime(online);
             double downTime = (onlineD - offlineD).TotalHours;
             wo.DownTime = downTime;
         }
 
+        private string getDate(string date)
+        {
+            try
+            {
+                //If the date can be converted just return it
+                DateTime dT = Convert.ToDateTime(date);
+                return date;
+            }
+            catch
+            {
+                /*The format is ddmmyyyy so correct it
+                 * and return the string */
+                string d = date.Substring(0, 2);
+                string m = date.Substring(3, 2);
+                int len = date.Length - 6;
+                string y = date.Substring(6, len);
+                string newDate = m + "/" + d + "/" + y;
+                return newDate;
+            }
+        }
+
         /* Add the start, end and open dates */
         private void addDates(int i)
         {
+            DateTime s;
             List<string> values = records[i + 1];
-            DateTime s = Convert.ToDateTime(values[1]);
+
+            //If there is no start date, set it to s min value so it can be flagged
+            if (values.Count < 2) 
+            {
+                s = DateTime.MinValue;
+            }
+            else
+            {
+                string d = getDate(values[1]);
+                s = Convert.ToDateTime(d);
+            }
+
             wo.StartDate = s;
             wo.OpenDate = s;
+            //If there isn't an end date, set it to start date
             if (values.Count < 3)
             {
                 wo.EndDate = s;

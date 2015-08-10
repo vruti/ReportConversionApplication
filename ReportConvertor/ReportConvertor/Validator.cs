@@ -26,6 +26,7 @@ namespace ReportConverter
         {
             if (wo.AssetID == null || wo.AssetID.Equals("")) return false;
             if (wo.TaskID == null || wo.TaskID.Equals("")) return false;
+            if (wo.StartDate == DateTime.MinValue) return false;
             return true;
         }
     }
